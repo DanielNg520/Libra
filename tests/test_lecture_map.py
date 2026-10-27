@@ -11,7 +11,7 @@ import pytest
 from libra.config import Settings
 from libra import lecture_map
 from libra.textbooks import BookEntry, BookMap
-from test_notes_sources import make_settings
+from test_sources import make_settings
 
 LEC1_PAGES = {1: "Queue arrival poisson process", 2: "Waiting server utilization factor"}
 LEC2_PAGES = {1: "Routing dijkstra shortest path", 2: "Distance vector bellman ford"}
@@ -253,7 +253,7 @@ def test_course_names(tmp_path: Path) -> None:
 
 
 def test_write_maps_vault_none(tmp_path: Path) -> None:
-    settings = Settings.load({"SEMAI_STATE_DIR": str(tmp_path / "state")})
+    settings = Settings.load({"LIBRA_STATE_DIR": str(tmp_path / "state")})
     assert settings.obsidian_academic_vault_dir is None
     assert lecture_map.write_maps(settings) == []
 

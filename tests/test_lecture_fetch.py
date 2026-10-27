@@ -89,8 +89,8 @@ def make_settings(tmp_path: Path) -> Settings:
     vault.mkdir()
     return Settings.load(
         {
-            "SEMAI_STATE_DIR": str(tmp_path / "state"),
-            "SEMAI_OBSIDIAN_ACADEMIC_VAULT_DIR": str(vault),
+            "LIBRA_STATE_DIR": str(tmp_path / "state"),
+            "LIBRA_VAULT_DIR": str(vault),
             "GEMINI_API_KEY": "gem",
             "OPENROUTER_API_KEY": "or",
         }
@@ -486,6 +486,6 @@ def test_fetch_transcripts_state_missing(tmp_path: Path) -> None:
 
 
 def test_fetch_transcripts_vault_none(tmp_path: Path) -> None:
-    settings = Settings.load({"SEMAI_STATE_DIR": str(tmp_path / "state")})
+    settings = Settings.load({"LIBRA_STATE_DIR": str(tmp_path / "state")})
     with pytest.raises(ValueError):
         lf.fetch_transcripts(settings, {"ECE 158A"}, "FA26")

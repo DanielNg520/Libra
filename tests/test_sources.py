@@ -20,8 +20,8 @@ def make_settings(tmp_path: Path) -> Settings:
     vault.mkdir()
     return Settings.load(
         {
-            "SEMAI_STATE_DIR": str(tmp_path / "state"),
-            "SEMAI_OBSIDIAN_ACADEMIC_VAULT_DIR": str(vault),
+            "LIBRA_STATE_DIR": str(tmp_path / "state"),
+            "LIBRA_VAULT_DIR": str(vault),
             "GEMINI_API_KEY": "gem",
             "OPENROUTER_API_KEY": "or",
         }
@@ -135,7 +135,7 @@ def test_course_dir_rejects(tmp_path: Path, course: str, setup: str | None) -> N
 def test_course_dir_rejects_vault_none(tmp_path: Path) -> None:
     settings = Settings.load(
         {
-            "SEMAI_STATE_DIR": str(tmp_path / "state"),
+            "LIBRA_STATE_DIR": str(tmp_path / "state"),
             "GEMINI_API_KEY": "gem",
             "OPENROUTER_API_KEY": "or",
         }

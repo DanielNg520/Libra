@@ -19,7 +19,7 @@ from libra.lecture_docs import (
 def make_settings(tmp_path: Path) -> Settings:
     return Settings.load(
         {
-            "SEMAI_STATE_DIR": str(tmp_path / "state"),
+            "LIBRA_STATE_DIR": str(tmp_path / "state"),
             "GEMINI_API_KEY": "gem",
             "OPENROUTER_API_KEY": "or",
         }

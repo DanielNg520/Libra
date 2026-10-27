@@ -10,7 +10,7 @@ from libra.config import Settings
 from libra.source_pages import MAX_FETCH_PAGES, cached_pages, missing_entries, page_sections
 from libra.sources import DOC_EFFORT, INDEX_NAME, SourceFile
 from libra.lecture_docs import READ_PROMPT, READS_DIR, TEXTBOOK_READ_PROMPT, reading_key
-from test_notes_sources import _write, make_settings
+from test_sources import _write, make_settings
 
 REL = "ECE 108/deck.pdf"
 SOURCE = SourceFile("ECE 108/deck.pdf", "doc", 100, 200)

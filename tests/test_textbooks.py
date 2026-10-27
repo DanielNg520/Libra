@@ -17,8 +17,8 @@ def make_settings(tmp_path: Path) -> Settings:
     vault.mkdir()
     return Settings.load(
         {
-            "SEMAI_STATE_DIR": str(tmp_path / "state"),
-            "SEMAI_OBSIDIAN_ACADEMIC_VAULT_DIR": str(vault),
+            "LIBRA_STATE_DIR": str(tmp_path / "state"),
+            "LIBRA_VAULT_DIR": str(vault),
             "GEMINI_API_KEY": "gem",
             "OPENROUTER_API_KEY": "or",
         }

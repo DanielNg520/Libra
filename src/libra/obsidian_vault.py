@@ -1,99 +1,11 @@
+"""Commit helpers for the academic vault's local git repo (undo history, never pushed)."""
+
 import logging
 import os
-import re
 import subprocess
 from pathlib import Path
-from datetime import date
-from typing import TYPE_CHECKING
-
-from semai.security.path_guard import _is_allowed_path
 
 logger = logging.getLogger(__name__)
-
-_FRONTMATTER_KEY_RE = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
-
-if TYPE_CHECKING:
-    from libra.config import Settings
-
-
-def _slugify(title: str) -> str:
-    result = []
-    last_was_dash = False
-
-    for char in title.lower():
-        if char.isalnum() and char.isascii():
-            if 'a' <= char <= 'z' or '0' <= char <= '9':
-                result.append(char)
-                last_was_dash = False
-            else:
-                if not last_was_dash and result:
-                    result.append('-')
-                    last_was_dash = True
-        else:
-            if not last_was_dash and result:
-                result.append('-')
-                last_was_dash = True
-
-    slug = ''.join(result).strip('-')
-    return slug if slug else 'untitled'
-
-
-class VaultWriteError(RuntimeError):
-    """Human-readable failure writing a note into an Obsidian vault."""
-
-
-def write_note(
-    vault_dir: "Path | None", *, title: str, content: str, flow: str,
-    tags: list[str] | None = None, settings: "Settings",
-    extra_frontmatter: dict[str, str] | None = None,
-) -> Path:
-    if vault_dir is None:
-        raise VaultWriteError("no vault directory configured")
-
-    slug = _slugify(title)
-    today = date.today().isoformat()
-    path = vault_dir / f"{slug}-{today}.md"
-
-    counter = 2
-    while path.exists():
-        path = vault_dir / f"{slug}-{counter}-{today}.md"
-        counter += 1
-
-    resolved = path.resolve()
-
-    if not _is_allowed_path(resolved, settings=settings):
-        raise VaultWriteError(f"path not allowed: {resolved}")
-
-    extra_lines = ""
-    if extra_frontmatter:
-        for key, value in extra_frontmatter.items():
-            if not _FRONTMATTER_KEY_RE.fullmatch(key):
-                raise VaultWriteError(f"invalid frontmatter key: {key!r}")
-            if '\n' in key or '\r' in key or '\n' in value or '\r' in value:
-                raise VaultWriteError(f"invalid frontmatter value for key: {key!r}")
-            if ':' in value or '#' in value:
-                escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-                value = f'"{escaped}"'
-            extra_lines += f"{key}: {value}\n"
-
-    quoted_title = f'"{title.replace("\\", "\\\\").replace('"', '\\"')}"' if ':' in title else title
-    rendered_tags = '[]' if not tags else '[' + ', '.join(tags) + ']'
-
-    text = (
-        f"---\n"
-        f"title: {quoted_title}\n"
-        f"date: {today}\n"
-        f"flow: {flow}\n"
-        f"tags: {rendered_tags}\n"
-        f"{extra_lines}"
-        f"---\n\n"
-        f"{content}"
-    )
-
-    vault_dir.mkdir(parents=True, exist_ok=True)
-    resolved.write_text(text, encoding='utf-8')
-
-    return resolved
 
 
 def _git(repo_dir: Path, args: list[str], *, timeout_s: float, env: dict[str, str]) -> subprocess.CompletedProcess[str]:

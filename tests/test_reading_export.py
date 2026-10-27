@@ -10,7 +10,7 @@ import pytest
 
 from libra.config import Settings
 from libra import reading_export
-from test_notes_sources import make_settings
+from test_sources import make_settings
 
 
 def _setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Settings, Path]:
@@ -189,7 +189,7 @@ def test_course_failure_isolated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 def test_vault_none_returns_empty(tmp_path: Path) -> None:
     settings = Settings.load(
         {
-            "SEMAI_STATE_DIR": str(tmp_path / "state"),
+            "LIBRA_STATE_DIR": str(tmp_path / "state"),
             "GEMINI_API_KEY": "gem",
             "OPENROUTER_API_KEY": "or",
         }

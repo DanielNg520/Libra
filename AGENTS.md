@@ -23,12 +23,15 @@ Owner (2026-10-27): Libra absorbs vault `Tools/librarian.py` (search, catalog, m
 Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 11-04 and 11-05 midterms.
 
 ## Carryover
-State 2026-10-27: no code ported yet; remote set, Fedora and Mac clones exist.
-Design approved 2026-10-27; all owner questions answered. Next: L0 scaffold, new session; SemAI keeps fetching until L5.
-L0 start: copy SemAI `tests/test_size_guard.py` and `.git/hooks/pre-commit` idioms; check `is_deepseek_peak_hours` before any dispatch.
-L0 needs owner: `sops` file creation for Libra (`GEMINI_API_KEY`, `OPENROUTER_API_KEY` from SemAI's sops), run by owner or with explicit go.
-Owner (2026-10-27): Whisper output reaches other instances through vault `<course>/Transcripts/` on Drive; no new transport.
-Owner (2026-10-27): her memory is Hivemind `libra/` (`MEMORY.md` index, one fact per file, `instances.md` feature map).
+L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
+Next: L2 absorb vault `Tools/librarian.py` (split under 600 lines, port its unittest tests to pytest), then L3 CLI and timers.
+Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead without waiting for exams.
+Trap: renaming a ported file breaks cross-test imports (`from test_sources import ...`); grep `^from test_` after any test rename.
+Trap: tests must pass `LIBRA_STATE_DIR` to `Settings.load`; the default creates the real `~/.local/state/libra`.
+Trap: the Mac has no ledger-check hook and no dispatch setup; Libra code changes happen on Fedora only.
+Seam: `lecture_poll.py` name is historical (no polling left); rename when L3 adds the CLI.
+Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive, inherited from SemAI.
+Seam: `lecture_docs.py` temp dir prefix still reads `semai-lecture-` (cosmetic).
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
 Goal: Libra owns transcript fetch, Whisper, readings, maps, search and page reads; SemAI and vault `Tools/librarian.py` keep none of it.
@@ -62,7 +65,7 @@ Exam prep: vault plan D1, D2, D7 (inventory, coverage, aliases) become Libra com
 `examprep.py` imports Libra loaders via PEP 723 `[tool.uv.sources] libra = { path = "/home/dyne/Documents/Coding/Libra" }` (Fedora only, as planned).
 Size guard: port SemAI `tests/test_size_guard.py` limits (600 lines a file, 100 code lines a function).
 
-### Port method (needs owner sign-off)
+### Port method (owner signed off 2026-10-27)
 Proposal: modules move by script (copy plus `semai.` to `libra.` import rewrite, no logic change); seam edits after go through TriAPI dispatch.
 Why: retyping 6k verbatim lines through DeepSeek is slow, hits its 8192-token output cap, and adds defects (whole-file regeneration trap).
 Gate: Libra gets the same pre-commit ledger hook; ported files enter the ledger through `dispatch-ledger-hand.sh`, which the owner runs.
@@ -79,10 +82,15 @@ L6 SemAI sweep (its M2): delete the moved modules and tests, dead `Settings` fie
 Overlap rule: until L5, Libra fetches only by hand; both apps skip existing transcripts and write atomically, so a manual overlap is harmless.
 Irreversible last: SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) are deleted only after Libra runs a week clean.
 
-### Ask owner
+### Owner answers (2026-10-27)
 Owner (2026-10-27): login-expiry push dropped; UCSD login is always manual with the owner; `libra login` reports the result at once.
 Owner (2026-10-27): Libra gets its own sops `.secret/secrets.json`; `GEMINI_API_KEY` and `OPENROUTER_API_KEY` share SemAI's key values.
 Owner (2026-10-27): port method signed off: script copy with import rewrite, owner runs `dispatch-ledger-hand.sh`, seam edits and new code dispatched.
 
 ## File and directory index
-`AGENTS.md` this file.
+`AGENTS.md` this file. `pyproject.toml` (uv; core stdlib, extra `fedora`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
+`src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
+`src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `lecture_poll.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`.
+`src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py`, `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
+`src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
+`src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

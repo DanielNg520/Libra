@@ -10,7 +10,7 @@ from libra.sources import SourceFile, split_entry
 from libra.textbooks import BookEntry, BookMap, BookMapError
 from libra import lecture_docs
 
-from test_notes_sources import _FakeClock, _index, _write, fake_chat, make_settings  # noqa: F401
+from test_sources import _FakeClock, _index, _write, fake_chat, make_settings  # noqa: F401
 
 
 def _range_render(pngs: list[bytes]) -> tuple[Callable, list[tuple[int, int] | None]]:
