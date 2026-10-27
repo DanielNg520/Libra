@@ -26,21 +26,28 @@ Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
 L2 done 2026-10-27: `librarian.py` split by script (verbatim blocks, generated imports), tests ported; 13 live commands byte-identical old vs new; 296 pass.
 L3 done 2026-10-27: `login` (verbatim port), `fetch`, `whisper`, `read`, `export`, `status`; sops key fallback for `read`; units in `deploy/`; 322 pass.
-Next: L4 live: install tool, copy SemAI state (reflink), write `.config/libra.env` on both machines, then live `status`, `read`, `search`, one `fetch`.
+Next: L4, step 1 dispatch the F1 lazy import (Mac blocker); then install, reflink-copy SemAI state, write `.config/libra.env` on both machines.
+L4 live checks: `status`, cached `read`, `search` on Fedora and Mac, one real `fetch`; check `is_deepseek_peak_hours` before dispatch.
 Incident (2026-10-27): a smoke `libra fetch` with empty scratch state rewrote vault maps (commit `6ef0f5f`) and readings; reverted (`49486a3`), SemAI re-exported 46 readings.
 Guard since then: `fetch` and `export` refuse without `lecture_reads/source_index.json` in the state dir (`commands._cache_ready`).
 Trap: never smoke-test fetch-side commands with `LIBRA_VAULT_DIR` on the real vault; use a scratch vault.
 Seam: `whisper` and `fetch` take no lock against each other; concurrent vault commits can fail on the git index lock and retry next run.
 Seam: `cmd_whisper` counts only successes; a failing job ends the loop early (logged), rest waits for the next night.
 Seam: `search.py` and `mapview.py` import private `_select_courses` from `catalog.py`; promote it to `library.py` when next touched.
-Seam: `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS` are two lists of non-course folders; merge when L3 touches either.
+Seam: `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS` are two lists of non-course folders; merge when next touched.
 Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead without waiting for exams.
 Trap: renaming a ported file breaks cross-test imports (`from test_sources import ...`); grep `^from test_` after any test rename.
 Trap: tests must pass `LIBRA_STATE_DIR` to `Settings.load`; the default creates the real `~/.local/state/libra`.
 Trap: the Mac has no ledger-check hook and no dispatch setup; Libra code changes happen on Fedora only.
-Seam: `lecture_poll.py` name is historical (no polling left); rename when L3 adds the CLI.
+Seam: `lecture_poll.py` name is historical (no polling left); rename at L5.
 Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive, inherited from SemAI.
 Seam: `lecture_docs.py` temp dir prefix still reads `semai-lecture-` (cosmetic).
+Last audit: 2026-10-27 wrap-up (audited through `04213d6`; 3 new findings).
+
+## Findings
+F1 [medium · 1 · 2026-10-27] `cli.py`: top-level `import commands` pulls `httpx`, `PIL`; Mac core-only install cannot run `search`; fix: lazy import in `_run_command` (verified, import blocked).
+F2 [low · 1 · 2026-10-27] `commands.py` `cmd_fetch`: exit 3 (expired) and 1 (partial errors) mark `libra-fetch.service` failed nightly; `status` shows login age only (verified by code).
+F3 [low · 1 · 2026-10-27] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (suspected).
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
 Goal: Libra owns transcript fetch, Whisper, readings, maps, search and page reads; SemAI and vault `Tools/librarian.py` keep none of it.
