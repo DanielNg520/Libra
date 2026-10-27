@@ -4,19 +4,26 @@ Usage: libra search [--in transcripts|readings|textbooks|all] [options] <terms..
        libra catalog [--course X] [--json]
        libra map [--course X] [--date D] [--json]
        libra map --confirm --course X --transcript ID --deck DECK [--from T] [--to T]
+       libra login [--timeout S]   (sign in to podcast.ucsd.edu, then fetch)
+       libra fetch | libra whisper [--until H] | libra export | libra status
+       libra read --course X PATH [--pages A-B] [--fetch]
 """
 
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 from typing import List, Optional
 
+from libra import commands
 from libra.catalog import cmd_catalog
 from libra.config import Settings, SettingsError
 from libra.mapview import cmd_map
 from libra.search import _validate_date, cmd_search
+
+VAULT_COMMANDS = frozenset({"search", "catalog", "map"})
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -60,7 +67,59 @@ def _build_parser() -> argparse.ArgumentParser:
     map_parser.add_argument("--deck", default=None)
     map_parser.add_argument("--from", dest="from_t", default=None)
     map_parser.add_argument("--to", dest="to_t", default=None)
+
+    login_parser = subparsers.add_parser("login")
+    login_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=900.0,
+        help="seconds to wait for sign-in",
+    )
+    subparsers.add_parser("fetch")
+    subparsers.add_parser("export")
+    subparsers.add_parser("status")
+
+    whisper_parser = subparsers.add_parser("whisper")
+    whisper_parser.add_argument(
+        "--until",
+        dest="until_hour",
+        type=int,
+        default=6,
+        help="stop starting new jobs at this local hour",
+    )
+
+    read_parser = subparsers.add_parser("read")
+    read_parser.add_argument("path")
+    read_parser.add_argument("--course", required=True)
+    read_parser.add_argument("--pages", default=None, help="N or A-B")
+    read_parser.add_argument("--fetch", action="store_true", default=False)
     return parser
+
+
+def _settings() -> Optional[Settings]:
+    """Load settings for the vault-side commands; print why and return None on bad config."""
+    try:
+        return Settings.load()
+    except SettingsError as exc:
+        print(f"libra: {exc}", file=sys.stderr)
+        return None
+
+
+def _run_command(args: argparse.Namespace, settings: Settings) -> int:
+    """Dispatch the fetch-side subcommands."""
+    if args.command == "login":
+        return commands.cmd_login(settings, args.timeout)
+    if args.command == "fetch":
+        return commands.cmd_fetch(settings)
+    if args.command == "whisper":
+        return commands.cmd_whisper(settings, args.until_hour)
+    if args.command == "read":
+        return commands.cmd_read(settings, args.course, args.path, args.pages, args.fetch)
+    if args.command == "export":
+        return commands.cmd_export(settings)
+    if args.command == "status":
+        return commands.cmd_status(settings)
+    return 2
 
 
 def _vault_root(arg: Optional[Path]) -> Optional[Path]:
@@ -88,6 +147,16 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
+
+    logging.basicConfig(
+        level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s"
+    )
+
+    if args.command not in VAULT_COMMANDS:
+        settings = _settings()
+        if settings is None:
+            return commands.EXIT_USAGE
+        return _run_command(args, settings)
 
     root = _vault_root(args.root)
     if root is None:

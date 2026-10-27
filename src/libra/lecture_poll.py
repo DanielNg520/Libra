@@ -61,6 +61,15 @@ def _refresh_readings(settings: Settings) -> None:
         return
 
 
+def refresh_exports(settings: Settings) -> None:
+    """Rebuild lecture maps (committed) and the readings export; no-op without a vault."""
+    vault = settings.obsidian_academic_vault_dir
+    if vault is None:
+        return
+    _refresh_maps(settings, vault)
+    _refresh_readings(settings)
+
+
 def run_fetch_job(settings: Settings, wanted: set[str] | None = None) -> FetchResult:
     if settings.term is None:
         raise ValueError("LIBRA_TERM is not set")

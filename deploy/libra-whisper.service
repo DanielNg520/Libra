@@ -1,0 +1,8 @@
+[Unit]
+Description=Libra Whisper fallback for lecture recordings without captions
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/libra whisper --until 6
+Nice=19
+IOSchedulingClass=idle

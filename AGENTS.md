@@ -25,7 +25,13 @@ Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 
 ## Carryover
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
 L2 done 2026-10-27: `librarian.py` split by script (verbatim blocks, generated imports), tests ported; 13 live commands byte-identical old vs new; 296 pass.
-Next: L3 by dispatch: `libra login` (port `cmd_podcast_login`), `fetch`, `whisper`, `read`, `export`, `status` in `cli.py`; timer units in `deploy/`.
+L3 done 2026-10-27: `login` (verbatim port), `fetch`, `whisper`, `read`, `export`, `status`; sops key fallback for `read`; units in `deploy/`; 322 pass.
+Next: L4 live: install tool, copy SemAI state (reflink), write `.config/libra.env` on both machines, then live `status`, `read`, `search`, one `fetch`.
+Incident (2026-10-27): a smoke `libra fetch` with empty scratch state rewrote vault maps (commit `6ef0f5f`) and readings; reverted (`49486a3`), SemAI re-exported 46 readings.
+Guard since then: `fetch` and `export` refuse without `lecture_reads/source_index.json` in the state dir (`commands._cache_ready`).
+Trap: never smoke-test fetch-side commands with `LIBRA_VAULT_DIR` on the real vault; use a scratch vault.
+Seam: `whisper` and `fetch` take no lock against each other; concurrent vault commits can fail on the git index lock and retry next run.
+Seam: `cmd_whisper` counts only successes; a failing job ends the loop early (logged), rest waits for the next night.
 Seam: `search.py` and `mapview.py` import private `_select_courses` from `catalog.py`; promote it to `library.py` when next touched.
 Seam: `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS` are two lists of non-course folders; merge when L3 touches either.
 Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead without waiting for exams.
@@ -97,4 +103,6 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py`, `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`).
+`src/libra/commands.py` fetch-side handlers and exit codes (3 = login expired); `read.py` `read_pages` (flock `read.lock`); `login.py` UCSD DevTools sign-in.
+`deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; not enabled until L5.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

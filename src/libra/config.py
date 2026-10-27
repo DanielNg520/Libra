@@ -8,21 +8,29 @@ which then ignores the `.config/libra.env` file entirely.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 import json
 from pathlib import Path
 import os
 import re
+import shutil
+import subprocess
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 DEFAULT_OCR_MODEL = "gemini-3.5-flash-lite"
 DEFAULT_TZ = "America/Los_Angeles"
+SECRET_KEYS: tuple[str, str] = ("GEMINI_API_KEY", "OPENROUTER_API_KEY")
+SOPS_TIMEOUT_S: float = 30.0
 
 
 def config_path(name: str) -> Path:
     return _REPO_ROOT / ".config" / name
+
+
+def secrets_path() -> Path:
+    return _REPO_ROOT / ".secret" / "secrets.json"
 
 
 def _read_config_env() -> dict[str, str]:
@@ -47,6 +55,33 @@ def _read_config_env() -> dict[str, str]:
                 value = value.strip('"')
         result[key] = str(value)
     return result
+
+
+def _read_sops_secrets(path: Path) -> dict[str, str]:
+    """Decrypt `path` with sops; any failure (no file, no sops, bad output) yields {}."""
+    try:
+        sops = shutil.which("sops")
+        if sops is None:
+            return {}
+        proc = subprocess.run(
+            [sops, "-d", "--output-type", "json", str(path)],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=SOPS_TIMEOUT_S,
+        )
+        data = json.loads(proc.stdout)
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+        return {}
+
+    if not isinstance(data, dict):
+        return {}
+
+    return {
+        key: str(data[key])
+        for key in SECRET_KEYS
+        if isinstance(data.get(key), str) and data[key]
+    }
 
 
 class SettingsError(ValueError):
@@ -126,3 +161,15 @@ class Settings:
             term=term,
             tz=tz,
         )
+
+
+def load_secrets(settings: Settings, *, path: Path | None = None) -> Settings:
+    """Fill unset API keys from Libra's sops file; already-set keys are kept."""
+    if settings.gemini_api_key and settings.openrouter_api_key:
+        return settings
+    found = _read_sops_secrets(path or secrets_path())
+    return replace(
+        settings,
+        gemini_api_key=settings.gemini_api_key or found.get("GEMINI_API_KEY"),
+        openrouter_api_key=settings.openrouter_api_key or found.get("OPENROUTER_API_KEY"),
+    )
