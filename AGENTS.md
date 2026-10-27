@@ -78,8 +78,8 @@ Overlap rule: until L5, Libra fetches only by hand; both apps skip existing tran
 Irreversible last: SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) are deleted only after Libra runs a week clean.
 
 ### Ask owner
-Ask owner: login-expiry push (ADR-0038 exception): drop it, since `libra login` runs twice weekly by habit and reports at once? Claude recommends drop.
-Ask owner: Gemini key for Libra: own sops file `.secret/secrets.json` with `GEMINI_API_KEY` and `OPENROUTER_API_KEY` copied from SemAI's? Claude recommends yes.
+Owner (2026-10-27): login-expiry push dropped; UCSD login is always manual with the owner; `libra login` reports the result at once.
+Owner (2026-10-27): Libra gets its own sops `.secret/secrets.json`; `GEMINI_API_KEY` and `OPENROUTER_API_KEY` share SemAI's key values.
 Ask owner: sign off the port method above (script copy, hand-ledgered by you, seam fixes dispatched).
 
 ## File and directory index
