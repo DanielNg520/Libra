@@ -22,7 +22,7 @@ Clones: Fedora `~/Documents/Coding/Libra`, Mac `~/Developer/Libra`.
 ## Carryover
 State 2026-10-27: no code ported yet; remote set, Fedora and Mac clones exist.
 Next: migration plan (which SemAI modules port, cutover order); SemAI keeps fetching transcripts until Libra is live.
-Open: how Whisper output reaches other instances; today transcripts land in vault `<course>/Transcripts/`, which Drive syncs to the Mac.
+Owner (2026-10-27): Whisper output reaches other instances through vault `<course>/Transcripts/` on Drive; no new transport.
 Open: where in Hivemind her memory lives and its format; decide in the migration plan.
 
 ## File and directory index
