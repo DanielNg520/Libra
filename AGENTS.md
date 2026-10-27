@@ -24,11 +24,13 @@ Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 
 
 ## Carryover
 State 2026-10-27: no code ported yet; remote set, Fedora and Mac clones exist.
-Next: owner answers the three `Ask owner` lines, then L0 in a new session; SemAI keeps fetching until L5.
+Design approved 2026-10-27; all owner questions answered. Next: L0 scaffold, new session; SemAI keeps fetching until L5.
+L0 start: copy SemAI `tests/test_size_guard.py` and `.git/hooks/pre-commit` idioms; check `is_deepseek_peak_hours` before any dispatch.
+L0 needs owner: `sops` file creation for Libra (`GEMINI_API_KEY`, `OPENROUTER_API_KEY` from SemAI's sops), run by owner or with explicit go.
 Owner (2026-10-27): Whisper output reaches other instances through vault `<course>/Transcripts/` on Drive; no new transport.
 Owner (2026-10-27): her memory is Hivemind `libra/` (`MEMORY.md` index, one fact per file, `instances.md` feature map).
 
-## Plan: migration from SemAI (Claude, 2026-10-27; design, awaiting owner answers)
+## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
 Goal: Libra owns transcript fetch, Whisper, readings, maps, search and page reads; SemAI and vault `Tools/librarian.py` keep none of it.
 Done means: Libra timers fetch on Fedora, `libra search` runs on Fedora and Mac, SemAI academic code and `librarian.py` deleted.
 
@@ -80,7 +82,7 @@ Irreversible last: SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/
 ### Ask owner
 Owner (2026-10-27): login-expiry push dropped; UCSD login is always manual with the owner; `libra login` reports the result at once.
 Owner (2026-10-27): Libra gets its own sops `.secret/secrets.json`; `GEMINI_API_KEY` and `OPENROUTER_API_KEY` share SemAI's key values.
-Ask owner: sign off the port method above (script copy, hand-ledgered by you, seam fixes dispatched).
+Owner (2026-10-27): port method signed off: script copy with import rewrite, owner runs `dispatch-ledger-hand.sh`, seam edits and new code dispatched.
 
 ## File and directory index
 `AGENTS.md` this file.
