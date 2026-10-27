@@ -1,1 +1,7 @@
 .codegraph/
+.venv/
+__pycache__/
+*.pyc
+# Machine-local config (libra.env) and sops secrets stay on the machine (SemAI rule).
+.config/
+.secret/

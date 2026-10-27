@@ -1,0 +1,191 @@
+import logging
+import os
+import re
+import subprocess
+from pathlib import Path
+from datetime import date
+from typing import TYPE_CHECKING
+
+from semai.security.path_guard import _is_allowed_path
+
+logger = logging.getLogger(__name__)
+
+_FRONTMATTER_KEY_RE = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
+
+if TYPE_CHECKING:
+    from libra.config import Settings
+
+
+def _slugify(title: str) -> str:
+    result = []
+    last_was_dash = False
+
+    for char in title.lower():
+        if char.isalnum() and char.isascii():
+            if 'a' <= char <= 'z' or '0' <= char <= '9':
+                result.append(char)
+                last_was_dash = False
+            else:
+                if not last_was_dash and result:
+                    result.append('-')
+                    last_was_dash = True
+        else:
+            if not last_was_dash and result:
+                result.append('-')
+                last_was_dash = True
+
+    slug = ''.join(result).strip('-')
+    return slug if slug else 'untitled'
+
+
+class VaultWriteError(RuntimeError):
+    """Human-readable failure writing a note into an Obsidian vault."""
+
+
+def write_note(
+    vault_dir: "Path | None", *, title: str, content: str, flow: str,
+    tags: list[str] | None = None, settings: "Settings",
+    extra_frontmatter: dict[str, str] | None = None,
+) -> Path:
+    if vault_dir is None:
+        raise VaultWriteError("no vault directory configured")
+
+    slug = _slugify(title)
+    today = date.today().isoformat()
+    path = vault_dir / f"{slug}-{today}.md"
+
+    counter = 2
+    while path.exists():
+        path = vault_dir / f"{slug}-{counter}-{today}.md"
+        counter += 1
+
+    resolved = path.resolve()
+
+    if not _is_allowed_path(resolved, settings=settings):
+        raise VaultWriteError(f"path not allowed: {resolved}")
+
+    extra_lines = ""
+    if extra_frontmatter:
+        for key, value in extra_frontmatter.items():
+            if not _FRONTMATTER_KEY_RE.fullmatch(key):
+                raise VaultWriteError(f"invalid frontmatter key: {key!r}")
+            if '\n' in key or '\r' in key or '\n' in value or '\r' in value:
+                raise VaultWriteError(f"invalid frontmatter value for key: {key!r}")
+            if ':' in value or '#' in value:
+                escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                value = f'"{escaped}"'
+            extra_lines += f"{key}: {value}\n"
+
+    quoted_title = f'"{title.replace("\\", "\\\\").replace('"', '\\"')}"' if ':' in title else title
+    rendered_tags = '[]' if not tags else '[' + ', '.join(tags) + ']'
+
+    text = (
+        f"---\n"
+        f"title: {quoted_title}\n"
+        f"date: {today}\n"
+        f"flow: {flow}\n"
+        f"tags: {rendered_tags}\n"
+        f"{extra_lines}"
+        f"---\n\n"
+        f"{content}"
+    )
+
+    vault_dir.mkdir(parents=True, exist_ok=True)
+    resolved.write_text(text, encoding='utf-8')
+
+    return resolved
+
+
+def _git(repo_dir: Path, args: list[str], *, timeout_s: float, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "-C", str(repo_dir), *args],
+        capture_output=True,
+        text=True,
+        timeout=timeout_s,
+        env=env,
+    )
+
+
+def commit_paths(repo_dir: Path, paths: list[Path], message: str, *, timeout_s: float = 10.0) -> bool:
+    """Commit only the given paths in the git work tree containing repo_dir.
+
+    Returns True only if a commit was made. Returns False without raising when
+    repo_dir is not inside a git work tree, paths is empty, or any git step
+    fails (nonzero exit, timeout, or git missing).
+    """
+    if not paths:
+        return False
+
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+
+    try:
+        check = _git(repo_dir, ["rev-parse", "--is-inside-work-tree"], timeout_s=timeout_s, env=env)
+    except (subprocess.SubprocessError, FileNotFoundError) as exc:
+        logger.debug("not a git work tree: %s", exc)
+        return False
+
+    if check.returncode != 0:
+        logger.debug("not a git work tree: %s", check.stderr.strip())
+        return False
+
+    path_strings = [str(path) for path in paths]
+
+    try:
+        staged = _git(repo_dir, ["add", "--", *path_strings], timeout_s=timeout_s, env=env)
+        if staged.returncode != 0:
+            logger.warning("git add failed: %s", staged.stderr.strip())
+            return False
+
+        committed = _git(repo_dir, ["commit", "-m", message, "--", *path_strings], timeout_s=timeout_s, env=env)
+        if committed.returncode != 0:
+            logger.warning("git commit failed: %s", committed.stderr.strip())
+            return False
+    except subprocess.TimeoutExpired as exc:
+        logger.warning("git command timed out: %s", exc)
+        return False
+    except (subprocess.SubprocessError, FileNotFoundError) as exc:
+        logger.warning("git command failed: %s", exc)
+        return False
+
+    return True
+
+
+def has_uncommitted_changes(repo_dir: Path, paths: list[Path], *, timeout_s: float = 10.0) -> bool:
+    """Return True if any of the given paths hold changes git has not committed.
+
+    Returns False for an empty paths list or when repo_dir is not inside a git
+    work tree. Fails safe by returning True when the status check cannot be
+    completed (nonzero exit, timeout, or git missing).
+    """
+    if not paths:
+        return False
+
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+
+    try:
+        check = _git(repo_dir, ["rev-parse", "--is-inside-work-tree"], timeout_s=timeout_s, env=env)
+    except (subprocess.SubprocessError, FileNotFoundError) as exc:
+        logger.debug("not a git work tree: %s", exc)
+        return False
+
+    if check.returncode != 0:
+        logger.debug("not a git work tree: %s", check.stderr.strip())
+        return False
+
+    path_strings = [str(path) for path in paths]
+
+    try:
+        status = _git(repo_dir, ["status", "--porcelain", "--untracked-files=all", "--", *path_strings], timeout_s=timeout_s, env=env)
+        if status.returncode != 0:
+            logger.warning("git status failed: %s", status.stderr.strip())
+            return True
+    except subprocess.TimeoutExpired as exc:
+        logger.warning("git command timed out: %s", exc)
+        return True
+    except (subprocess.SubprocessError, FileNotFoundError) as exc:
+        logger.warning("git command failed: %s", exc)
+        return True
+
+    return bool(status.stdout.strip())
