@@ -66,7 +66,13 @@ LM2 done 2026-10-28 (`7b5b1bc`): extra `plot`; Fedora `.[fedora,plot]`, Mac `.[p
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 LM3 done 2026-10-28: `Course info.md` in `Current/ECE 108`, `158A`, `271A` (vault `8d77089`) and `~/Classes/ECE 253/` (no git).
 LM4 done 2026-10-28: Hivemind `libra/jotting-cleanup.md` (`250c013`). SemAI M2b done 2026-10-28: SemAI holds no academic feature.
-Next: state-file deletion waits a clean week.
+Owner (2026-10-28): the homework-precedent rule (Hivemind `libra/homework-workflow.md`) must be built into Libra deterministically, not left to agent memory.
+Next (new session): HP plan, then dispatch: Libra returns course precedents for a problem before any agent explains it.
+HP reuse: `libra search` already scopes `--kind lecture|discussion` and `--in transcripts|readings|textbooks`; extend it, no new index unless homework solutions are unindexed.
+HP open: are posted homework solutions in `<course>/Homework/` covered by `readings` export? Trace first.
+HP open: fixed order (solutions, discussion, lecture examples), output a precedent packet (source path, excerpt, notation); empty packet says so.
+HP open: enforcement: Hivemind `academic-study` skill makes the call a mandatory first step; check whether a hook can gate it.
+State-file deletion waits a clean week.
 Summary 2026-10-27 (lx1, autofire): `_run_command` prints a one-line fedora-extra error, exit 2; `main` bad settings exit 2; 2 dispatches, 0 fix rounds, 325 pass.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
