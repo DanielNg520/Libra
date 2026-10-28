@@ -26,8 +26,12 @@ Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
 L2 done 2026-10-27: `librarian.py` split by script (verbatim blocks, generated imports), tests ported; 13 live commands byte-identical old vs new; 296 pass.
 L3 done 2026-10-27: `login` (verbatim port), `fetch`, `whisper`, `read`, `export`, `status`; sops key fallback for `read`; units in `deploy/`; 322 pass.
-Next: L4, step 1 dispatch the F1 lazy import (Mac blocker); then install, reflink-copy SemAI state, write `.config/libra.env` on both machines.
-L4 live checks: `status`, cached `read`, `search` on Fedora and Mac, one real `fetch`; check `is_deepseek_peak_hours` before dispatch.
+L4 2026-10-27: F1 fixed (`3dc8808`, 323 pass); installed on Fedora (`.[fedora]`) and Mac (core); state reflink-copied from SemAI; `.config/libra.env` on both.
+L4 passed: Fedora `status`, cached `read`, `search`, `catalog`; Mac `search`, `catalog`, `map`, and `read` via `ssh dyne@fedora libra read`.
+L4 fetch: exit 3, UCSD login expired (SemAI's too); vault exports byte-identical after it; 10-26 and 10-27 lectures not fetched yet.
+L4 open: owner runs `libra login` (Mac `ssh -L` DevTools), then one real `libra fetch`; then dispatch F4 (prompts `libra_l4_f4_*.md`, off-peak), then wrap-up.
+Trap: `libra read` paths are vault-relative (`ECE 108/Discussion/x.pdf`), not course-relative; a course-relative path answers `unknown_source`.
+Trap: TriAPI `llm_client.is_deepseek_peak_hours` fails to import from a bare `python3 -c`; check the clock (UTC 01-04, 06-10 weekdays) instead.
 Incident (2026-10-27): a smoke `libra fetch` with empty scratch state rewrote vault maps (commit `6ef0f5f`) and readings; reverted (`49486a3`), SemAI re-exported 46 readings.
 Guard since then: `fetch` and `export` refuse without `lecture_reads/source_index.json` in the state dir (`commands._cache_ready`).
 Trap: never smoke-test fetch-side commands with `LIBRA_VAULT_DIR` on the real vault; use a scratch vault.
@@ -45,7 +49,7 @@ Seam: `lecture_docs.py` temp dir prefix still reads `semai-lecture-` (cosmetic).
 Last audit: 2026-10-27 wrap-up (audited through `04213d6`; 3 new findings).
 
 ## Findings
-F1 [medium · 1 · 2026-10-27] `cli.py`: top-level `import commands` pulls `httpx`, `PIL`; Mac core-only install cannot run `search`; fix: lazy import in `_run_command` (verified, import blocked).
+F4 [low · 1 · 2026-10-27] `cli.py` `_run_command`: on the Mac core install, `status`, `fetch`, `read` crash with a `httpx` traceback; fix prompts written, not dispatched (verified).
 F2 [low · 1 · 2026-10-27] `commands.py` `cmd_fetch`: exit 3 (expired) and 1 (partial errors) mark `libra-fetch.service` failed nightly; `status` shows login age only (verified by code).
 F3 [low · 1 · 2026-10-27] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (suspected).
 
