@@ -23,6 +23,9 @@ Owner (2026-10-27): Libra absorbs vault `Tools/librarian.py` (search, catalog, m
 Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 11-04 and 11-05 midterms.
 
 ## Carryover
+L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
+Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
+Next: L6, SemAI sweep (its M2): delete moved modules (`lecture_fetch`, `lecture_whisper`, `lecture_docs`, `notes/*`), dead Settings, `[all]` deps; trace `web/notes.py` users of `notes/*` first.
 Summary 2026-10-27 (lx1, autofire): `_run_command` prints a one-line fedora-extra error, exit 2; `main` bad settings exit 2; 2 dispatches, 0 fix rounds, 325 pass.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
@@ -33,25 +36,6 @@ L4 passed: Fedora `status`, cached `read`, `search`, `catalog`; Mac `search`, `c
 L4 fetch passed 2026-10-27 20:11 PDT: owner `libra login`, then fetch: ECE 158A 10-27 (vault `ba66115`), map `9dbba8b`; ECE 108 10-27 queued for Whisper.
 Mac login command: `ssh -t -L 9222:127.0.0.1:9222 dyne@fedora /home/dyne/.local/bin/libra login`; a bare `~` expands on the Mac.
 Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing; owner reported "doesn't catch" though it saved.
-### Tonight: L4 close plus L5 (owner window 2026-10-27 21:00-23:00 PDT, off-peak; new session, "continue")
-Owner (2026-10-27): 2-hour window; dispatch nonstop; plan fixed below; all prompts already written in TriAPI `rebuild/tasks/`.
-Owner (2026-10-27): runs as autofire: timers `semai-autofire-lxa` 21:05 (`run.sh lx1`) and `-lxb` 21:06 (`run.sh lx2 lx3 lx4`); prompts `~/.cache/semai-autorun/prompt_lx*.md`.
-Steps: lx1 Libra F4+F5; lx2 SemAI W1+W2; lx3 SemAI reinstall and restart (W3); lx4 Hivemind skill, vault docs, `librarian.py` removal, L5 docs (W4-W5).
-Monitor: `tail -f ~/.cache/semai-autorun/run.log`; done markers `lx<n>.done`; a stopped step leaves an `Ask owner:` line.
-W1 21:00, send all three at once (SemAI `semai_am_edit_system.md`): `semai_lx_cli`, `semai_lx_daemon`, `semai_lx_app`.
-W1 Libra part done 2026-10-27 (lx1): F4, F5 fixed; 325 pass; Mac `status` exits 2 cleanly.
-W1 audit: count blocks (6 cli, 4 daemon, 3 app); apply each with `apply_dispatch.py`.
-W2 SemAI deletions (hook ignores deletes, `--diff-filter=ACMR`): `git rm` `workers/lecture_poll.py`, `web/study.py`, `adapters/study_cli.py`, tests `test_lecture_poll`, `test_web_study`, `test_study_cli`, `test_cli_podcast_login`.
-W2 config by hand (owner sign-off in this plan): drop `omll-study` from SemAI `pyproject.toml` scripts; then `uv run pytest -q tests/` (baseline 2818 minus deleted tests).
-W2 failures: grep `lecture_poll|study|podcast` in failing tests; send fix dispatches, never hand edits; script suite `bash run_tests.sh` too.
-W3 SemAI live: check `semai-web` journal for live `/api/*/jobs/`, clear `__pycache__`, `uv tool install --editable --force '.[all]'`, playwright trap, restart three units.
-W3 checks: `omll-study` gone, daemon journal clean 2 min, PWA loads, `.state-semai/study.sock` absent after restart.
-W4 docs by hand: Hivemind `claude/skills/academic-study/SKILL.md` swap `omll-study read` to `libra read`, `librarian.py` to `libra search|catalog|map`; commit, push.
-W4 vault: amend vault `AGENTS.md` lines 45, 84-87, 141, 155, 160, 192, 206 (`librarian.py` to Libra); `git rm Tools/librarian.py Tools/tests/test_librarian*.py`; keep `Tools/tests/fixtures`.
-W4 check first: `Tools/tests/fixtures` users (exam-prep P1 port) and Mac Claude skill copies; vault exam-prep D1, D2 now target Libra commands.
-W5: SemAI AGENTS.md (M2 partial, index lines for removed files), Libra L5 done, wrap-up, sync. Stretch: L6 module sweep trace only.
-Owner needed: nothing planned; only if a unit restart finds a live job (wait) or a dispatch hits a wall twice.
-Later (L6, separate night): delete SemAI moved modules (`lecture_fetch`, `lecture_whisper`, `lecture_docs`, `notes/*`), dead Settings, `[all]` deps; trace `web/notes.py` users first.
 Trap: `libra read` paths are vault-relative (`ECE 108/Discussion/x.pdf`), not course-relative; a course-relative path answers `unknown_source`.
 Trap: TriAPI `llm_client.is_deepseek_peak_hours` fails to import from a bare `python3 -c`; check the clock (UTC 01-04, 06-10 weekdays) instead.
 Incident (2026-10-27): a smoke `libra fetch` with empty scratch state rewrote vault maps (commit `6ef0f5f`) and readings; reverted (`49486a3`), SemAI re-exported 46 readings.
@@ -65,13 +49,13 @@ Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead wi
 Trap: renaming a ported file breaks cross-test imports (`from test_sources import ...`); grep `^from test_` after any test rename.
 Trap: tests must pass `LIBRA_STATE_DIR` to `Settings.load`; the default creates the real `~/.local/state/libra`.
 Trap: the Mac has no ledger-check hook and no dispatch setup; Libra code changes happen on Fedora only.
-Seam: `lecture_poll.py` name is historical (no polling left); rename at L5.
+Seam: `lecture_poll.py` name is historical (no polling left); rename when next touched.
 Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive, inherited from SemAI.
 Seam: `lecture_docs.py` temp dir prefix still reads `semai-lecture-` (cosmetic).
 Owner (2026-10-27): Libra alone fetches and runs Whisper from now; SemAI's login is never refreshed; `libra login` is the only sign-in.
 Done 2026-10-27 20:20 PDT: Libra timers enabled (fetch 23:30, Whisper 01:00); SemAI's hourly poll logs expired-login warnings until L5 removes it.
 Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/libra.env`, but `--root` skips `Settings.load`; harmless today (verified).
-Last audit: 2026-10-27 wrap-up (audited through `b597c6b`; 1 new finding F6).
+Last audit: 2026-10-27 wrap-up (audited through `24f3b15`; 0 new findings; LX4 docs only).
 
 ## Findings
 F6 [low · 1 · 2026-10-27] `cli.py` `_run_command`: any ImportError, even a real `libra.*` bug on Fedora, prints "needs the fedora extra"; re-raise unless third-party (verified by code).
