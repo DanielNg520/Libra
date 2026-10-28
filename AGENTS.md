@@ -33,6 +33,9 @@ Mac login command: `ssh -t -L 9222:127.0.0.1:9222 dyne@fedora /home/dyne/.local/
 Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing; owner reported "doesn't catch" though it saved.
 ### Tonight: L4 close plus L5 (owner window 2026-10-27 21:00-23:00 PDT, off-peak; new session, "continue")
 Owner (2026-10-27): 2-hour window; dispatch nonstop; plan fixed below; all prompts already written in TriAPI `rebuild/tasks/`.
+Owner (2026-10-27): runs as autofire: timers `semai-autofire-lxa` 21:05 (`run.sh lx1`) and `-lxb` 21:06 (`run.sh lx2 lx3 lx4`); prompts `~/.cache/semai-autorun/prompt_lx*.md`.
+Steps: lx1 Libra F4+F5; lx2 SemAI W1+W2; lx3 SemAI reinstall and restart (W3); lx4 Hivemind skill, vault docs, `librarian.py` removal, L5 docs (W4-W5).
+Monitor: `tail -f ~/.cache/semai-autorun/run.log`; done markers `lx<n>.done`; a stopped step leaves an `Ask owner:` line.
 W1 21:00, send all five at once (Libra system `libra_edit_system.md`, SemAI `semai_am_edit_system.md`): `libra_l4_f4_cli`, `libra_l4_f4_test`, `semai_lx_cli`, `semai_lx_daemon`, `semai_lx_app`.
 W1 audit: count blocks (6 cli, 4 daemon, 3 app, 2 Libra cli, 1 Libra test); apply each with `apply_dispatch.py`; Libra `uv run pytest -q`, commit, push, Mac pull.
 W2 SemAI deletions (hook ignores deletes, `--diff-filter=ACMR`): `git rm` `workers/lecture_poll.py`, `web/study.py`, `adapters/study_cli.py`, tests `test_lecture_poll`, `test_web_study`, `test_study_cli`, `test_cli_podcast_login`.
