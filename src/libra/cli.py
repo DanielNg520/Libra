@@ -7,6 +7,7 @@ Usage: libra search [--in transcripts|readings|textbooks|all] [options] <terms..
        libra login [--timeout S]   (sign in to podcast.ucsd.edu, then fetch)
        libra fetch | libra whisper [--until H] | libra export | libra status
        libra read --course X PATH [--pages A-B] [--fetch]
+       libra ocr IMAGE|- [--notes] [--mime TYPE]   (Gemini transcription; - reads stdin)
 """
 
 from __future__ import annotations
@@ -92,6 +93,10 @@ def _build_parser() -> argparse.ArgumentParser:
     read_parser.add_argument("--course", required=True)
     read_parser.add_argument("--pages", default=None, help="N or A-B")
     read_parser.add_argument("--fetch", action="store_true", default=False)
+    ocr_parser = subparsers.add_parser("ocr")
+    ocr_parser.add_argument("image", help="image path, or - for stdin")
+    ocr_parser.add_argument("--notes", action="store_true", default=False, help="notes prompt: printed text too, math as LaTeX")
+    ocr_parser.add_argument("--mime", default=None, help="MIME type (default: guessed from the name, else image/jpeg)")
     return parser
 
 
@@ -127,6 +132,8 @@ def _run_command(args: argparse.Namespace, settings: Settings) -> int:
         return commands.cmd_export(settings)
     if args.command == "status":
         return commands.cmd_status(settings)
+    if args.command == "ocr":
+        return commands.cmd_ocr(settings, args.image, args.notes, args.mime)
     return 2
 
 

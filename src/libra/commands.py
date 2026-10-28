@@ -5,14 +5,17 @@ from __future__ import annotations
 import json
 import sys
 from datetime import datetime
-from typing import Callable
+from pathlib import Path
+from typing import BinaryIO, Callable
 from zoneinfo import ZoneInfo
 
 from libra import lecture_poll
 from libra.config import Settings, load_secrets
+from libra.gemini import GeminiError
 from libra.lecture_docs import READS_DIR
 from libra.lecture_fetch import AUDIO_DIR, state_path
 from libra.login import cmd_podcast_login
+from libra.ocr import DEFAULT_OCR_PROMPT, NOTES_OCR_PROMPT, transcribe_image
 from libra.read import ReadError, read_pages
 from libra.sources import INDEX_NAME
 
@@ -156,4 +159,35 @@ def cmd_status(
         print("login state: none (run `libra login`)")
 
     print(f"whisper queue: {_queued(settings)}")
+    return EXIT_OK
+
+
+def cmd_ocr(settings: Settings, image: str, notes: bool, mime: str | None, *, stdin: BinaryIO | None = None) -> int:
+    if image == "-":
+        data: bytes | Path
+        if stdin is not None:
+            data = stdin.read()
+        else:
+            data = sys.stdin.buffer.read()
+    else:
+        image_path = Path(image)
+        if not image_path.is_file():
+            print(f"libra: no such image: {image}", file=sys.stderr)
+            return EXIT_USAGE
+        data = image_path
+
+    settings = load_secrets(settings)
+    prompt = NOTES_OCR_PROMPT if notes else DEFAULT_OCR_PROMPT
+
+    try:
+        result = transcribe_image(data, settings, mime=mime, prompt=prompt)
+    except GeminiError as exc:
+        print(f"libra: ocr failed: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+
+    if result is None:
+        print("libra: ocr returned no text", file=sys.stderr)
+        return EXIT_FAILED
+
+    print(result)
     return EXIT_OK

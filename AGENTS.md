@@ -57,7 +57,12 @@ Then SemAI M2b: drop OCR, plot deps, writers, `courses` table, course workers; e
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
 L6 done 2026-10-27 (autofire): SemAI deleted lecture workers, `notes/`, `whisper_model`, `faster-whisper`, `numpy`; F39, F136, F148 moved here.
-Next: LM1 OCR port (plan under "Incoming from SemAI"), new session; state-file deletion waits a clean week.
+LM1 done 2026-10-28: `libra ocr IMAGE|- [--notes] [--mime T]`; 4 dispatches plus 2 fixes, 338 pass; live on Fedora path, Fedora stdin, Mac via ssh stdin.
+Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --notes < image.png`; the image travels on stdin.
+Seam: default prompt on an image without handwriting gets null content; `ocr` prints `no content (finish_reason stop)`, exit 1, not "returned no text".
+Seam: OCR has no OpenRouter cap fallback (SemAI parity); a Gemini cap hit exits 1; `read` alone falls back.
+Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora fails host-key checks; test the ssh path from the Mac.
+Next: LM2 plot extra (plan under "Incoming from SemAI"), new session; state-file deletion waits a clean week.
 Summary 2026-10-27 (lx1, autofire): `_run_command` prints a one-line fedora-extra error, exit 2; `main` bad settings exit 2; 2 dispatches, 0 fix rounds, 325 pass.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
@@ -160,6 +165,6 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py`, `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`).
-`src/libra/commands.py` fetch-side handlers and exit codes (3 = login expired); `read.py` `read_pages` (flock `read.lock`); `login.py` UCSD DevTools sign-in.
+`src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired); `ocr.py` `transcribe_image`, OCR prompts; `read.py` `read_pages` (flock `read.lock`); `login.py` UCSD DevTools sign-in.
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).
