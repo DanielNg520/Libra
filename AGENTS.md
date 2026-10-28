@@ -38,6 +38,8 @@ Next step is the owner's pick: further reading (owner, 2026-10-16) or a textbook
 ### Incoming from SemAI (owner, 2026-10-28; plan before code)
 Owner (2026-10-28): OCR comes to Libra: SemAI `adapters/ocr.py` `transcribe_image`, its prompts, `ocr_model`; reuse Libra `gemini.py` and `ocr_model`.
 Owner (2026-10-28): `matplotlib`, `schemdraw` move from SemAI `[all]` to Libra; they draw study-note schematics and plots.
+Owner (2026-10-28): `academic_writer`, `note_draft` (note drafts from text, photo, PDF) and the `courses` table also come here.
+Open: Libra has no sqlite today; decide where course rows live (file in state dir or vault) before porting.
 Open: which extra takes the plotting deps (core is stdlib only; the Mac installs core), and which Libra command serves OCR.
 
 ## Carryover
