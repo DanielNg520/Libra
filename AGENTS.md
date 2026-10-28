@@ -62,7 +62,10 @@ Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --n
 Seam: default prompt on an image without handwriting gets null content; `ocr` prints `no content (finish_reason stop)`, exit 1, not "returned no text".
 Seam: OCR has no OpenRouter cap fallback (SemAI parity); a Gemini cap hit exits 1; `read` alone falls back.
 Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora fails host-key checks; test the ssh path from the Mac.
-Next: LM2 plot extra (plan under "Incoming from SemAI"), new session; state-file deletion waits a clean week.
+LM2 done 2026-10-28 (`7b5b1bc`): extra `plot`; Fedora `.[fedora,plot]`, Mac `.[plot]`; both import matplotlib 3.11.2, schemdraw 0.23.
+Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
+LM3 done 2026-10-28: `Course info.md` in `Current/ECE 108`, `158A`, `271A` (vault `8d77089`) and `~/Classes/ECE 253/` (no git).
+LM4 done 2026-10-28: Hivemind `libra/jotting-cleanup.md` (`250c013`). Next: SemAI M2b; state-file deletion waits a clean week.
 Summary 2026-10-27 (lx1, autofire): `_run_command` prints a one-line fedora-extra error, exit 2; `main` bad settings exit 2; 2 dispatches, 0 fix rounds, 325 pass.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
