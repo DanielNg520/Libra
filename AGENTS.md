@@ -51,7 +51,7 @@ Owner (2026-10-28): `note_draft` and `academic_writer` fold into the agent notet
 Owner (2026-10-28): Libra's agents are agy and Claude Code; model APIs only Gemini (reads, OCR), plus the OpenRouter cap fallback (kept, owner 2026-10-28).
 Owner (2026-10-28): a light local model will later run on the Mac; revisit a local cleaner then, build nothing for it now.
 LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]`, separate additions section) into the Hivemind notetaker memory.
-Then SemAI M2b: drop OCR, plot deps, writers, `courses` table, course workers; each step its own session, dispatched.
+SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` table kept pending the owner.
 
 ## Carryover
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
@@ -65,7 +65,8 @@ Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora f
 LM2 done 2026-10-28 (`7b5b1bc`): extra `plot`; Fedora `.[fedora,plot]`, Mac `.[plot]`; both import matplotlib 3.11.2, schemdraw 0.23.
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 LM3 done 2026-10-28: `Course info.md` in `Current/ECE 108`, `158A`, `271A` (vault `8d77089`) and `~/Classes/ECE 253/` (no git).
-LM4 done 2026-10-28: Hivemind `libra/jotting-cleanup.md` (`250c013`). Next: SemAI M2b; state-file deletion waits a clean week.
+LM4 done 2026-10-28: Hivemind `libra/jotting-cleanup.md` (`250c013`). SemAI M2b done 2026-10-28: SemAI holds no academic feature.
+Next: state-file deletion waits a clean week.
 Summary 2026-10-27 (lx1, autofire): `_run_command` prints a one-line fedora-extra error, exit 2; `main` bad settings exit 2; 2 dispatches, 0 fix rounds, 325 pass.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
