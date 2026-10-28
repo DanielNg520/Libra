@@ -15,6 +15,11 @@ fedora = [
     "faster-whisper>=1.2.1",
     "numpy>=2.0",
 ]
+# Study-note schematics and plots, on every machine.
+plot = [
+    "matplotlib>=3.11.2",
+    "schemdraw>=0.23",
+]
 
 [project.scripts]
 libra = "libra.cli:main"
