@@ -51,7 +51,7 @@ Owner (2026-10-28): `note_draft` and `academic_writer` fold into the agent notet
 Owner (2026-10-28): Libra's agents are agy and Claude Code; model APIs only Gemini (reads, OCR), plus the OpenRouter cap fallback (kept, owner 2026-10-28).
 Owner (2026-10-28): a light local model will later run on the Mac; revisit a local cleaner then, build nothing for it now.
 LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]`, separate additions section) into the Hivemind notetaker memory.
-SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` table kept pending the owner.
+SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
