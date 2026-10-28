@@ -48,6 +48,7 @@ LM1 skips `CANVAS_OCR_PROMPT` (course workers go off) and the flyer prompt (mail
 LM2 plot deps: new extra `plot` (`matplotlib`, `schemdraw`); install `.[fedora,plot]` on Fedora, `.[plot]` on the Mac; agents run it with the tool interpreter.
 LM3 courses (Claude, 2026-10-28): rows become one vault note per course, `<course>/Course info.md`, by a one-off export; no table, no Libra code.
 Owner (2026-10-28): `note_draft` and `academic_writer` fold into the agent notetaker: cleaning rules move to Hivemind `libra/`, workers deleted in M2b.
+Owner (2026-10-28): Libra's agents are agy and Claude Code; model APIs only Gemini (reads, OCR), plus the OpenRouter cap fallback (kept, owner 2026-10-28).
 Owner (2026-10-28): a light local model will later run on the Mac; revisit a local cleaner then, build nothing for it now.
 LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]`, separate additions section) into the Hivemind notetaker memory.
 Then SemAI M2b: drop OCR, plot deps, writers, `courses` table, course workers; each step its own session, dispatched.
