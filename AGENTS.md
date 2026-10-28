@@ -25,7 +25,8 @@ Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 
 ## Carryover
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
-Next: L6, SemAI sweep (its M2): delete moved modules (`lecture_fetch`, `lecture_whisper`, `lecture_docs`, `notes/*`), dead Settings, `[all]` deps; trace `web/notes.py` users of `notes/*` first.
+L6 done 2026-10-27 (autofire): SemAI deleted lecture workers, `notes/`, `whisper_model`, `faster-whisper`, `numpy`; F39, F136, F148 moved here.
+Next: migration plan complete; SemAI continues its secretary pivot (M1 mail off or M3 PWA chat box); state-file deletion waits a clean week.
 Summary 2026-10-27 (lx1, autofire): `_run_command` prints a one-line fedora-extra error, exit 2; `main` bad settings exit 2; 2 dispatches, 0 fix rounds, 325 pass.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
@@ -58,6 +59,9 @@ Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/l
 Last audit: 2026-10-27 wrap-up (audited through `24f3b15`; 0 new findings; LX4 docs only).
 
 ## Findings
+F7 [low · 4 · 2026-10-14→2026-10-27] `lecture_docs.py` `read_document`: recitation-retry batches unmarked in readings (from SemAI F39; port unverified).
+F8 [low · 1 · 2026-10-24→2026-10-27] `textbooks.py` `check_copies`: delete guard needs a book directly in `<course>/Textbooks/`; `_is_book_rel` accepts nested ones, nested duplicates never deleted (from SemAI F136).
+F9 [low · 1 · 2026-10-27] `reading_export.py` `_process_source`: re-hashes every textbook PDF per export (from SemAI F148).
 F6 [low · 1 · 2026-10-27] `cli.py` `_run_command`: any ImportError, even a real `libra.*` bug on Fedora, prints "needs the fedora extra"; re-raise unless third-party (verified by code).
 F2 [low · 1 · 2026-10-27] `commands.py` `cmd_fetch`: exit 3 (expired) and 1 (partial errors) mark `libra-fetch.service` failed nightly; `status` shows login age only (verified by code).
 F3 [low · 1 · 2026-10-27] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (suspected).
