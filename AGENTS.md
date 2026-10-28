@@ -18,9 +18,27 @@ Owner (2026-10-27): Libra is modular; her memory lives in Hivemind, shared by ev
 Owner (2026-10-27): an instance may hold a feature others lack; sharing every feature across instances is the long-run goal.
 Owner (2026-10-27): Whisper runs on Fedora only; Fedora makes every Whisper output available to Libra instances on other machines.
 Clones: Fedora `~/Documents/Coding/Libra`, Mac `~/Developer/Libra`.
-Owner (2026-10-27): course calendar workers (`course_extract`, `course_events`, `course_schedule`, `course_office_hours`, `course_screenshot`, `course_watch`) stay in SemAI.
+Superseded (owner, 2026-10-28): course calendar workers do not stay in SemAI; they go off with the transition, never ported here.
 Owner (2026-10-27): Libra absorbs vault `Tools/librarian.py` (search, catalog, maps, readings); one librarian, not two.
 Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 11-04 and 11-05 midterms.
+Owner (2026-10-28): SemAI academic memory moved out; behaviour memory to Hivemind `libra/`, code and vault facts here.
+
+## Vault and sources (moved from SemAI, 2026-10-28)
+Agent behaviour memory (notetaker, homework, study notes, exam prep, term state) lives in Hivemind `libra/`; never here.
+Owner (2026-10-24): decks in `<course>/Slides/`, sources in `<course>/Textbooks/` and `<course>/Readings/`; ECE 25 decks in `ECE 108/Readings/ECE 25/`.
+Owner (2026-10-19): non-academic files go in `Current/Personal/`, a non-course folder.
+Readings scope (owner, 2026-10-11): Discussion decks and `271.pdf` count; handouts and reference sheets excluded.
+Owner (2026-10-11): page reads use Gemini until the $10 cap, then OpenRouter; only public material goes to Gemini (owner, 2026-10-12).
+Owner (2026-10-26): readings export to vault `Tools/readings/`; maps live in `Tools/maps/`, rebuilt after each fetch; agents confirm pairs.
+Trap: vault `Tools/` has no hooks; set `PYTHONDONTWRITEBYTECODE=1` when testing there, or `__pycache__` syncs to Drive.
+Cleanup 2026-10-24: 174 writer files trashed (vault `d3fe20d`); restore from Fedora `~/.local/share/Trash`; manifest `~/.cache/spike-20261024/cleanup-manifest.txt`.
+Idea: vector search could port SemAI `memory/indexer.py` (heading chunks, hash diff) and `retriever.py` `hybrid_search` (BM25 plus local vectors).
+Next step is the owner's pick: further reading (owner, 2026-10-16) or a textbook `read` route.
+
+### Incoming from SemAI (owner, 2026-10-28; plan before code)
+Owner (2026-10-28): OCR comes to Libra: SemAI `adapters/ocr.py` `transcribe_image`, its prompts, `ocr_model`; reuse Libra `gemini.py` and `ocr_model`.
+Owner (2026-10-28): `matplotlib`, `schemdraw` move from SemAI `[all]` to Libra; they draw study-note schematics and plots.
+Open: which extra takes the plotting deps (core is stdlib only; the Mac installs core), and which Libra command serves OCR.
 
 ## Carryover
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
