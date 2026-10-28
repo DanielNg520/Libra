@@ -39,14 +39,24 @@ Next step is the owner's pick: further reading (owner, 2026-10-16) or a textbook
 Owner (2026-10-28): OCR comes to Libra: SemAI `adapters/ocr.py` `transcribe_image`, its prompts, `ocr_model`; reuse Libra `gemini.py` and `ocr_model`.
 Owner (2026-10-28): `matplotlib`, `schemdraw` move from SemAI `[all]` to Libra; they draw study-note schematics and plots.
 Owner (2026-10-28): `academic_writer`, `note_draft` (note drafts from text, photo, PDF) and the `courses` table also come here.
-Open: Libra has no sqlite today; decide where course rows live (file in state dir or vault) before porting.
-Open: which extra takes the plotting deps (core is stdlib only; the Mac installs core), and which Libra command serves OCR.
+Owner (2026-10-28): order is Libra LM phases, then SemAI M2b, then SemAI M1 S3.
+Trace (2026-10-28): SemAI `adapters/ocr.py` 46 lines; `academic_writer.py` 129, `note_draft.py` 201; `courses` table 4 rows (code, name, instructor, office hours, TAs, description, resources, term).
+Trace: Libra `gemini.chat` already takes `reasoning_effort`; `ocr_model` exists (`LIBRA_READ_MODEL`); Mac has no Ollama (verified 2026-10-28).
+Trace: `note_draft` needs Ollama, SemAI approvals and web search; `academic_writer` needs ghostwriter, SearXNG search, Notion; none exist in Libra.
+LM1 OCR: `src/libra/ocr.py` (`transcribe_image`, handwriting and notes prompts) on `gemini.chat`; `libra ocr <image> [--notes]` prints text; extra `fedora`; Mac via ssh.
+LM1 skips `CANVAS_OCR_PROMPT` (course workers go off) and the flyer prompt (mail goes off).
+LM2 plot deps: new extra `plot` (`matplotlib`, `schemdraw`); install `.[fedora,plot]` on Fedora, `.[plot]` on the Mac; agents run it with the tool interpreter.
+LM3 courses (Claude, 2026-10-28): rows become one vault note per course, `<course>/Course info.md`, by a one-off export; no table, no Libra code.
+Owner (2026-10-28): `note_draft` and `academic_writer` fold into the agent notetaker: cleaning rules move to Hivemind `libra/`, workers deleted in M2b.
+Owner (2026-10-28): a light local model will later run on the Mac; revisit a local cleaner then, build nothing for it now.
+LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]`, separate additions section) into the Hivemind notetaker memory.
+Then SemAI M2b: drop OCR, plot deps, writers, `courses` table, course workers; each step its own session, dispatched.
 
 ## Carryover
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
 L6 done 2026-10-27 (autofire): SemAI deleted lecture workers, `notes/`, `whisper_model`, `faster-whisper`, `numpy`; F39, F136, F148 moved here.
-Next: migration plan complete; SemAI continues its secretary pivot (M1 mail off or M3 PWA chat box); state-file deletion waits a clean week.
+Next: LM1 OCR port (plan under "Incoming from SemAI"), new session; state-file deletion waits a clean week.
 Summary 2026-10-27 (lx1, autofire): `_run_command` prints a one-line fedora-extra error, exit 2; `main` bad settings exit 2; 2 dispatches, 0 fix rounds, 325 pass.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
