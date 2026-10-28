@@ -28,8 +28,10 @@ L2 done 2026-10-27: `librarian.py` split by script (verbatim blocks, generated i
 L3 done 2026-10-27: `login` (verbatim port), `fetch`, `whisper`, `read`, `export`, `status`; sops key fallback for `read`; units in `deploy/`; 322 pass.
 L4 2026-10-27: F1 fixed (`3dc8808`, 323 pass); installed on Fedora (`.[fedora]`) and Mac (core); state reflink-copied from SemAI; `.config/libra.env` on both.
 L4 passed: Fedora `status`, cached `read`, `search`, `catalog`; Mac `search`, `catalog`, `map`, and `read` via `ssh dyne@fedora libra read`.
-L4 fetch: exit 3, UCSD login expired (SemAI's too); vault exports byte-identical after it; 10-26 and 10-27 lectures not fetched yet.
-L4 open: owner runs `libra login` (Mac `ssh -L` DevTools), then one real `libra fetch`; then dispatch F4 plus F5 (prompts `libra_l4_f4_*.md`, off-peak).
+L4 fetch passed 2026-10-27 20:11 PDT: owner `libra login`, then fetch: ECE 158A 10-27 (vault `ba66115`), map `9dbba8b`; ECE 108 10-27 queued for Whisper.
+Mac login command: `ssh -t -L 9222:127.0.0.1:9222 dyne@fedora /home/dyne/.local/bin/libra login`; a bare `~` expands on the Mac.
+Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing; owner reported "doesn't catch" though it saved.
+L4 open: dispatch F4 plus F5 (prompts `libra_l4_f4_*.md`, off-peak), then L5 in a new session.
 Trap: `libra read` paths are vault-relative (`ECE 108/Discussion/x.pdf`), not course-relative; a course-relative path answers `unknown_source`.
 Trap: TriAPI `llm_client.is_deepseek_peak_hours` fails to import from a bare `python3 -c`; check the clock (UTC 01-04, 06-10 weekdays) instead.
 Incident (2026-10-27): a smoke `libra fetch` with empty scratch state rewrote vault maps (commit `6ef0f5f`) and readings; reverted (`49486a3`), SemAI re-exported 46 readings.
@@ -46,8 +48,8 @@ Trap: the Mac has no ledger-check hook and no dispatch setup; Libra code changes
 Seam: `lecture_poll.py` name is historical (no polling left); rename at L5.
 Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive, inherited from SemAI.
 Seam: `lecture_docs.py` temp dir prefix still reads `semai-lecture-` (cosmetic).
-Seam (Claude, 2026-10-27): SemAI and Libra hold separate copies of `ucsd-podcast-state.json`; `libra login` refreshes only Libra's, so SemAI's hourly poll stays expired until L5.
-Ask owner: after libra login, copy the state back to SemAI, or let Libra fetch alone until L5?
+Owner (2026-10-27): Libra alone fetches and runs Whisper from now; SemAI's login is never refreshed; `libra login` is the only sign-in.
+Done 2026-10-27 20:20 PDT: Libra timers enabled (fetch 23:30, Whisper 01:00); SemAI's hourly poll logs expired-login warnings until L5 removes it.
 Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/libra.env`, but `--root` skips `Settings.load`; harmless today (verified).
 Last audit: 2026-10-27 wrap-up (audited through `d87cc81`; 1 new finding).
 
@@ -100,10 +102,10 @@ L1 port: fetch, Whisper, readings, maps modules plus their tests by script; disp
 L2 absorb `librarian.py`: split and port its tests; outputs match the old tool on the live vault (`search`, `catalog`, `map` diff).
 L3 glue by dispatch: `libra` CLI, `login` then fetch, `read` with lock, timer units in `deploy/`.
 L4 live: copy SemAI state to Libra state; `libra fetch` on real courses, one `read`, `search` on both machines; SemAI still running.
-L5 cutover: SemAI dispatch removes the lecture tick, study socket, `omll-study`, `podcast-login`; enable Libra timers; update Hivemind `academic-study` skill.
+L5 cutover: SemAI dispatch removes the lecture tick, study socket, `omll-study`, `podcast-login`; update Hivemind `academic-study` skill (timers enabled early, 2026-10-27).
 L5 also: amend vault `AGENTS.md` tool lines, then delete `Tools/librarian.py` and `Tools/tests/` for it, after L4 checks pass on both machines.
 L6 SemAI sweep (its M2): delete the moved modules and tests, dead `Settings` fields, `[all]` deps no other code uses; F39, F136, F142, F147, F148 move here.
-Overlap rule: until L5, Libra fetches only by hand; both apps skip existing transcripts and write atomically, so a manual overlap is harmless.
+Overlap rule (superseded 2026-10-27): Libra alone fetches; SemAI's expired login makes its poll a no-op; both skip existing transcripts if it ever runs.
 Irreversible last: SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) are deleted only after Libra runs a week clean.
 
 ### Owner answers (2026-10-27)
@@ -119,5 +121,5 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`).
 `src/libra/commands.py` fetch-side handlers and exit codes (3 = login expired); `read.py` `read_pages` (flock `read.lock`); `login.py` UCSD DevTools sign-in.
-`deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; not enabled until L5.
+`deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).
