@@ -29,7 +29,7 @@ L3 done 2026-10-27: `login` (verbatim port), `fetch`, `whisper`, `read`, `export
 L4 2026-10-27: F1 fixed (`3dc8808`, 323 pass); installed on Fedora (`.[fedora]`) and Mac (core); state reflink-copied from SemAI; `.config/libra.env` on both.
 L4 passed: Fedora `status`, cached `read`, `search`, `catalog`; Mac `search`, `catalog`, `map`, and `read` via `ssh dyne@fedora libra read`.
 L4 fetch: exit 3, UCSD login expired (SemAI's too); vault exports byte-identical after it; 10-26 and 10-27 lectures not fetched yet.
-L4 open: owner runs `libra login` (Mac `ssh -L` DevTools), then one real `libra fetch`; then dispatch F4 (prompts `libra_l4_f4_*.md`, off-peak), then wrap-up.
+L4 open: owner runs `libra login` (Mac `ssh -L` DevTools), then one real `libra fetch`; then dispatch F4 plus F5 (prompts `libra_l4_f4_*.md`, off-peak).
 Trap: `libra read` paths are vault-relative (`ECE 108/Discussion/x.pdf`), not course-relative; a course-relative path answers `unknown_source`.
 Trap: TriAPI `llm_client.is_deepseek_peak_hours` fails to import from a bare `python3 -c`; check the clock (UTC 01-04, 06-10 weekdays) instead.
 Incident (2026-10-27): a smoke `libra fetch` with empty scratch state rewrote vault maps (commit `6ef0f5f`) and readings; reverted (`49486a3`), SemAI re-exported 46 readings.
@@ -46,9 +46,13 @@ Trap: the Mac has no ledger-check hook and no dispatch setup; Libra code changes
 Seam: `lecture_poll.py` name is historical (no polling left); rename at L5.
 Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive, inherited from SemAI.
 Seam: `lecture_docs.py` temp dir prefix still reads `semai-lecture-` (cosmetic).
-Last audit: 2026-10-27 wrap-up (audited through `04213d6`; 3 new findings).
+Seam (Claude, 2026-10-27): SemAI and Libra hold separate copies of `ucsd-podcast-state.json`; `libra login` refreshes only Libra's, so SemAI's hourly poll stays expired until L5.
+Ask owner: after libra login, copy the state back to SemAI, or let Libra fetch alone until L5?
+Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/libra.env`, but `--root` skips `Settings.load`; harmless today (verified).
+Last audit: 2026-10-27 wrap-up (audited through `d87cc81`; 1 new finding).
 
 ## Findings
+F5 [medium · 1 · 2026-10-27] `cli.py` `main` line 158: F1 removed the `commands` import, so bad settings on fetch-side commands raise `NameError`, not exit 2; untested (verified).
 F4 [low · 1 · 2026-10-27] `cli.py` `_run_command`: on the Mac core install, `status`, `fetch`, `read` crash with a `httpx` traceback; fix prompts written, not dispatched (verified).
 F2 [low · 1 · 2026-10-27] `commands.py` `cmd_fetch`: exit 3 (expired) and 1 (partial errors) mark `libra-fetch.service` failed nightly; `status` shows login age only (verified by code).
 F3 [low · 1 · 2026-10-27] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (suspected).
