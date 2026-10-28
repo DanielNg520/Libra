@@ -88,3 +88,33 @@ def test_vault_commands_run_without_fedora_extra(tmp_path: Path) -> None:
     )
     assert result.returncode == 0, result.stderr
     json.loads(result.stdout)
+
+
+def test_fetch_commands_report_missing_extra(tmp_path: Path) -> None:
+    code = _BLOCKED_IMPORT_CODE.replace(
+        '"--root", sys.argv[1], "catalog", "--json"', '"status"'
+    )
+    assert code != _BLOCKED_IMPORT_CODE
+    env = os.environ.copy()
+    env["LIBRA_STATE_DIR"] = str(tmp_path / "state")
+    env.pop("LIBRA_VAULT_DIR", None)
+    env.pop("LIBRA_TERM", None)
+    env.pop("LIBRA_TZ", None)
+    result = subprocess.run(
+        [sys.executable, "-c", code, str(tmp_path)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 2
+    assert "needs the fedora extra" in result.stderr
+    assert "ssh dyne@fedora libra status" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_fetch_command_bad_settings_exits_2(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("LIBRA_TERM", "bad")
+    assert cli.main(["status"]) == 2
+    assert capsys.readouterr().err.startswith("libra: LIBRA_TERM")

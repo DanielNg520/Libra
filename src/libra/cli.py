@@ -106,7 +106,15 @@ def _settings() -> Optional[Settings]:
 
 def _run_command(args: argparse.Namespace, settings: Settings) -> int:
     """Dispatch the fetch-side subcommands."""
-    from libra import commands
+    try:
+        from libra import commands
+    except ImportError as exc:
+        print(
+            f"libra: {args.command} needs the fedora extra ({exc.name}); "
+            f"run it on Fedora: ssh dyne@fedora libra {args.command}",
+            file=sys.stderr,
+        )
+        return 2
     if args.command == "login":
         return commands.cmd_login(settings, args.timeout)
     if args.command == "fetch":
@@ -155,7 +163,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command not in VAULT_COMMANDS:
         settings = _settings()
         if settings is None:
-            return commands.EXIT_USAGE
+            return 2
         return _run_command(args, settings)
 
     root = _vault_root(args.root)

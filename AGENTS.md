@@ -23,6 +23,8 @@ Owner (2026-10-27): Libra absorbs vault `Tools/librarian.py` (search, catalog, m
 Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 11-04 and 11-05 midterms.
 
 ## Carryover
+Summary 2026-10-27 (lx1, autofire): `_run_command` prints a one-line fedora-extra error, exit 2; `main` bad settings exit 2; 2 dispatches, 0 fix rounds, 325 pass.
+Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 L0 and L1 done 2026-10-27: verbatim port (owner-ledgered), then 7 dispatches (3 fix rounds); 255 pass; `uv run pytest -q`.
 L2 done 2026-10-27: `librarian.py` split by script (verbatim blocks, generated imports), tests ported; 13 live commands byte-identical old vs new; 296 pass.
 L3 done 2026-10-27: `login` (verbatim port), `fetch`, `whisper`, `read`, `export`, `status`; sops key fallback for `read`; units in `deploy/`; 322 pass.
@@ -36,8 +38,9 @@ Owner (2026-10-27): 2-hour window; dispatch nonstop; plan fixed below; all promp
 Owner (2026-10-27): runs as autofire: timers `semai-autofire-lxa` 21:05 (`run.sh lx1`) and `-lxb` 21:06 (`run.sh lx2 lx3 lx4`); prompts `~/.cache/semai-autorun/prompt_lx*.md`.
 Steps: lx1 Libra F4+F5; lx2 SemAI W1+W2; lx3 SemAI reinstall and restart (W3); lx4 Hivemind skill, vault docs, `librarian.py` removal, L5 docs (W4-W5).
 Monitor: `tail -f ~/.cache/semai-autorun/run.log`; done markers `lx<n>.done`; a stopped step leaves an `Ask owner:` line.
-W1 21:00, send all five at once (Libra system `libra_edit_system.md`, SemAI `semai_am_edit_system.md`): `libra_l4_f4_cli`, `libra_l4_f4_test`, `semai_lx_cli`, `semai_lx_daemon`, `semai_lx_app`.
-W1 audit: count blocks (6 cli, 4 daemon, 3 app, 2 Libra cli, 1 Libra test); apply each with `apply_dispatch.py`; Libra `uv run pytest -q`, commit, push, Mac pull.
+W1 21:00, send all three at once (SemAI `semai_am_edit_system.md`): `semai_lx_cli`, `semai_lx_daemon`, `semai_lx_app`.
+W1 Libra part done 2026-10-27 (lx1): F4, F5 fixed; 325 pass; Mac `status` exits 2 cleanly.
+W1 audit: count blocks (6 cli, 4 daemon, 3 app); apply each with `apply_dispatch.py`.
 W2 SemAI deletions (hook ignores deletes, `--diff-filter=ACMR`): `git rm` `workers/lecture_poll.py`, `web/study.py`, `adapters/study_cli.py`, tests `test_lecture_poll`, `test_web_study`, `test_study_cli`, `test_cli_podcast_login`.
 W2 config by hand (owner sign-off in this plan): drop `omll-study` from SemAI `pyproject.toml` scripts; then `uv run pytest -q tests/` (baseline 2818 minus deleted tests).
 W2 failures: grep `lecture_poll|study|podcast` in failing tests; send fix dispatches, never hand edits; script suite `bash run_tests.sh` too.
@@ -71,8 +74,6 @@ Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/l
 Last audit: 2026-10-27 wrap-up (audited through `043d861`; 0 new findings, docs only).
 
 ## Findings
-F5 [medium · 1 · 2026-10-27] `cli.py` `main` line 158: F1 removed the `commands` import, so bad settings on fetch-side commands raise `NameError`, not exit 2; untested (verified).
-F4 [low · 1 · 2026-10-27] `cli.py` `_run_command`: on the Mac core install, `status`, `fetch`, `read` crash with a `httpx` traceback; fix prompts written, not dispatched (verified).
 F2 [low · 1 · 2026-10-27] `commands.py` `cmd_fetch`: exit 3 (expired) and 1 (partial errors) mark `libra-fetch.service` failed nightly; `status` shows login age only (verified by code).
 F3 [low · 1 · 2026-10-27] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (suspected).
 
