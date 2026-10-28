@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from libra import commands
 from libra.catalog import cmd_catalog
 from libra.config import Settings, SettingsError
 from libra.mapview import cmd_map
@@ -107,6 +106,7 @@ def _settings() -> Optional[Settings]:
 
 def _run_command(args: argparse.Namespace, settings: Settings) -> int:
     """Dispatch the fetch-side subcommands."""
+    from libra import commands
     if args.command == "login":
         return commands.cmd_login(settings, args.timeout)
     if args.command == "fetch":

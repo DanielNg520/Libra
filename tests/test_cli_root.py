@@ -1,5 +1,8 @@
 """Tests for CLI root resolution and catalog JSON output."""
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -50,3 +53,38 @@ def test_main_uses_env_vault(
     monkeypatch.setenv("LIBRA_VAULT_DIR", str(vault))
     assert cli.main(["catalog", "--json"]) == 0
     json.loads(capsys.readouterr().out)
+
+
+_BLOCKED_IMPORT_CODE = r"""
+import sys
+
+class _BlockedFinder:
+    def find_spec(self, name, path=None, target=None):
+        if name.split(".")[0] in {"httpx", "PIL", "playwright", "faster_whisper", "numpy"}:
+            raise ImportError(f"blocked import: {name}")
+        return None
+
+sys.meta_path.insert(0, _BlockedFinder())
+
+from libra import cli
+raise SystemExit(cli.main(["--root", sys.argv[1], "catalog", "--json"]))
+"""
+
+
+def test_vault_commands_run_without_fedora_extra(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    (vault / "ECE 108" / "Transcripts").mkdir(parents=True)
+
+    env = os.environ.copy()
+    env["LIBRA_STATE_DIR"] = str(tmp_path / "state")
+    for key in ("LIBRA_VAULT_DIR", "LIBRA_TERM", "LIBRA_TZ"):
+        env.pop(key, None)
+
+    result = subprocess.run(
+        [sys.executable, "-c", _BLOCKED_IMPORT_CODE, str(vault)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 0, result.stderr
+    json.loads(result.stdout)
