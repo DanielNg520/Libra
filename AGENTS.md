@@ -56,7 +56,13 @@ SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course 
 
 ## Carryover
 Summary 2026-10-29 (LN done, attended): script after-check fixed, 0 of 27 missing; links rewritten (6), export, Drive, docs verified; F11 closed.
-Ask owner: F12 fix choice: re-key the 4 cached reads to the new paths (state edit, no LLM), or re-read them (hosted model cost).
+Next session: F12 (owner, 2026-10-29). Start: CodeGraph `cached_pages`, `load_index`, `_prune_index`, `read_sources`; no `libra read` on ECE 158A before fixing.
+F12 facts: index `~/.local/state/libra/lecture_reads/source_index.json`, entry rel -> [size, mtime_ns, sha, render_key]; old-name entries still present.
+F12 facts: new files are byte-identical to old (`ln_move.sh` cmp); old rels Slides/Lec1-Max-PDF, Lec2-Max-PDF, Lec6-Max, Lec7-Max (.pdf).
+F12 trap: `_prune_index` drops entries whose rel is no longer listed on any `libra read` of the course; backup `~/.cache/spike-20261029/source_index.before-f12.json`.
+F12 options: (a) one-off re-key of 4 entries (state edit, no LLM); (b) code: sha fallback adopts an orphan entry on rename (dispatch).
+F12 Claude lean: (b), since every future `Outdated/` move renames too; then (a) is not needed. Trace before choosing; owner picks if unclear.
+F12 done when: export writes the 4 decks under `Tools/readings/ECE 158A/Slides/`, `libra search` finds them, tests pass, Mac pulled.
 Summary 2026-10-28 (F2, F6, attended off-peak): fetch exit 4 on partial errors; `_run_command` re-raises `libra.*` ImportErrors; 5 dispatches (1 fix round), 339 pass; unit reloaded.
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
