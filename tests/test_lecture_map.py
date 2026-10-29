@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from libra.config import Settings
+from libra.gemini import GeminiError
 from libra import lecture_map
 from libra.textbooks import BookEntry, BookMap
 from test_sources import make_settings
@@ -49,6 +50,14 @@ def _setup_course(tmp_path: Path) -> Settings:
     _write_transcript(vault, "ECE 1", "2026-10-01", "Queue arrival poisson waiting server")
     _write_transcript(vault, "ECE 1", "2026-10-02", "Routing dijkstra shortest distance vector")
     return settings
+
+
+@pytest.fixture(autouse=True)
+def _no_real_book_map(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fail_book_map(*args: object, **kwargs: object) -> None:
+        pytest.fail("book_map should not really run in tests")
+
+    monkeypatch.setattr(lecture_map, "book_map", fail_book_map)
 
 
 def test_write_maps_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -226,6 +235,9 @@ def test_write_maps_chapters(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     assert decks_by_rel[LEC2_DECK]["chapters"][0]["title"] == "Routing"
 
     monkeypatch.setattr(lecture_map, "load_cached_map", _fake_load_cached_map(None))
+    def _fake_book_map(*args, **kwargs):
+        raise GeminiError("cap")
+    monkeypatch.setattr(lecture_map, "book_map", _fake_book_map)
     (settings.state_dir / "lecture_reads" / "books").mkdir(parents=True, exist_ok=True)
     (settings.state_dir / "lecture_reads" / "books" / "changed.json").write_text("{}")
     lecture_map.write_maps(settings)
@@ -299,3 +311,204 @@ def test_write_maps_per_course_failure(
     ]
     assert course_a_records
     assert all(record.exc_info is not None for record in course_a_records)
+
+
+def test_ensure_book_maps_two_uncached_books(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    book1 = vault / "ECE 1" / "Textbooks" / "book1.pdf"
+    book2 = vault / "ECE 1" / "Textbooks" / "book2.pdf"
+    _write_pdf(book1, b"book-one-bytes")
+    _write_pdf(book2, b"book-two-bytes")
+    sha1 = lecture_map.sha256_file(book1)
+    sha2 = lecture_map.sha256_file(book2)
+
+    calls: list[str] = []
+    monkeypatch.setattr(
+        lecture_map,
+        "book_map",
+        lambda settings, path, sha: calls.append(sha),
+    )
+    secrets_calls: list[Settings] = []
+    monkeypatch.setattr(
+        lecture_map,
+        "load_secrets",
+        lambda settings: secrets_calls.append(settings) or settings,
+    )
+
+    result = lecture_map.ensure_book_maps(settings, "ECE 1")
+
+    assert result == 2
+    assert calls == [sha1, sha2]
+    assert len(secrets_calls) == 1
+    assert secrets_calls[0] is settings
+
+
+def test_ensure_book_maps_identical_bytes_built_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    book1 = vault / "ECE 1" / "Textbooks" / "book1.pdf"
+    book2 = vault / "ECE 1" / "Textbooks" / "book2.pdf"
+    _write_pdf(book1, b"same-bytes")
+    _write_pdf(book2, b"same-bytes")
+
+    calls: list[str] = []
+    monkeypatch.setattr(
+        lecture_map,
+        "book_map",
+        lambda settings, path, sha: calls.append(sha),
+    )
+    monkeypatch.setattr(
+        lecture_map,
+        "load_secrets",
+        lambda settings: settings,
+    )
+
+    result = lecture_map.ensure_book_maps(settings, "ECE 1")
+
+    assert result == 1
+    assert calls == [lecture_map.sha256_file(book1)]
+
+
+def test_ensure_book_maps_all_cached(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    book1 = vault / "ECE 1" / "Textbooks" / "book1.pdf"
+    book2 = vault / "ECE 1" / "Textbooks" / "book2.pdf"
+    _write_pdf(book1, b"book-one-bytes")
+    _write_pdf(book2, b"book-two-bytes")
+
+    cached = BookMap(
+        title="B",
+        authors="A",
+        edition=None,
+        year=None,
+        pages=1,
+        searchable=True,
+        complete=True,
+        entries=(BookEntry("C", 1, 1, ()),),
+    )
+    monkeypatch.setattr(
+        lecture_map,
+        "load_cached_map",
+        lambda cache_file, path: cached,
+    )
+    book_map_calls: list[Path] = []
+    monkeypatch.setattr(
+        lecture_map,
+        "book_map",
+        lambda settings, path, sha: book_map_calls.append(path),
+    )
+    load_secrets_calls: list[Settings] = []
+    monkeypatch.setattr(
+        lecture_map,
+        "load_secrets",
+        lambda settings: load_secrets_calls.append(settings) or settings,
+    )
+
+    result = lecture_map.ensure_book_maps(settings, "ECE 1")
+
+    assert result == 0
+    assert book_map_calls == []
+    assert load_secrets_calls == []
+
+
+def test_ensure_book_maps_first_fails_second_succeeds(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    book1 = vault / "ECE 1" / "Textbooks" / "book1.pdf"
+    book2 = vault / "ECE 1" / "Textbooks" / "book2.pdf"
+    _write_pdf(book1, b"book-one-bytes")
+    _write_pdf(book2, b"book-two-bytes")
+
+    def fake_book_map(settings: Settings, path: Path, sha: str) -> None:
+        if path == book1:
+            raise GeminiError("gemini failure")
+
+    monkeypatch.setattr(lecture_map, "book_map", fake_book_map)
+    monkeypatch.setattr(
+        lecture_map,
+        "load_secrets",
+        lambda settings: settings,
+    )
+
+    with caplog.at_level("WARNING"):
+        result = lecture_map.ensure_book_maps(settings, "ECE 1")
+
+    assert result == 1
+    assert any(
+        "ECE 1/Textbooks/book1.pdf" in record.message
+        and "GeminiError" in record.message
+        for record in caplog.records
+    )
+
+
+def test_ensure_book_maps_retry_after_failed_build(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    book = vault / "ECE 1" / "Textbooks" / "book.pdf"
+    _write_pdf(book, b"book-bytes")
+    monkeypatch.setattr(
+        lecture_map,
+        "cached_pages",
+        _make_pages({LEC1_DECK: LEC1_PAGES, LEC2_DECK: LEC2_PAGES}),
+    )
+
+    book_map_calls: list[Path] = []
+
+    def fake_book_map(settings: Settings, path: Path, sha: str) -> None:
+        book_map_calls.append(path)
+        raise GeminiError("gemini failure")
+
+    monkeypatch.setattr(lecture_map, "book_map", fake_book_map)
+    monkeypatch.setattr(
+        lecture_map,
+        "load_cached_map",
+        lambda cache_file, path: None,
+    )
+    monkeypatch.setattr(
+        lecture_map,
+        "load_secrets",
+        lambda settings: settings,
+    )
+
+    lecture_map.write_maps(settings)
+    lecture_map.write_maps(settings)
+
+    assert len(book_map_calls) == 2
+
+
+def test_write_maps_order_ensure_before_fingerprint(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    settings = _setup_course(tmp_path)
+    events: list[str] = []
+    monkeypatch.setattr(
+        lecture_map,
+        "ensure_book_maps",
+        lambda settings, course: events.append("ensure"),
+    )
+    monkeypatch.setattr(
+        lecture_map,
+        "fingerprint",
+        lambda settings, course: events.append("fingerprint") or "x",
+    )
+
+    lecture_map.write_maps(settings)
+
+    assert events == ["ensure", "fingerprint"]

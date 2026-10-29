@@ -5,6 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin
 ExecStart=%h/.local/bin/libra fetch
 SuccessExitStatus=4
 Nice=10

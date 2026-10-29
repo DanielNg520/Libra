@@ -67,7 +67,7 @@ F14 fix: `read_pages` runs `reconcile_index` (outside the lock) when cached page
 F7 fix: recitation-retry pages carry `lecture_docs.PARAPHRASE_NOTE` under each `### Page N`; earlier cached reads stay unmarked (no re-read).
 Closed 2026-10-29: F8 delete path has no production caller (`expand_books` passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
 Closed 2026-10-29: F14 duplicates and re-hash parts; reads are content-keyed, so a duplicate costs a render, never a Gemini call.
-Ask owner: F13 wiring loads sops keys in `fetch`, `export`, `whisper` (today only `read --fetch`, `ocr`); approve the secrets change?
+Owner (2026-10-29): F13 approved, "important, do it optimally and efficiently"; plan below before dispatch.
 Ask owner: F3 config home: keep repo-relative `.config/` (editable installs only) or move to `~/.config/libra/`?
 Ask owner: merge `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS`? Contents differ; a union hides `Concepts`, `Archive` from catalog.
 Summary 2026-10-29 (F15 fixed, attended): login sign-in check reads every frame (`page.frames`); 2 dispatches (1 re-prompt), 353 pass; new tests fail on old code.
@@ -138,7 +138,10 @@ Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of 
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
 F13 [medium · 2 · 2026-10-29] `sources.py` `expand_books`: only builder of textbook chapter maps, no production caller; new textbooks never reach lecture maps; skips `index_lock` (verified).
-F13 plan: call `expand_books` per course before `write_maps` in `lecture_poll._refresh_maps`, lock inside it; maps of all 10 current books are cached.
+F13 plan (Claude, 2026-10-29, supersedes the expand_books plan): maps read chapters via `load_chapters` (cache only); `expand_books` is not on that path.
+F13 build: `lecture_map.ensure_book_maps` runs per course before `fingerprint` in `write_maps`; `book_map` builds only uncached books; keys load lazily, only when one builds.
+F13 why before fingerprint: a failed build leaves no cache, so the next run retries; a build changes `books` mtime, so the map rebuilds.
+F13 units: timers lack `~/.local/bin` (no `sops`, keys never load); both units get `Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin` (verified 2026-10-29).
 F3 [low · 2 · 2026-10-27→2026-10-29] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (verified by code trace).
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)

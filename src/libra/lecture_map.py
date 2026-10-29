@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from libra.config import Settings
+from libra.config import Settings, load_secrets
 from libra.lecture_align import (
     PAGE_MAX_DF,
     Anchor,
@@ -41,7 +41,8 @@ from libra.sources import (
     SourceFile,
     list_sources,
 )
-from libra.textbooks import BOOKS_DIR, load_cached_map, pdf_page_texts
+from libra.gemini import GeminiError
+from libra.textbooks import BOOKS_DIR, book_map, load_cached_map, pdf_page_texts
 from libra.lecture_docs import READS_DIR, sha256_file
 
 log = logging.getLogger(__name__)
@@ -110,6 +111,11 @@ def _track_sources(sources: Sequence[SourceFile], course: str, folder: str) -> l
     return [s for s in sources if s.kind == "doc" and s.rel.startswith(prefix)]
 
 
+def _textbook_sources(sources: Sequence[SourceFile], course: str) -> list[SourceFile]:
+    prefix = f"{course}/{TEXTBOOKS_DIR}/"
+    return [s for s in sources if s.kind == "doc" and s.rel.startswith(prefix) and s.rel.endswith(".pdf")]
+
+
 def _books_mtime(settings: Settings) -> int:
     books_dir = settings.state_dir / READS_DIR / BOOKS_DIR
     try:
@@ -139,9 +145,8 @@ def fingerprint(settings: Settings, course: str) -> str:
         for source in _track_sources(sources, course, folder):
             pages = len(cached_pages(settings, source))
             lines.append(f"{source.rel}\t{source.size}\t{source.mtime_ns}\t{pages}")
-    for source in sources:
-        if source.kind == "doc" and source.rel.startswith(f"{course}/{TEXTBOOKS_DIR}/") and source.rel.endswith(".pdf"):
-            lines.append(f"{source.rel}\t{source.size}\t{source.mtime_ns}\t0")
+    for source in _textbook_sources(sources, course):
+        lines.append(f"{source.rel}\t{source.size}\t{source.mtime_ns}\t0")
     lines.append(f"books\t{_books_mtime(settings)}")
     confirmed_path = vault / MAPS_DIR / f"{course}{CONFIRMED_SUFFIX}"
     if confirmed_path.exists():
@@ -258,9 +263,7 @@ def load_chapters(settings: Settings, course: str, sources: Sequence[SourceFile]
         raise ValueError("Obsidian academic vault is not configured")
     chapters: list[Chapter] = []
     seen_shas: set[str] = set()
-    for source in sources:
-        if source.kind != "doc" or not source.rel.startswith(f"{course}/{TEXTBOOKS_DIR}/") or not source.rel.endswith(".pdf"):
-            continue
+    for source in _textbook_sources(sources, course):
         path = vault / source.rel
         sha = sha256_file(path)
         if sha in seen_shas:
@@ -393,6 +396,39 @@ def _write_json(path: Path, data: Mapping[str, Any]) -> None:
     os.replace(tmp, path)
 
 
+def ensure_book_maps(settings: Settings, course: str) -> int:
+    """Build chapter maps for the course's textbooks that have no cached map."""
+    if settings.obsidian_academic_vault_dir is None:
+        return 0
+    sources = _textbook_sources(list_sources(settings, course), course)
+    keyed_settings: Settings | None = None
+    seen_shas: set[str] = set()
+    vault = settings.obsidian_academic_vault_dir
+    built = 0
+    for source in sources:
+        path = vault / source.rel
+        try:
+            sha = sha256_file(path)
+        except OSError as exc:
+            log.warning("chapter map failed for %s: %s", source.rel, type(exc).__name__)
+            continue
+        if sha in seen_shas:
+            continue
+        seen_shas.add(sha)
+        cache_file = settings.state_dir / READS_DIR / BOOKS_DIR / f"{sha}.json"
+        if load_cached_map(cache_file, path) is not None:
+            continue
+        if keyed_settings is None:
+            keyed_settings = load_secrets(settings)
+        try:
+            book_map(keyed_settings, path, sha)
+            built += 1
+        except (GeminiError, OSError, ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+            log.warning("chapter map failed for %s: %s", source.rel, type(exc).__name__)
+            continue
+    return built
+
+
 def write_maps(settings: Settings) -> list[Path]:
     vault = settings.obsidian_academic_vault_dir
     if vault is None:
@@ -402,6 +438,7 @@ def write_maps(settings: Settings) -> list[Path]:
     written: list[Path] = []
     for course in course_names(vault):
         try:
+            ensure_book_maps(settings, course)
             inputs = fingerprint(settings, course)
             path = maps / f"{course}.json"
             if _stored_inputs(path) == inputs:

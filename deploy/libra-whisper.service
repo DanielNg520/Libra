@@ -3,6 +3,7 @@ Description=Libra Whisper fallback for lecture recordings without captions
 
 [Service]
 Type=oneshot
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin
 ExecStart=%h/.local/bin/libra whisper --until 6
 Nice=19
 IOSchedulingClass=idle
