@@ -57,17 +57,27 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-10-29 (F13 done, attended): new textbooks get chapter maps nightly; 7 dispatches (4 re-prompts), 390 pass; 6 mutants caught; live build matched cache.
+F13 rule: `lecture_map.ensure_book_maps` runs per course before `fingerprint` in `write_maps`; `book_map` builds uncached books only; keys load lazily, once.
+F13 why first: a failed build leaves no cache, so the next run retries; a build changes `books` mtime, so the map rebuilds.
+F13 units: both services set `Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin`; without it `sops` is missing and keys never load (verified).
+F13 live 2026-10-29: scratch rebuild of ECE 158A `978-3-031-79281-6.pdf` via unit env: 1 Gemini call, 16 s; equal to the cached map.
+Seam: `expand_books` still has no production caller; kept as the base for a textbook `read` route (owner pick pending).
+Seam: a scanned (unsearchable) textbook gets an unusable map; `load_cached_map` retries it weekly, one 12-page vision call each time.
+Seam: fetch and Whisper can build the same new book at once; double call, last atomic write wins; harmless.
+Guard: tests/test_lecture_map.py autouse `_no_real_book_map` fails any test that reaches a real `book_map`.
+Trap: dispatch excerpts must mark gaps between non-adjacent code; two SEARCH misses came from excerpts shown as adjacent (2026-10-29).
 Summary 2026-10-29 (agent readiness, attended): `--help` text on every flag; agent guard; agy skill link; 5 dispatches (2 re-prompts), 384 pass; mutation-checked.
 Agent guard: refuses (exit 2) under `CLAUDECODE`, `ANTIGRAVITY_AGENT`, `AI_AGENT`, or `SSH_CONNECTION` without a TTY; timers and owner `ssh -t` pass (verified live, Mac ssh both ways).
 Trap: Claude Code `!libra fetch` runs with `CLAUDECODE` set and is refused; prefix `LIBRA_OWNER_OK=1`.
 Seam: the guard stops careless agents, not deliberate ones; an agent can still set `LIBRA_OWNER_OK=1`; agent harnesses beyond Claude Code and agy are unchecked.
-Next session: HP plan (below), or F13 once the owner answers; open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
+Next session: HP plan (below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
 Summary 2026-10-29 (findings sweep, attended): F7, F14 fixed; F8, F9 closed by measurement; 7 dispatches (4 re-prompts), 358 pass; mutation-checked.
 F14 fix: `read_pages` runs `reconcile_index` (outside the lock) when cached pages are missing; re-reads only if it adopted.
 F7 fix: recitation-retry pages carry `lecture_docs.PARAPHRASE_NOTE` under each `### Page N`; earlier cached reads stay unmarked (no re-read).
 Closed 2026-10-29: F8 delete path has no production caller (`expand_books` passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
 Closed 2026-10-29: F14 duplicates and re-hash parts; reads are content-keyed, so a duplicate costs a render, never a Gemini call.
-Owner (2026-10-29): F13 approved, "important, do it optimally and efficiently"; plan below before dispatch.
+Owner (2026-10-29): F13 approved, "important, do it optimally and efficiently"; done `85d9b90`.
 Ask owner: F3 config home: keep repo-relative `.config/` (editable installs only) or move to `~/.config/libra/`?
 Ask owner: merge `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS`? Contents differ; a union hides `Concepts`, `Archive` from catalog.
 Summary 2026-10-29 (F15 fixed, attended): login sign-in check reads every frame (`page.frames`); 2 dispatches (1 re-prompt), 353 pass; new tests fail on old code.
@@ -137,11 +147,6 @@ Last audit: 2026-10-29 wrap-up (audited through `8c30b71`; LM1, LM2, F2, F6, LN,
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
-F13 [medium · 2 · 2026-10-29] `sources.py` `expand_books`: only builder of textbook chapter maps, no production caller; new textbooks never reach lecture maps; skips `index_lock` (verified).
-F13 plan (Claude, 2026-10-29, supersedes the expand_books plan): maps read chapters via `load_chapters` (cache only); `expand_books` is not on that path.
-F13 build: `lecture_map.ensure_book_maps` runs per course before `fingerprint` in `write_maps`; `book_map` builds only uncached books; keys load lazily, only when one builds.
-F13 why before fingerprint: a failed build leaves no cache, so the next run retries; a build changes `books` mtime, so the map rebuilds.
-F13 units: timers lack `~/.local/bin` (no `sops`, keys never load); both units get `Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin` (verified 2026-10-29).
 F3 [low · 2 · 2026-10-27→2026-10-29] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (verified by code trace).
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
@@ -203,7 +208,7 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `lecture_poll.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
-`src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
+`src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps (`ensure_book_maps` builds new textbook maps); `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, adopts renamed sources); `login.py` sign-in (every frame).
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
