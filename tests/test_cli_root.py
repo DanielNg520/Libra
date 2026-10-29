@@ -118,3 +118,32 @@ def test_fetch_command_bad_settings_exits_2(
     monkeypatch.setenv("LIBRA_TERM", "bad")
     assert cli.main(["status"]) == 2
     assert capsys.readouterr().err.startswith("libra: LIBRA_TERM")
+
+
+def test_internal_import_error_is_not_masked(tmp_path: Path) -> None:
+    code = """
+import sys
+
+class BlockLibraLecturePoll:
+    def find_spec(self, name, path=None, target=None):
+        if name == "libra.lecture_poll":
+            raise ModuleNotFoundError(f"blocked import: {name}", name=name)
+        return None
+
+sys.meta_path.insert(0, BlockLibraLecturePoll())
+
+from libra import cli
+raise SystemExit(cli.main(["status"]))
+"""
+    env = os.environ.copy()
+    env["LIBRA_STATE_DIR"] = str(tmp_path / "state")
+    env.pop("LIBRA_VAULT_DIR", None)
+    env.pop("LIBRA_TERM", None)
+    env.pop("LIBRA_TZ", None)
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, env=env
+    )
+    assert result.returncode == 1
+    assert "Traceback" in result.stderr
+    assert "cannot import name 'lecture_poll'" in result.stderr
+    assert "needs the fedora extra" not in result.stderr

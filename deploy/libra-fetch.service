@@ -6,4 +6,5 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=%h/.local/bin/libra fetch
+SuccessExitStatus=4
 Nice=10

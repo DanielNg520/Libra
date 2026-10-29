@@ -11,6 +11,7 @@ Never reference or absorb another repo's content; port what Libra needs, then ow
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## Owner decisions
+Owner (2026-10-28): a partial fetch exits 4 (`EXIT_PARTIAL`); `libra-fetch.service` `SuccessExitStatus=4`; crash (1) and expired login (3) still fail the unit.
 Owner (2026-10-27): Libra is its own project; every academic piece leaves SemAI for it, transcript fetch and Whisper included.
 Owner (2026-10-27): the tutor and librarian tools also live in `~/Classes/Current` and Hivemind.
 Owner (2026-10-27): remote `git@github.com:DanielNg520/Libra.git`; Libra runs on every machine (Fedora, Mac), not Fedora-only.
@@ -54,6 +55,7 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-10-28 (F2, F6, attended off-peak): fetch exit 4 on partial errors; `_run_command` re-raises `libra.*` ImportErrors; 5 dispatches (1 fix round), 339 pass; unit reloaded.
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
 L6 done 2026-10-27 (autofire): SemAI deleted lecture workers, `notes/`, `whisper_model`, `faster-whisper`, `numpy`; F39, F136, F148 moved here.
@@ -110,8 +112,6 @@ Probe after the next `libra login`: `~/.local/share/uv/tools/libra/bin/python -I
 F7 [low · 4 · 2026-10-14→2026-10-27] `lecture_docs.py` `read_document`: recitation-retry batches unmarked in readings (from SemAI F39; port unverified).
 F8 [low · 1 · 2026-10-24→2026-10-27] `textbooks.py` `check_copies`: delete guard needs a book directly in `<course>/Textbooks/`; `_is_book_rel` accepts nested ones, nested duplicates never deleted (from SemAI F136).
 F9 [low · 1 · 2026-10-27] `reading_export.py` `_process_source`: re-hashes every textbook PDF per export (from SemAI F148).
-F6 [low · 1 · 2026-10-27] `cli.py` `_run_command`: any ImportError, even a real `libra.*` bug on Fedora, prints "needs the fedora extra"; re-raise unless third-party (verified by code).
-F2 [low · 1 · 2026-10-27] `commands.py` `cmd_fetch`: exit 3 (expired) and 1 (partial errors) mark `libra-fetch.service` failed nightly; `status` shows login age only (verified by code).
 F3 [low · 1 · 2026-10-27] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (suspected).
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
@@ -175,6 +175,6 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py`, `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`).
-`src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired); `ocr.py` `transcribe_image`, OCR prompts; `read.py` `read_pages` (flock `read.lock`); `login.py` UCSD DevTools sign-in.
+`src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` `transcribe_image`, OCR prompts; `read.py` `read_pages` (flock `read.lock`); `login.py` UCSD DevTools sign-in.
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

@@ -79,7 +79,8 @@ def test_fetch_summary_and_codes(
         no_captions=[],
         errors=["ECE 108 Lecture 2026-10-20"],
     )
-    assert commands.cmd_fetch(settings) == 1
+    assert commands.cmd_fetch(settings) == commands.EXIT_PARTIAL
+    assert commands.EXIT_PARTIAL == 4
     out, _ = capsys.readouterr()
     lines = out.splitlines()
     assert lines[0] == "fetch FA26: 2 new, 1 queued for Whisper, 0 without captions, 1 errors"

@@ -23,6 +23,7 @@ EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_USAGE = 2
 EXIT_LOGIN_EXPIRED = 3
+EXIT_PARTIAL = 4
 
 
 def _queued(settings: Settings) -> int:
@@ -63,7 +64,7 @@ def cmd_fetch(settings: Settings) -> int:
     if r.expired:
         print("UCSD login expired: run `libra login`", file=sys.stderr)
         return EXIT_LOGIN_EXPIRED
-    return EXIT_FAILED if r.errors else EXIT_OK
+    return EXIT_PARTIAL if r.errors else EXIT_OK
 
 
 def cmd_login(settings: Settings, timeout: float) -> int:

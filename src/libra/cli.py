@@ -114,6 +114,8 @@ def _run_command(args: argparse.Namespace, settings: Settings) -> int:
     try:
         from libra import commands
     except ImportError as exc:
+        if exc.name == "libra" or (exc.name or "").startswith("libra."):
+            raise
         print(
             f"libra: {args.command} needs the fedora extra ({exc.name}); "
             f"run it on Fedora: ssh dyne@fedora libra {args.command}",
