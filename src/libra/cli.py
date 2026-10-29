@@ -16,7 +16,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from libra.catalog import cmd_catalog
 from libra.config import Settings, SettingsError
@@ -26,60 +26,123 @@ from libra.search import _validate_date, cmd_search
 VAULT_COMMANDS = frozenset({"search", "catalog", "map"})
 
 
-def _build_parser() -> argparse.ArgumentParser:
-    """Build the argument parser."""
-    parser = argparse.ArgumentParser(prog="libra")
-    parser.add_argument("--root", type=Path, default=None, help="vault root (default: LIBRA_VAULT_DIR)")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    search_parser = subparsers.add_parser("search")
-    search_parser.add_argument("terms", nargs="+")
-    search_parser.add_argument("--course", default=None)
-    search_parser.add_argument("--since", type=_validate_date, default=None)
-    search_parser.add_argument("--until", type=_validate_date, default=None)
-    search_parser.add_argument(
-        "--kind", choices=["lecture", "discussion", "all"], default="all"
+def _add_search_parser(subparsers: Any) -> None:
+    """Register the search subcommand."""
+    search_parser = subparsers.add_parser(
+        "search",
+        help="find terms in lecture transcripts and readings; exit 1 means no match, 2 a usage or path error",
     )
     search_parser.add_argument(
-        "--any", dest="any_mode", action="store_true", default=False
+        "terms",
+        nargs="+",
+        help="all must match unless --any; quote a phrase; a trailing * is a prefix match and must be quoted",
     )
-    search_parser.add_argument("--window", type=int, default=4)
-    search_parser.add_argument("-C", "--context", type=int, default=1)
-    search_parser.add_argument("--limit", type=int, default=20)
+    search_parser.add_argument(
+        "--course",
+        default=None,
+        help="course folder name such as 'ECE 108'; default every course",
+    )
+    search_parser.add_argument(
+        "--since", type=_validate_date, default=None,
+        help="YYYY-MM-DD start bound; filters transcripts only, never readings",
+    )
+    search_parser.add_argument(
+        "--until", type=_validate_date, default=None,
+        help="YYYY-MM-DD end bound; filters transcripts only, never readings",
+    )
+    search_parser.add_argument(
+        "--kind", choices=["lecture", "discussion", "all"], default="all",
+        help="lecture or discussion transcripts; filters transcripts only",
+    )
+    search_parser.add_argument(
+        "--any", dest="any_mode", action="store_true", default=False,
+        help="match any term instead of all",
+    )
+    search_parser.add_argument(
+        "--window", type=int, default=4,
+        help="consecutive transcript lines searched together, so terms can match across lines",
+    )
+    search_parser.add_argument(
+        "-C", "--context", type=int, default=1,
+        help="context lines printed around each hit",
+    )
+    search_parser.add_argument("--limit", type=int, default=20, help="maximum hits printed")
     search_parser.add_argument(
         "--in",
         dest="scope",
         action="append",
         choices=["transcripts", "readings", "textbooks", "all"],
         default=None,
+        help="where to search, repeatable; default transcripts plus readings; textbooks only when asked",
     )
-    search_parser.add_argument("--json", action="store_true", default=False)
+    search_parser.add_argument(
+        "--json", action="store_true", default=False, help="structured hits instead of text"
+    )
 
-    catalog_parser = subparsers.add_parser("catalog")
-    catalog_parser.add_argument("--course", default=None)
-    catalog_parser.add_argument("--json", action="store_true", default=False)
-    map_parser = subparsers.add_parser("map")
-    map_parser.add_argument("--course", default=None)
-    map_parser.add_argument("--date", type=_validate_date)
-    map_parser.add_argument("--json", action="store_true", default=False)
-    map_parser.add_argument("--confirm", action="store_true", default=False)
-    map_parser.add_argument("--transcript", default=None)
-    map_parser.add_argument("--deck", default=None)
-    map_parser.add_argument("--from", dest="from_t", default=None)
-    map_parser.add_argument("--to", dest="to_t", default=None)
 
-    login_parser = subparsers.add_parser("login")
+def _add_vault_parsers(subparsers: Any) -> None:
+    """Register the catalog and map subcommands."""
+    catalog_parser = subparsers.add_parser(
+        "catalog",
+        help="list transcripts by date (duration, opening line) and every course file",
+    )
+    catalog_parser.add_argument("--course", default=None, help="one course, default all")
+    catalog_parser.add_argument(
+        "--json", action="store_true", default=False, help="structured output"
+    )
+    map_parser = subparsers.add_parser(
+        "map",
+        help="lecture-to-slide map per transcript (spans, deck, pages, score)",
+    )
+    map_parser.add_argument("--course", default=None, help="course folder name")
+    map_parser.add_argument(
+        "--date", type=_validate_date, help="YYYY-MM-DD, one lecture"
+    )
+    map_parser.add_argument(
+        "--json", action="store_true", default=False, help="structured output"
+    )
+    map_parser.add_argument(
+        "--confirm",
+        action="store_true",
+        default=False,
+        help=(
+            "record a verified transcript-to-deck pairing (needs --course, "
+            "--transcript, --deck); confirmations override the automatic match"
+        ),
+    )
+    map_parser.add_argument("--transcript", default=None, help="transcript id as shown by map")
+    map_parser.add_argument("--deck", default=None, help="deck name")
+    map_parser.add_argument(
+        "--from", dest="from_t", default=None, help="MM:SS start of the pairing"
+    )
+    map_parser.add_argument(
+        "--to", dest="to_t", default=None, help="MM:SS end of the pairing"
+    )
+
+
+def _add_fedora_parsers(subparsers: Any) -> None:
+    """Register the Fedora-only subcommands."""
+    login_parser = subparsers.add_parser(
+        "login",
+        help="owner only; interactive UCSD podcast sign-in, then a fetch",
+    )
     login_parser.add_argument(
         "--timeout",
         type=float,
         default=900.0,
         help="seconds to wait for sign-in",
     )
-    subparsers.add_parser("fetch")
-    subparsers.add_parser("export")
-    subparsers.add_parser("status")
+    subparsers.add_parser(
+        "fetch",
+        help="owner or nightly timer only; download new lecture transcripts, rebuild maps and readings",
+    )
+    subparsers.add_parser("export", help="owner or timer only; rebuild vault readings and maps")
+    subparsers.add_parser("status", help="login age and Whisper queue size")
 
-    whisper_parser = subparsers.add_parser("whisper")
+    whisper_parser = subparsers.add_parser(
+        "whisper",
+        help="owner or nightly timer only; transcribe queued lecture audio",
+    )
     whisper_parser.add_argument(
         "--until",
         dest="until_hour",
@@ -88,15 +151,49 @@ def _build_parser() -> argparse.ArgumentParser:
         help="stop starting new jobs at this local hour",
     )
 
-    read_parser = subparsers.add_parser("read")
-    read_parser.add_argument("path")
-    read_parser.add_argument("--course", required=True)
+    read_parser = subparsers.add_parser(
+        "read", help="print the cached page text of a deck, reading or textbook"
+    )
+    read_parser.add_argument(
+        "path",
+        help="vault-relative path such as 'ECE 108/Slides/x.pdf', not course-relative",
+    )
+    read_parser.add_argument("--course", required=True, help="course folder name")
     read_parser.add_argument("--pages", default=None, help="N or A-B")
-    read_parser.add_argument("--fetch", action="store_true", default=False)
-    ocr_parser = subparsers.add_parser("ocr")
+    read_parser.add_argument(
+        "--fetch",
+        action="store_true",
+        default=False,
+        help="read uncached pages with Gemini (costs money; owner only)",
+    )
+    ocr_parser = subparsers.add_parser(
+        "ocr", help="transcribe an image with Gemini"
+    )
     ocr_parser.add_argument("image", help="image path, or - for stdin")
-    ocr_parser.add_argument("--notes", action="store_true", default=False, help="notes prompt: printed text too, math as LaTeX")
+    ocr_parser.add_argument(
+        "--notes",
+        action="store_true",
+        default=False,
+        help="notes prompt: printed text too, math as LaTeX",
+    )
     ocr_parser.add_argument("--mime", default=None, help="MIME type (default: guessed from the name, else image/jpeg)")
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    """Build the argument parser."""
+    parser = argparse.ArgumentParser(
+        prog="libra",
+        description=(
+            "course librarian over the vault; search/catalog/map run on any "
+            "machine, the other commands are Fedora-only"
+        ),
+    )
+    parser.add_argument("--root", type=Path, default=None, help="vault root (default: LIBRA_VAULT_DIR)")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    _add_search_parser(subparsers)
+    _add_vault_parsers(subparsers)
+    _add_fedora_parsers(subparsers)
     return parser
 
 
