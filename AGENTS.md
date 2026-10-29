@@ -55,6 +55,11 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Next session: F10. Owner runs `libra login`; then run `~/.local/share/uv/tools/libra/bin/python -I -u ~/.cache/spike-20261028/libra_flavor_probe.py` (read-only).
+F10 next: record the cause here; plan the fix dispatch, off-peak only (DeepSeek peak UTC 01-04 and 06-10 weekdays).
+Owner (2026-10-29): approved the F12 content-adoption design ("go for it"), replacing options (a) and (b); built as `8c30b71`.
+Open check: Mac readings of the 4 renamed decks were not visible over Drive at 2026-10-29 ~05:45 PDT; on the Mac run `libra search "CIDR" --course "ECE 158A"`, expect `Lec7-IP-Addressing`.
+Proposal: regression test that `reconcile_index` under a held `index_lock` is not re-entrant (subprocess with timeout); dispatch with the next `sources.py` edit.
 Summary 2026-10-29 (F12 done, attended): content-matched index adoption; 7 dispatches (3 fixes), 351 pass; live export adopted 8 entries (158A decks, 271A HW2).
 F12 rule: `sources._adopt_moved` re-keys a missing or stale-mtime entry to a same-size, same-sha entry (own or same-course orphan); never takes a listed rel.
 F12 callers: `read_sources` (caller holds the lock) and `reading_export.write_readings` via `reconcile_index`, which takes `index_lock` itself.
@@ -111,7 +116,7 @@ Seam: `lecture_docs.py` temp dir prefix still reads `semai-lecture-` (cosmetic).
 Owner (2026-10-27): Libra alone fetches and runs Whisper from now; SemAI's login is never refreshed; `libra login` is the only sign-in.
 Done 2026-10-27 20:20 PDT: Libra timers enabled (fetch 23:30, Whisper 01:00); SemAI's hourly poll logs expired-login warnings until L5 removes it.
 Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/libra.env`, but `--root` skips `Settings.load`; harmless today (verified).
-Last audit: 2026-10-27 wrap-up (audited through `24f3b15`; 0 new findings; LX4 docs only).
+Last audit: 2026-10-29 wrap-up (audited through `8c30b71`; LM1, LM2, F2, F6, LN, F12; 2 new findings F13, F14).
 
 ## Findings
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
@@ -119,6 +124,8 @@ Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slide
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
 F10 [low · 1 · 2026-10-27] `lecture_fetch.py` `_fetch_recording`: ECE 108 Lecture 09-24 (2% captions) raises `JSONDecodeError` in the flavor lookup nightly; never transcribed (verified symptom, cause suspected).
 Probe after the next `libra login`: `~/.local/share/uv/tools/libra/bin/python -I -u ~/.cache/spike-20261028/libra_flavor_probe.py` (read-only, prints raw Kaltura replies).
+F13 [low · 1 · 2026-10-29] `sources.py` `expand_books`: no production caller (tests only); its index load-modify-save skips `index_lock`; wire under the lock or delete (verified).
+F14 [low · 1 · 2026-10-29] `sources.py` `_adopt_moved`: plain `libra read` skips adoption; duplicate files adopt once; unindexed same-size files re-hash each export (verified).
 F7 [low · 4 · 2026-10-14→2026-10-27] `lecture_docs.py` `read_document`: recitation-retry batches unmarked in readings (from SemAI F39; port unverified).
 F8 [low · 1 · 2026-10-24→2026-10-27] `textbooks.py` `check_copies`: delete guard needs a book directly in `<course>/Textbooks/`; `_is_book_rel` accepts nested ones, nested duplicates never deleted (from SemAI F136).
 F9 [low · 1 · 2026-10-27] `reading_export.py` `_process_source`: re-hashes every textbook PDF per export (from SemAI F148).
