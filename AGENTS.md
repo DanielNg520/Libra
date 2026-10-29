@@ -55,8 +55,10 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
-Next session: F10. Owner runs `libra login`; then run `~/.local/share/uv/tools/libra/bin/python -I -u ~/.cache/spike-20261028/libra_flavor_probe.py` (read-only).
-F10 next: record the cause here; plan the fix dispatch, off-peak only (DeepSeek peak UTC 01-04 and 06-10 weekdays).
+Next session: F10 (login fresh 2026-10-29 09:43 PDT); run `~/.local/share/uv/tools/libra/bin/python -I -u ~/.cache/spike-20261028/libra_flavor_probe.py` (read-only).
+F10 next: record the cause; plan F10 and F15 fix dispatches, off-peak only (DeepSeek peak UTC 01-04 and 06-10 weekdays).
+Done 2026-10-29 09:43 PDT: owner login via Xubuntu; saved only after Claude navigated the tab to `CourseList.aspx` (F15); fetch added 2 transcripts (vault `1074c8d`).
+F15 workaround until fixed: after sign-in, open `https://podcast.ucsd.edu/CourseList.aspx` top-level in the inspected tab; fix: scan every frame (`page.frames`).
 Owner (2026-10-29): approved the F12 content-adoption design ("go for it"), replacing options (a) and (b); built as `8c30b71`.
 Open check: Mac readings of the 4 renamed decks were not visible over Drive at 2026-10-29 ~05:45 PDT; on the Mac run `libra search "CIDR" --course "ECE 158A"`, expect `Lec7-IP-Addressing`.
 Proposal: regression test that `reconcile_index` under a held `index_lock` is not re-entrant (subprocess with timeout); dispatch with the next `sources.py` edit.
@@ -124,6 +126,7 @@ Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slide
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
 F10 [low · 1 · 2026-10-27] `lecture_fetch.py` `_fetch_recording`: ECE 108 Lecture 09-24 (2% captions) raises `JSONDecodeError` in the flavor lookup nightly; never transcribed (verified symptom, cause suspected).
 Probe after the next `libra login`: `~/.local/share/uv/tools/libra/bin/python -I -u ~/.cache/spike-20261028/libra_flavor_probe.py` (read-only, prints raw Kaltura replies).
+F15 [medium · 1 · 2026-10-29] `login.py` sign-in wait: My Courses now loads in iframes (`CourseList.aspx`); `count_watch_links(page.content())` reads the top frame only, never detects sign-in (verified).
 F13 [low · 1 · 2026-10-29] `sources.py` `expand_books`: no production caller (tests only); its index load-modify-save skips `index_lock`; wire under the lock or delete (verified).
 F14 [low · 1 · 2026-10-29] `sources.py` `_adopt_moved`: plain `libra read` skips adoption; duplicate files adopt once; unindexed same-size files re-hash each export (verified).
 F7 [low · 4 · 2026-10-14→2026-10-27] `lecture_docs.py` `read_document`: recitation-retry batches unmarked in readings (from SemAI F39; port unverified).
