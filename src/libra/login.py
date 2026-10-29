@@ -74,12 +74,15 @@ def cmd_podcast_login(
             found = False
             while not found:
                 for active_page in context.pages:
-                    try:
-                        if count_watch_links(active_page.content()) > 0:
-                            found = True
-                            break
-                    except PlaywrightError:
-                        continue
+                    for frame in active_page.frames:
+                        try:
+                            if count_watch_links(frame.content()) > 0:
+                                found = True
+                                break
+                        except PlaywrightError:
+                            continue
+                    if found:
+                        break
                 if found:
                     break
                 if monotonic() >= deadline:

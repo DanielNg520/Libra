@@ -28,6 +28,7 @@ class FakePage:
         contents: list,
         goto_error: Exception | None = None,
         goto_failures: int | None = None,
+        child_frames: list["FakePage"] | None = None,
     ) -> None:
         self._contents = contents
         self.goto_error = goto_error
@@ -35,6 +36,11 @@ class FakePage:
         self.goto_calls: int = 0
         self.goto_url: str | None = None
         self.goto_kwargs: dict[str, Any] | None = None
+        self._child_frames = child_frames or []
+
+    @property
+    def frames(self) -> list["FakePage"]:
+        return [self, *self._child_frames]
 
     def content(self) -> str:
         item = self._contents.pop(0)
@@ -223,6 +229,29 @@ def test_any_open_page_counts(tmp_path: Path) -> None:
     assert result == 0
     assert state_file.exists()
     assert clock.sleep_calls == []
+
+
+def test_child_frame_signed_in(tmp_path: Path) -> None:
+    child = FakePage([SIGNED_IN_HTML])
+    page = FakePage([SIGNED_OUT_HTML], child_frames=[child])
+    result, _, _, clock, state_file = _run_login(tmp_path, [page])
+
+    assert result == 0
+    assert state_file.exists()
+    assert clock.sleep_calls == []
+
+
+def test_child_frame_error_then_signed_in(tmp_path: Path) -> None:
+    detached_child = FakePage([PlaywrightError("detached")])
+    signed_in_child = FakePage([SIGNED_IN_HTML])
+    page = FakePage(
+        [SIGNED_OUT_HTML],
+        child_frames=[detached_child, signed_in_child],
+    )
+    result, _, _, clock, state_file = _run_login(tmp_path, [page])
+
+    assert result == 0
+    assert state_file.exists()
 
 
 def test_goto_failure_prints_and_still_polls(
