@@ -406,6 +406,20 @@ class CatalogTests(unittest.TestCase):
         self.assertIn("unknown course", err)
         self.assertIn("ECE 108", err)
 
+    def test_outdated_folder_skipped(self) -> None:
+        outdated = self.course1 / "Slides" / "Outdated"
+        outdated.mkdir()
+        (outdated / "old.pdf").write_text("old")
+        code, out, _ = self._run("catalog", "--json")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        ece108 = next(c for c in data["courses"] if c["course"] == "ECE 108")
+        self.assertEqual(
+            [f["path"] for f in ece108["folders"]["Slides"]],
+            ["ECE 108/Slides/lecture1.pdf"],
+        )
+        self.assertNotIn("Outdated", out)
+
     def test_search_still_works(self) -> None:
         code, _, _ = self._run("search", "logical")
         self.assertEqual(code, 0)

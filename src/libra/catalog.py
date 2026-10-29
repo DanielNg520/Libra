@@ -13,6 +13,7 @@ from typing import List, Optional
 
 from libra.library import (
     MATERIAL_DIRS,
+    OUTDATED_DIR,
     Segment,
     _parse_transcript_file,
     _transcript_name,
@@ -40,6 +41,8 @@ def _file_entry(path: Path, course_dir: Path, root: Path) -> Optional[dict]:
     """Return a file entry dict, or None if the file should be skipped."""
     relative_parts = path.relative_to(course_dir).parts
     if any(part.startswith(".") for part in relative_parts):
+        return None
+    if OUTDATED_DIR in relative_parts[:-1]:
         return None
     if fnmatch.fnmatch(path.name, "*.conflict[0-9]*"):
         return None

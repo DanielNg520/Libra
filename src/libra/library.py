@@ -60,6 +60,7 @@ class PageHit:
 
 
 MATERIAL_DIRS = ("Slides", "Discussion", "Homework", "Textbooks", "Readings")
+OUTDATED_DIR: str = "Outdated"
 
 
 EXCLUDED_DIRS = frozenset({"Study notes", "Agent scratch", "Personal", "Academic Planning"})

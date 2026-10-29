@@ -55,6 +55,10 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-10-29 (LN, autofire, stopped at step 3): `Outdated/` skip code applied (6 dispatches, 1 fix round), 341 pass; vault folders moved, content intact.
+Ask owner: `ln_move.sh` exited 1 after all moves; its after-hash `sha256sum Slides/*` hit the new `Outdated/` dir under `pipefail`.
+LN state: by-hand content check 0 of 27 missing; `Lecture Notes/`, `In Class Problems/` gone; steps 4-8 (links, export, Drive, docs, Mac) not run.
+LN resume: fix the script's glob, then run steps 4-8 of `~/.cache/semai-autorun/prompt_ln.md`; `ln.done` not touched; backup `~/.cache/spike-20261029/ln-backup/`.
 Summary 2026-10-28 (F2, F6, attended off-peak): fetch exit 4 on partial errors; `_run_command` re-raises `libra.*` ImportErrors; 5 dispatches (1 fix round), 339 pass; unit reloaded.
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).

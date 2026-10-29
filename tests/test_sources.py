@@ -606,6 +606,20 @@ def test_list_sources_allowlist_and_output_dirs(
     assert "Week 1" in caplog.records[0].getMessage()
 
 
+def test_list_sources_skips_outdated_folders(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+
+    _write(vault / "ECE 158A" / "Slides" / "Lec7-Add-Multicast Notes.pdf", b"%PDF-1.7 x")
+    _write(vault / "ECE 158A" / "Slides" / "Outdated" / "Lec7-Addendum.pdf", b"%PDF-1.7 x")
+    _write(vault / "ECE 158A" / "Homework" / "Outdated" / "Week 1" / "old.pdf", b"%PDF-1.7 x")
+    _write(vault / "ECE 158A" / "Readings" / "outdated" / "keep.pdf", b"%PDF-1.7 x")
+
+    listed = [s.rel for s in sources.list_sources(settings, "ECE 158A")]
+
+    assert listed == ["ECE 158A/Readings/outdated/keep.pdf", "ECE 158A/Slides/Lec7-Add-Multicast Notes.pdf"]
+
+
 def test_source_roots_skips_missing_and_symlinked(tmp_path: Path) -> None:
     settings = make_settings(tmp_path)
     vault = settings.obsidian_academic_vault_dir

@@ -13,6 +13,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 
 from libra.config import Settings
+from libra.library import OUTDATED_DIR
 from libra.textbooks import BookMap, BookMapError, book_map, check_copies
 from libra.gemini import GeminiCapError, GeminiError
 from libra.lecture_docs import (
@@ -168,6 +169,7 @@ def list_sources(settings: Settings, course: str) -> list[SourceFile]:
                         if not d.startswith(".")
                         and not d.startswith("~$")
                         and d not in OUTPUT_DIRS
+                        and d != OUTDATED_DIR
                     )
                     for filename in sorted(filenames):
                         if filename.startswith(".") or filename.startswith("~$"):
