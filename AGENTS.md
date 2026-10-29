@@ -11,6 +11,8 @@ Never reference or absorb another repo's content; port what Libra needs, then ow
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## Owner decisions
+Owner (2026-10-29): agents never run `login`, `fetch`, `export`, `whisper`, `read --fetch` unasked; enforced in `cli._agent_refusal`, override `LIBRA_OWNER_OK=1`.
+Owner (2026-10-29): agy (Gemini 3.8 Flash) wields Libra too; it loads Hivemind `academic-study` from `~/.gemini/config/skills/` (symlink, Fedora and Mac).
 Owner (2026-10-28): a partial fetch exits 4 (`EXIT_PARTIAL`); `libra-fetch.service` `SuccessExitStatus=4`; crash (1) and expired login (3) still fail the unit.
 Owner (2026-10-27): Libra is its own project; every academic piece leaves SemAI for it, transcript fetch and Whisper included.
 Owner (2026-10-27): the tutor and librarian tools also live in `~/Classes/Current` and Hivemind.
@@ -55,6 +57,10 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-10-29 (agent readiness, attended): `--help` text on every flag; agent guard; agy skill link; 5 dispatches (2 re-prompts), 384 pass; mutation-checked.
+Agent guard: refuses (exit 2) under `CLAUDECODE`, `ANTIGRAVITY_AGENT`, `AI_AGENT`, or `SSH_CONNECTION` without a TTY; timers and owner `ssh -t` pass (verified live, Mac ssh both ways).
+Trap: Claude Code `!libra fetch` runs with `CLAUDECODE` set and is refused; prefix `LIBRA_OWNER_OK=1`.
+Seam: the guard stops careless agents, not deliberate ones; an agent can still set `LIBRA_OWNER_OK=1`; agent harnesses beyond Claude Code and agy are unchecked.
 Next session: HP plan (below), or F13 once the owner answers; open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
 Summary 2026-10-29 (findings sweep, attended): F7, F14 fixed; F8, F9 closed by measurement; 7 dispatches (4 re-prompts), 358 pass; mutation-checked.
 F14 fix: `read_pages` runs `reconcile_index` (outside the lock) when cached pages are missing; re-reads only if it adopted.
@@ -195,7 +201,7 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `lecture_poll.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
-`src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`).
+`src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, adopts renamed sources); `login.py` sign-in (every frame).
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

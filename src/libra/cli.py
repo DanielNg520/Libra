@@ -14,7 +14,9 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, List, Optional
 
@@ -24,6 +26,10 @@ from libra.mapview import cmd_map
 from libra.search import _validate_date, cmd_search
 
 VAULT_COMMANDS = frozenset({"search", "catalog", "map"})
+
+AGENT_VARS = ("CLAUDECODE", "ANTIGRAVITY_AGENT", "AI_AGENT")
+OWNER_ONLY_COMMANDS = frozenset({"login", "fetch", "export", "whisper"})
+OWNER_OK_VAR = "LIBRA_OWNER_OK"
 
 
 def _add_search_parser(subparsers: Any) -> None:
@@ -251,6 +257,34 @@ def _vault_root(arg: Optional[Path]) -> Optional[Path]:
     return vault
 
 
+def _agent_refusal(
+    args: argparse.Namespace, env: Mapping[str, str], stdin_tty: bool
+) -> Optional[str]:
+    """Return the refusal message for an owner-only command run by an agent, else None."""
+    if env.get(OWNER_OK_VAR) == "1":
+        return None
+
+    if any(env.get(var) for var in AGENT_VARS):
+        is_agent = True
+    else:
+        is_agent = bool(env.get("SSH_CONNECTION")) and not stdin_tty
+
+    if not is_agent:
+        return None
+
+    if args.command == "read" and args.fetch:
+        name = "read --fetch"
+    elif args.command in OWNER_ONLY_COMMANDS:
+        name = args.command
+    else:
+        return None
+
+    return (
+        f"libra: {name} is owner-only; rerun with {OWNER_OK_VAR}=1 "
+        "only if the owner asked"
+    )
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     """Run the CLI and return the exit code."""
     parser = _build_parser()
@@ -267,6 +301,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     if args.command not in VAULT_COMMANDS:
+        stdin_tty = sys.stdin.isatty() if sys.stdin is not None else False
+        refusal = _agent_refusal(args, os.environ, stdin_tty)
+        if refusal is not None:
+            print(refusal, file=sys.stderr)
+            return 2
+
         settings = _settings()
         if settings is None:
             return 2
