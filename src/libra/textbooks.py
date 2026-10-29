@@ -319,7 +319,7 @@ def load_cached_map(cache_file: Path, path: Path) -> BookMap | None:
                 for e in cached["entries"]
             ),
         )
-        if not book_map.entries and time.time() - cache_file.stat().st_mtime > UNUSABLE_RETRY_S:
+        if not book_map.entries and book_map.searchable and time.time() - cache_file.stat().st_mtime > UNUSABLE_RETRY_S:
             log.info("Unusable map for %s is older than 7 days; rebuilding", path)
             return None
         return book_map

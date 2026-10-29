@@ -62,8 +62,9 @@ F13 rule: `lecture_map.ensure_book_maps` runs per course before `fingerprint` in
 F13 why first: a failed build leaves no cache, so the next run retries; a build changes `books` mtime, so the map rebuilds.
 F13 units: both services set `Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin`; without it `sops` is missing and keys never load (verified).
 F13 live 2026-10-29: scratch rebuild of ECE 158A `978-3-031-79281-6.pdf` via unit env: 1 Gemini call, 16 s; equal to the cached map.
-Seam: `expand_books` still has no production caller; kept as the base for a textbook `read` route (owner pick pending).
-Seam: a scanned (unsearchable) textbook gets an unusable map; `load_cached_map` retries it weekly, one 12-page vision call each time.
+Owner (2026-10-29): keep `expand_books` (no production caller); base for a textbook `read` route.
+Owner (2026-10-29): a scanned textbook, once identified, is never retried (no weekly vision call).
+Scanned rule: `load_cached_map` retries an empty map weekly only if searchable; a scanned map (`searchable` false) is final; a new copy has a new sha.
 Seam: fetch and Whisper can build the same new book at once; double call, last atomic write wins; harmless.
 Guard: tests/test_lecture_map.py autouse `_no_real_book_map` fails any test that reaches a real `book_map`.
 Trap: dispatch excerpts must mark gaps between non-adjacent code; two SEARCH misses came from excerpts shown as adjacent (2026-10-29).

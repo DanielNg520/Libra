@@ -332,6 +332,43 @@ def test_book_map_unusable_stale_rebuilds(tmp_path: Path, monkeypatch: pytest.Mo
     assert result.built is True
 
 
+def test_scanned_map_never_retried(tmp_path: Path) -> None:
+    import os
+    import time
+
+    settings = make_settings(tmp_path)
+    sha = "a" * 64
+    cache_path = (
+        settings.state_dir / textbooks.READS_DIR / "books" / f"{sha}.json"
+    )
+    textbooks._save_map(
+        cache_path,
+        textbooks.BookMap(
+            title="title",
+            authors="author",
+            searchable=False,
+            complete=False,
+            edition=None,
+            year=None,
+            pages=300,
+            entries=(),
+        ),
+    )
+    old = time.time() - textbooks.UNUSABLE_RETRY_S - 1
+    os.utime(cache_path, (old, old))
+
+    result = textbooks.load_cached_map(cache_path, tmp_path / "book.pdf")
+    assert result is not None
+    assert result.searchable is False
+
+    def raises(*args: Any, **kwargs: Any) -> str:
+        raise AssertionError("chat_fn should not be called")
+
+    assert textbooks.book_map(
+        settings, tmp_path / "book.pdf", sha, chat_fn=raises
+    ) is not None
+
+
 def test_book_map_index_beyond_book(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     settings = make_settings(tmp_path)
     texts = make_texts(pages=110, offset=10, index_printed=115)
