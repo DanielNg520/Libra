@@ -183,6 +183,9 @@ def _renumber_pages(reply: str, first: int, last: int) -> str:
     return _PAGE_HEADING_RE.sub(_replace, reply)
 
 
+PARAPHRASE_NOTE: str = "> Paraphrased study notes: the model declined a verbatim read of this page."
+
+
 def _read_pages_with_fallback(
     settings: Settings,
     key: str,
@@ -195,6 +198,7 @@ def _read_pages_with_fallback(
     batch: list[tuple[str, bytes]],
 ) -> str:
     prompt = prompt_template.format(course=course, first=first, last=last)
+    paraphrased = False
     try:
         reply = read_pages(settings, prompt, batch, model=model, effort=effort).strip()
     except GeminiRecitationError:
@@ -211,9 +215,16 @@ def _read_pages_with_fallback(
             model=model,
             effort=effort,
         ).strip()
+        paraphrased = True
     if first == last and not _PAGE_HEADING_RE.search(reply):
         reply = f"### Page {first}\n{reply}"
-    return _renumber_pages(reply, first, last)
+    reply = _renumber_pages(reply, first, last)
+    if paraphrased:
+        reply = _PAGE_HEADING_RE.sub(
+            lambda match: f"{match.group(0)}\n{PARAPHRASE_NOTE}",
+            reply,
+        )
+    return reply
 
 
 # Bumped whenever reply post-processing (_renumber_pages) changes.
@@ -299,7 +310,7 @@ def read_document(
                 f"pages has {len(pages)} entries but page_range {page_range[0]}-{page_range[1]} spans {expected}"
             )
     checkpoint_path = settings.state_dir / READS_DIR / f"{key}.partial.json"
-    with tempfile.TemporaryDirectory(prefix="semai-lecture-") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="libra-lecture-") as tmpdir:
         workdir = Path(tmpdir)
         if pages is None:
             try:

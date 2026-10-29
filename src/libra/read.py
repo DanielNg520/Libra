@@ -12,7 +12,7 @@ from libra.courses import canonical_course_code
 from libra.gemini import GeminiCapError
 from libra.lecture_docs import pdf_page_count
 from libra.source_pages import MAX_FETCH_PAGES, cached_pages, missing_entries
-from libra.sources import SourceFile, course_dir, index_lock, list_sources, read_sources
+from libra.sources import SourceFile, course_dir, index_lock, list_sources, read_sources, reconcile_index
 
 READ_BUDGET_S: float = 900.0
 
@@ -86,6 +86,10 @@ def read_pages(
     pages = cached_pages(settings, source)
     answer = _answer(source.rel, pages, first, last)
     missing = answer["missing"]
+    if missing and reconcile_index(settings, code, sources):
+        pages = cached_pages(settings, source)
+        answer = _answer(source.rel, pages, first, last)
+        missing = answer["missing"]
     if not fetch or not missing:
         return answer
 

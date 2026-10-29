@@ -55,18 +55,26 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
-Next session: owner's pick among HP plan (below), F13, F14; open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
+Next session: HP plan (below), or F13 once the owner answers; open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
+Summary 2026-10-29 (findings sweep, attended): F7, F14 fixed; F8, F9 closed by measurement; 7 dispatches (4 re-prompts), 358 pass; mutation-checked.
+F14 fix: `read_pages` runs `reconcile_index` (outside the lock) when cached pages are missing; re-reads only if it adopted.
+F7 fix: recitation-retry pages carry `lecture_docs.PARAPHRASE_NOTE` under each `### Page N`; earlier cached reads stay unmarked (no re-read).
+Closed 2026-10-29: F8 delete path has no production caller (`expand_books` passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
+Closed 2026-10-29: F14 duplicates and re-hash parts; reads are content-keyed, so a duplicate costs a render, never a Gemini call.
+Ask owner: F13 wiring loads sops keys in `fetch`, `export`, `whisper` (today only `read --fetch`, `ocr`); approve the secrets change?
+Ask owner: F3 config home: keep repo-relative `.config/` (editable installs only) or move to `~/.config/libra/`?
+Ask owner: merge `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS`? Contents differ; a union hides `Concepts`, `Archive` from catalog.
 Summary 2026-10-29 (F15 fixed, attended): login sign-in check reads every frame (`page.frames`); 2 dispatches (1 re-prompt), 353 pass; new tests fail on old code.
 F10 closed 2026-10-29: ECE 108 Lecture 09-24 is gone from podcast.ucsd.edu (probe, fresh login); cause of its `JSONDecodeError` unrecoverable.
 Done 2026-10-29 09:43 PDT: owner login via Xubuntu; saved only after Claude navigated the tab to `CourseList.aspx` (F15); fetch added 2 transcripts (vault `1074c8d`).
 Owner (2026-10-29): approved the F12 content-adoption design ("go for it"), replacing options (a) and (b); built as `8c30b71`.
 Mac check passed 2026-10-29 09:47 PDT: `libra search "CIDR" --course "ECE 158A"` returns `Lec7-IP-Addressing.pdf` pp. 22, 23, 28.
-Proposal: regression test that `reconcile_index` under a held `index_lock` is not re-entrant (subprocess with timeout); dispatch with the next `sources.py` edit.
+Guard: `test_reconcile_never_runs_under_index_lock` (`tests/test_read.py`) fails if `read_pages` reconciles while holding `index_lock`.
 Summary 2026-10-29 (F12 done, attended): content-matched index adoption; 7 dispatches (3 fixes), 351 pass; live export adopted 8 entries (158A decks, 271A HW2).
 F12 rule: `sources._adopt_moved` re-keys a missing or stale-mtime entry to a same-size, same-sha entry (own or same-course orphan); never takes a listed rel.
 F12 callers: `read_sources` (caller holds the lock) and `reading_export.write_readings` via `reconcile_index`, which takes `index_lock` itself.
 Trap: `index_lock` (`read.lock`, flock) is not re-entrant; never call `reconcile_index` while holding it (`read_pages` fetch path).
-Seam: export waits on `index_lock` while a `libra read --fetch` runs (budget up to 900 s per read).
+Seam: export, and a plain `read` with missing pages, wait on `index_lock` while a `libra read --fetch` runs (up to 900 s).
 Seam: `refresh_exports` builds maps before readings, so a renamed deck reaches `Tools/maps/` one export later.
 Summary 2026-10-29 (LN done, attended): script after-check fixed, 0 of 27 missing; links rewritten (6), export, Drive, docs verified; F11 closed.
 Summary 2026-10-28 (F2, F6, attended off-peak): fetch exit 4 on partial errors; `_run_command` re-raises `libra.*` ImportErrors; 5 dispatches (1 fix round), 339 pass; unit reloaded.
@@ -114,7 +122,6 @@ Trap: tests must pass `LIBRA_STATE_DIR` to `Settings.load`; the default creates 
 Trap: the Mac has no ledger-check hook and no dispatch setup; Libra code changes happen on Fedora only.
 Seam: `lecture_poll.py` name is historical (no polling left); rename when next touched.
 Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive, inherited from SemAI.
-Seam: `lecture_docs.py` temp dir prefix still reads `semai-lecture-` (cosmetic).
 Owner (2026-10-27): Libra alone fetches and runs Whisper from now; SemAI's login is never refreshed; `libra login` is the only sign-in.
 Done 2026-10-27 20:20 PDT: Libra timers enabled (fetch 23:30, Whisper 01:00); SemAI's hourly poll logs expired-login warnings until L5 removes it.
 Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/libra.env`, but `--root` skips `Settings.load`; harmless today (verified).
@@ -124,12 +131,9 @@ Last audit: 2026-10-29 wrap-up (audited through `8c30b71`; LM1, LM2, F2, F6, LN,
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
-F13 [low · 1 · 2026-10-29] `sources.py` `expand_books`: no production caller (tests only); its index load-modify-save skips `index_lock`; wire under the lock or delete (verified).
-F14 [low · 1 · 2026-10-29] `sources.py` `_adopt_moved`: plain `libra read` skips adoption; duplicate files adopt once; unindexed same-size files re-hash each export (verified).
-F7 [low · 4 · 2026-10-14→2026-10-27] `lecture_docs.py` `read_document`: recitation-retry batches unmarked in readings (from SemAI F39; port unverified).
-F8 [low · 1 · 2026-10-24→2026-10-27] `textbooks.py` `check_copies`: delete guard needs a book directly in `<course>/Textbooks/`; `_is_book_rel` accepts nested ones, nested duplicates never deleted (from SemAI F136).
-F9 [low · 1 · 2026-10-27] `reading_export.py` `_process_source`: re-hashes every textbook PDF per export (from SemAI F148).
-F3 [low · 1 · 2026-10-27] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (suspected).
+F13 [medium · 2 · 2026-10-29] `sources.py` `expand_books`: only builder of textbook chapter maps, no production caller; new textbooks never reach lecture maps; skips `index_lock` (verified).
+F13 plan: call `expand_books` per course before `write_maps` in `lecture_poll._refresh_maps`, lock inside it; maps of all 10 current books are cached.
+F3 [low · 2 · 2026-10-27→2026-10-29] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (verified by code trace).
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
 Goal: Libra owns transcript fetch, Whisper, readings, maps, search and page reads; SemAI and vault `Tools/librarian.py` keep none of it.
@@ -192,6 +196,6 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`).
-`src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` `transcribe_image`, OCR prompts; `read.py` `read_pages` (flock `read.lock`); `login.py` DevTools sign-in (reads every frame).
+`src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, adopts renamed sources); `login.py` sign-in (every frame).
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

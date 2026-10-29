@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -150,6 +152,83 @@ def test_cached_only(settings: Settings, fakes: dict[str, Mock]) -> None:
     fakes["read_sources"].assert_not_called()
 
 
+def test_missing_reconcile_true(
+    settings: Settings, fakes: dict[str, Mock], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fakes["cached_pages"].side_effect = [
+        {1: "a", 3: "c"},
+        {1: "a", 2: "b", 3: "c", 4: "d", 5: "e"},
+    ]
+    reconcile = Mock(return_value=True)
+    monkeypatch.setattr(read_mod, "reconcile_index", reconcile)
+    result = read_mod.read_pages(settings, "ece 108", "notes/lec1.pdf")
+    assert result == {
+        "ok": True,
+        "path": "notes/lec1.pdf",
+        "pages": [
+            {"page": 1, "text": "a"},
+            {"page": 2, "text": "b"},
+            {"page": 3, "text": "c"},
+            {"page": 4, "text": "d"},
+            {"page": 5, "text": "e"},
+        ],
+        "missing": [],
+    }
+    reconcile.assert_called_once_with(
+        settings, "ECE 108", fakes["list_sources"].return_value
+    )
+    fakes["read_sources"].assert_not_called()
+
+
+def test_nothing_missing_no_reconcile(
+    settings: Settings, fakes: dict[str, Mock], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fakes["cached_pages"].return_value = {
+        1: "a",
+        2: "b",
+        3: "c",
+        4: "d",
+        5: "e",
+    }
+    reconcile = Mock(return_value=True)
+    monkeypatch.setattr(read_mod, "reconcile_index", reconcile)
+    result = read_mod.read_pages(settings, "ece 108", "notes/lec1.pdf")
+    assert result == {
+        "ok": True,
+        "path": "notes/lec1.pdf",
+        "pages": [
+            {"page": 1, "text": "a"},
+            {"page": 2, "text": "b"},
+            {"page": 3, "text": "c"},
+            {"page": 4, "text": "d"},
+            {"page": 5, "text": "e"},
+        ],
+        "missing": [],
+    }
+    reconcile.assert_not_called()
+    fakes["read_sources"].assert_not_called()
+
+
+def test_missing_reconcile_false(
+    settings: Settings, fakes: dict[str, Mock], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fakes["cached_pages"].return_value = {1: "a", 3: "c"}
+    reconcile = Mock(return_value=False)
+    monkeypatch.setattr(read_mod, "reconcile_index", reconcile)
+    result = read_mod.read_pages(settings, "ece 108", "notes/lec1.pdf")
+    assert result == {
+        "ok": True,
+        "path": "notes/lec1.pdf",
+        "pages": [
+            {"page": 1, "text": "a"},
+            {"page": 3, "text": "c"},
+        ],
+        "missing": [2, 4, 5],
+    }
+    fakes["cached_pages"].assert_called_once()
+    fakes["read_sources"].assert_not_called()
+
+
 def test_fetch_guards(
     settings: Settings,
     no_key_settings: Settings,
@@ -222,3 +301,45 @@ def test_gemini_cap(settings: Settings, fakes: dict[str, Mock]) -> None:
             settings, "ece 108", "notes/lec1.pdf", fetch=True
         )
     assert exc.value.code == "gemini_cap"
+
+
+def test_reconcile_never_runs_under_index_lock(
+    settings: Settings, fakes: dict[str, Mock], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    held = False
+    entries = 0
+    reconcile_calls = 0
+
+    @contextlib.contextmanager
+    def fake_index_lock(_settings: Settings) -> Iterator[None]:
+        nonlocal held, entries
+        held = True
+        entries += 1
+        try:
+            yield
+        finally:
+            held = False
+
+    def fake_reconcile(
+        _settings: Settings, _code: str, sources: object
+    ) -> bool:
+        nonlocal reconcile_calls
+        reconcile_calls += 1
+        assert not held
+        return False
+
+    monkeypatch.setattr(read_mod, "MAX_FETCH_PAGES", 10)
+    monkeypatch.setattr(read_mod, "index_lock", fake_index_lock)
+    monkeypatch.setattr(read_mod, "reconcile_index", fake_reconcile)
+    fakes["cached_pages"].side_effect = [
+        {1: "a"},
+        {1: "a"},
+        {1: "a", 2: "b", 3: "c", 4: "d", 5: "e"},
+    ]
+
+    result = read_mod.read_pages(settings, "ece 108", "notes/lec1.pdf", fetch=True)
+
+    assert entries == 1
+    assert reconcile_calls == 1
+    assert fakes["read_sources"].call_count == 1
+    assert result["missing"] == []

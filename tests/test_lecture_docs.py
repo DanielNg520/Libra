@@ -484,7 +484,41 @@ def test_recitation_refusal_retries_with_textbook_prompt(tmp_path, monkeypatch):
     assert len(prompts) == 2
     assert "of lecture material for" in prompts[0]
     assert "of a textbook used in" in prompts[1]
-    assert "study notes" in result.read_text()
+    text = result.read_text()
+    assert "study notes" in text
+    assert text.count(lecture_docs.PARAPHRASE_NOTE) == 2
+    headings = re.findall(r"^### Page \d+$", text, flags=re.MULTILINE)
+    note_positions = [
+        m.start() for m in re.finditer(re.escape(lecture_docs.PARAPHRASE_NOTE), text)
+    ]
+    for heading in headings:
+        line_start = text.find(f"\n{heading}\n", 0) + len(heading) + 2
+        line_end = text.find("\n", line_start)
+        assert lecture_docs.PARAPHRASE_NOTE == text[line_start:line_end].strip()
+    assert len(note_positions) == len(headings)
+
+
+def test_normal_read_has_no_paraphrase_note(tmp_path, monkeypatch):
+    settings = make_settings(tmp_path)
+
+    def fake_chat(messages, model, *, api_key, reasoning_effort, timeout_s, url=None):
+        return _headed(messages, "verbatim text")
+
+    monkeypatch.setattr(lecture_docs, "chat", fake_chat)
+
+    result = lecture_docs.read_document(
+        settings,
+        key=KEY,
+        course=COURSE,
+        kind=KIND,
+        paths=PATHS,
+        sources=[tmp_path / "x.pdf"],
+        model=MODEL,
+        effort=EFFORT,
+        pages=[("image/png", b"p0"), ("image/png", b"p1")],
+    )
+
+    assert lecture_docs.PARAPHRASE_NOTE not in result.read_text()
 
 
 def test_recitation_refusal_with_textbook_prompt_propagates(tmp_path, monkeypatch):
