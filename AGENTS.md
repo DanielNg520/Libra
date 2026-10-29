@@ -55,14 +55,13 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-10-29 (F12 done, attended): content-matched index adoption; 7 dispatches (3 fixes), 351 pass; live export adopted 8 entries (158A decks, 271A HW2).
+F12 rule: `sources._adopt_moved` re-keys a missing or stale-mtime entry to a same-size, same-sha entry (own or same-course orphan); never takes a listed rel.
+F12 callers: `read_sources` (caller holds the lock) and `reading_export.write_readings` via `reconcile_index`, which takes `index_lock` itself.
+Trap: `index_lock` (`read.lock`, flock) is not re-entrant; never call `reconcile_index` while holding it (`read_pages` fetch path).
+Seam: export waits on `index_lock` while a `libra read --fetch` runs (budget up to 900 s per read).
+Seam: `refresh_exports` builds maps before readings, so a renamed deck reaches `Tools/maps/` one export later.
 Summary 2026-10-29 (LN done, attended): script after-check fixed, 0 of 27 missing; links rewritten (6), export, Drive, docs verified; F11 closed.
-Next session: F12 (owner, 2026-10-29). Start: CodeGraph `cached_pages`, `load_index`, `_prune_index`, `read_sources`; no `libra read` on ECE 158A before fixing.
-F12 facts: index `~/.local/state/libra/lecture_reads/source_index.json`, entry rel -> [size, mtime_ns, sha, render_key]; old-name entries still present.
-F12 facts: new files are byte-identical to old (`ln_move.sh` cmp); old rels Slides/Lec1-Max-PDF, Lec2-Max-PDF, Lec6-Max, Lec7-Max (.pdf).
-F12 trap: `_prune_index` drops entries whose rel is no longer listed on any `libra read` of the course; backup `~/.cache/spike-20261029/source_index.before-f12.json`.
-F12 options: (a) one-off re-key of 4 entries (state edit, no LLM); (b) code: sha fallback adopts an orphan entry on rename (dispatch).
-F12 Claude lean: (b), since every future `Outdated/` move renames too; then (a) is not needed. Trace before choosing; owner picks if unclear.
-F12 done when: export writes the 4 decks under `Tools/readings/ECE 158A/Slides/`, `libra search` finds them, tests pass, Mac pulled.
 Summary 2026-10-28 (F2, F6, attended off-peak): fetch exit 4 on partial errors; `_run_command` re-raises `libra.*` ImportErrors; 5 dispatches (1 fix round), 339 pass; unit reloaded.
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
@@ -118,7 +117,6 @@ Last audit: 2026-10-27 wrap-up (audited through `24f3b15`; 0 new findings; LX4 d
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
-F12 [medium · 1 · 2026-10-29] `source_pages.py` `cached_pages`: reads keyed by path; renamed decks Lec1, Lec2, Lec6, Lec7-IP (158A) lost readings, not searchable (verified).
 F10 [low · 1 · 2026-10-27] `lecture_fetch.py` `_fetch_recording`: ECE 108 Lecture 09-24 (2% captions) raises `JSONDecodeError` in the flavor lookup nightly; never transcribed (verified symptom, cause suspected).
 Probe after the next `libra login`: `~/.local/share/uv/tools/libra/bin/python -I -u ~/.cache/spike-20261028/libra_flavor_probe.py` (read-only, prints raw Kaltura replies).
 F7 [low · 4 · 2026-10-14→2026-10-27] `lecture_docs.py` `read_document`: recitation-retry batches unmarked in readings (from SemAI F39; port unverified).
@@ -184,7 +182,7 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `AGENTS.md` this file. `pyproject.toml` (uv; core stdlib, extra `fedora`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
 `src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `lecture_poll.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`.
-`src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py`, `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
+`src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps; `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`).
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` `transcribe_image`, OCR prompts; `read.py` `read_pages` (flock `read.lock`); `login.py` UCSD DevTools sign-in.

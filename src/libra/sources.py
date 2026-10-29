@@ -1,5 +1,6 @@
 """Source layer for on-demand study-notes: list course files and read chosen ones lazily."""
 
+import fcntl
 import hashlib
 import json
 import logging
@@ -8,7 +9,8 @@ import re
 import subprocess
 import tempfile
 import time
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 
@@ -36,6 +38,7 @@ PHOTO_MODEL = "gemini-3.5-flash"
 PHOTO_EFFORT = "medium"
 DOC_EFFORT = "low"
 INDEX_NAME = "source_index.json"
+LOCK_NAME = "read.lock"
 SLIDES_DIR = "Slides"
 DISCUSSION_DIR = "Discussion"
 HOMEWORK_DIR = "Homework"
@@ -341,6 +344,98 @@ def _resolve_key(
     return render_key, pages, True
 
 
+@contextmanager
+def index_lock(settings: Settings) -> Iterator[None]:
+    """Exclusive lock serialising index writers (`libra read` fetches and the readings export); not re-entrant within one process."""
+    path = settings.state_dir / LOCK_NAME
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        yield
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+
+def _rewrite_ranges(index: dict[str, list], old_prefix: str, new_prefix: str, size: int, mtime_ns: int) -> None:
+    """Move range keys from old_prefix to new_prefix, updating size and mtime_ns."""
+    for key in list(index):
+        if key.startswith(old_prefix):
+            suffix = key[len(old_prefix):]
+            entry = index.pop(key)
+            index[new_prefix + suffix] = [size, mtime_ns, entry[2], entry[3]]
+
+
+def _adopt_moved(index: dict[str, list], course: str, sources: Collection[SourceFile], vault: Path) -> bool:
+    """Adopt index entries for renamed or touched sources by content hash."""
+    changed = False
+    listed = {s.rel for s in sources}
+    orphans = sorted(k for k in index if "#pages=" not in k and k.startswith(f"{course}/") and k not in listed)
+
+    seen: set[str] = set()
+    for source in sources:
+        rel = source.rel
+        if source.kind not in ("doc", "photo") or rel in seen:
+            continue
+        seen.add(rel)
+
+        own = index.get(rel)
+        if isinstance(own, list) and len(own) == 4 and own[0] == source.size and own[1] == source.mtime_ns:
+            continue
+
+        candidates: list[str] = []
+        if isinstance(own, list) and len(own) == 4 and own[0] == source.size:
+            candidates.append(rel)
+        candidates.extend(k for k in orphans if index[k][0] == source.size)
+
+        if not candidates:
+            continue
+
+        try:
+            sha = sha256_file(vault / rel)
+        except OSError:
+            log.debug("could not hash %s", rel)
+            continue
+
+        adopted_from: str | None = None
+        if rel in candidates and index[rel][2] == sha:
+            old_render_key = index[rel][3]
+            index[rel] = [source.size, source.mtime_ns, sha, old_render_key]
+            _rewrite_ranges(index, f"{rel}#pages=", f"{rel}#pages=", source.size, source.mtime_ns)
+            changed = True
+            continue
+
+        for orphan in orphans:
+            if index[orphan][0] != source.size or index[orphan][2] != sha:
+                continue
+            adopted_from = orphan
+            break
+
+        if adopted_from is None:
+            continue
+
+        orphan_render_key = index[adopted_from][3]
+        index[rel] = [source.size, source.mtime_ns, sha, orphan_render_key]
+        _rewrite_ranges(index, f"{adopted_from}#pages=", f"{rel}#pages=", source.size, source.mtime_ns)
+        index.pop(adopted_from, None)
+        orphans.remove(adopted_from)
+        log.info("adopted index entry %s -> %s", adopted_from, rel)
+        changed = True
+
+    return changed
+
+
+def reconcile_index(settings: Settings, course: str, sources: Collection[SourceFile]) -> bool:
+    """Reconcile the source index with current sources; callers must not already hold `index_lock`."""
+    if settings.obsidian_academic_vault_dir is None:
+        return False
+    vault = settings.obsidian_academic_vault_dir
+    with index_lock(settings):
+        index = load_index(settings)
+        changed = _adopt_moved(index, course, sources, vault)
+        if changed:
+            save_checkpoint(settings.state_dir / READS_DIR / INDEX_NAME, {"version": 1, "files": index})
+        return changed
+
+
 def _prune_index(index: dict[str, list], course: str, listed: Collection[str]) -> bool:
     pruned = False
     prefixes = (f"{course}/",)
@@ -370,6 +465,8 @@ def read_sources(
     reads_dir = settings.state_dir / READS_DIR
     index = load_index(settings)
     index_changed = False
+    if _adopt_moved(index, course, sources.values(), settings.obsidian_academic_vault_dir):
+        index_changed = True
     readings: dict[str, Path] = {}
     skipped: list[str] = []
     failed: dict[str, str] = {}

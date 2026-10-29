@@ -2,22 +2,19 @@
 
 from __future__ import annotations
 
-import fcntl
 import subprocess
 import time
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Iterator
+from typing import Any, Callable
 
 from libra.config import Settings
 from libra.courses import canonical_course_code
 from libra.gemini import GeminiCapError
 from libra.lecture_docs import pdf_page_count
 from libra.source_pages import MAX_FETCH_PAGES, cached_pages, missing_entries
-from libra.sources import SourceFile, course_dir, list_sources, read_sources
+from libra.sources import SourceFile, course_dir, index_lock, list_sources, read_sources
 
 READ_BUDGET_S: float = 900.0
-LOCK_NAME: str = "read.lock"
 
 
 class ReadError(Exception):
@@ -35,18 +32,6 @@ def _answer(rel: str, pages: dict[int, str], first: int, last: int) -> dict[str,
         else:
             missing.append(n)
     return {"ok": True, "path": rel, "pages": page_entries, "missing": missing}
-
-
-@contextmanager
-def _locked(path: Path) -> Iterator[None]:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    lock_file = open(path, "a")
-    try:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-        yield
-    finally:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
-        lock_file.close()
 
 
 def read_pages(
@@ -110,7 +95,7 @@ def read_pages(
     if not settings.gemini_api_key:
         raise ReadError("read_unavailable")
 
-    with _locked(settings.state_dir / LOCK_NAME):
+    with index_lock(settings):
         fetched = cached_pages(settings, source)
         still_missing = [page for page in missing if page not in fetched]
         if still_missing:

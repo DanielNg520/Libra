@@ -10,7 +10,7 @@ from pathlib import Path
 
 from libra.config import Settings
 from libra.lecture_map import course_names
-from libra.sources import TEXTBOOKS_DIR, SourceFile, list_sources
+from libra.sources import TEXTBOOKS_DIR, SourceFile, list_sources, reconcile_index
 from libra.source_pages import cached_pages
 from libra.textbooks import is_searchable, pdf_page_texts
 from libra.lecture_docs import sha256_file
@@ -176,6 +176,7 @@ def write_readings(settings: Settings) -> list[Path]:
     for course in course_names(vault):
         try:
             sources = list_sources(settings, course)
+            reconcile_index(settings, course, sources)
             kept: set[str] = set()
             for source in sources:
                 if source.kind not in ("doc", "photo"):
