@@ -55,10 +55,8 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
-Summary 2026-10-29 (LN, autofire, stopped at step 3): `Outdated/` skip code applied (6 dispatches, 1 fix round), 341 pass; vault folders moved, content intact.
-Ask owner: `ln_move.sh` exited 1 after all moves; its after-hash `sha256sum Slides/*` hit the new `Outdated/` dir under `pipefail`.
-LN state: by-hand content check 0 of 27 missing; `Lecture Notes/`, `In Class Problems/` gone; steps 4-8 (links, export, Drive, docs, Mac) not run.
-LN resume: fix the script's glob, then run steps 4-8 of `~/.cache/semai-autorun/prompt_ln.md`; `ln.done` not touched; backup `~/.cache/spike-20261029/ln-backup/`.
+Summary 2026-10-29 (LN done, attended): script after-check fixed, 0 of 27 missing; links rewritten (6), export, Drive, docs verified; F11 closed.
+Ask owner: F12 fix choice: re-key the 4 cached reads to the new paths (state edit, no LLM), or re-read them (hosted model cost).
 Summary 2026-10-28 (F2, F6, attended off-peak): fetch exit 4 on partial errors; `_run_command` re-raises `libra.*` ImportErrors; 5 dispatches (1 fix round), 339 pass; unit reloaded.
 L5 done 2026-10-27 (autofire LX1-LX4): Libra `b597c6b`; SemAI `f0f50f4`, `6e59220`; Hivemind skill `2fb67a0`; vault `4056b3a` deleted `librarian.py` and its tests.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
@@ -111,10 +109,10 @@ Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/l
 Last audit: 2026-10-27 wrap-up (audited through `24f3b15`; 0 new findings; LX4 docs only).
 
 ## Findings
-F11 [medium · 1 · 2026-10-28] `sources.py` `SOURCE_DIRS`: `Lecture Notes/` (owner's source of truth, vault AGENTS.md) is skipped; journal warns "not a source folder" (verified).
-F11 trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; on the Mac's case-insensitive Drive it is the same folder.
+Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
+F12 [medium · 1 · 2026-10-29] `source_pages.py` `cached_pages`: reads keyed by path; renamed decks Lec1, Lec2, Lec6, Lec7-IP (158A) lost readings, not searchable (verified).
 F10 [low · 1 · 2026-10-27] `lecture_fetch.py` `_fetch_recording`: ECE 108 Lecture 09-24 (2% captions) raises `JSONDecodeError` in the flavor lookup nightly; never transcribed (verified symptom, cause suspected).
 Probe after the next `libra login`: `~/.local/share/uv/tools/libra/bin/python -I -u ~/.cache/spike-20261028/libra_flavor_probe.py` (read-only, prints raw Kaltura replies).
 F7 [low · 4 · 2026-10-14→2026-10-27] `lecture_docs.py` `read_document`: recitation-retry batches unmarked in readings (from SemAI F39; port unverified).
