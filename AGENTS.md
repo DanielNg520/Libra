@@ -108,7 +108,9 @@ Last audit: 2026-10-27 wrap-up (audited through `24f3b15`; 0 new findings; LX4 d
 
 ## Findings
 F11 [medium · 1 · 2026-10-28] `sources.py` `SOURCE_DIRS`: `Lecture Notes/` (owner's source of truth, vault AGENTS.md) is skipped; journal warns "not a source folder" (verified).
-F11 trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; on the Mac's case-insensitive Drive it is the same folder. Owner decides the rename.
+F11 trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; on the Mac's case-insensitive Drive it is the same folder.
+Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
+Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
 F10 [low · 1 · 2026-10-27] `lecture_fetch.py` `_fetch_recording`: ECE 108 Lecture 09-24 (2% captions) raises `JSONDecodeError` in the flavor lookup nightly; never transcribed (verified symptom, cause suspected).
 Probe after the next `libra login`: `~/.local/share/uv/tools/libra/bin/python -I -u ~/.cache/spike-20261028/libra_flavor_probe.py` (read-only, prints raw Kaltura replies).
 F7 [low · 4 · 2026-10-14→2026-10-27] `lecture_docs.py` `read_document`: recitation-retry batches unmarked in readings (from SemAI F39; port unverified).
