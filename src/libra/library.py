@@ -98,6 +98,34 @@ def match_course(name: str, courses: dict) -> Optional[str]:
     return None
 
 
+def select_courses(root: Path, course_arg: Optional[str], *, catalog: bool) -> Optional[dict]:
+    """Select courses by argument; return None on error."""
+    if not root.exists() or not root.is_dir():
+        print(f"error: root not found: {root}", file=sys.stderr)
+        return None
+
+    courses = find_courses(root, catalog=catalog)
+    if not courses:
+        if catalog:
+            print(f"error: no course folders under {root}", file=sys.stderr)
+        else:
+            print(f"error: no course folders with Transcripts/ under {root}", file=sys.stderr)
+        return None
+
+    if course_arg is None:
+        return courses
+
+    course_name = match_course(course_arg, courses)
+    if course_name is None:
+        known = ", ".join(sorted(courses))
+        print(
+            f"error: unknown course '{course_arg}'; known: {known}",
+            file=sys.stderr,
+        )
+        return None
+    return {course_name: courses[course_name]}
+
+
 def _transcript_name(path: Path) -> Optional[Tuple[date, str]]:
     """Return (date, kind) for a transcript file name, or None if invalid."""
     stem = path.stem

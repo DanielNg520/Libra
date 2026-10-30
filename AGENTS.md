@@ -57,7 +57,7 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
-Next session: HP plan (lines "HP" below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
+Next: owner picks (further reading or textbook `read` route); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
 Pending (irreversible, ask owner first): delete SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) after a clean Libra week, earliest 2026-11-03.
 Mac login command: `ssh -t -L 9222:127.0.0.1:9222 dyne@fedora /home/dyne/.local/bin/libra login`; a bare `~` expands on the Mac.
 Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --notes < image.png`; the image travels on stdin.
@@ -102,18 +102,26 @@ Seam: OCR has no OpenRouter cap fallback (SemAI parity); a Gemini cap hit exits 
 Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora fails host-key checks; test the ssh path from the Mac.
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 Owner (2026-10-28): the homework-precedent rule (Hivemind `libra/homework-workflow.md`) must be built into Libra deterministically, not left to agent memory.
-Next (new session): HP plan, then dispatch: Libra returns course precedents for a problem before any agent explains it.
-HP reuse: `libra search` already scopes `--kind lecture|discussion` and `--in transcripts|readings|textbooks`; extend it, no new index unless homework solutions are unindexed.
-HP open: are posted homework solutions in `<course>/Homework/` covered by `readings` export? Trace first.
-HP open: fixed order (solutions, discussion, lecture examples), output a precedent packet (source path, excerpt, notation); empty packet says so.
-HP open: enforcement: Hivemind `academic-study` skill makes the call a mandatory first step; check whether a hook can gate it.
+HP plan (Claude, 2026-10-29; approved by owner 2026-10-29): `libra precedents --course C <terms>`, new `precedents.py` on search primitives; stdlib, runs on Mac.
+HP tiers, fixed order: 1 solutions (`Homework/` names matching `sol|solution|key|answer`), 2 discussion (`Discussion/` plus `-DI` transcripts), 3 lectures (`Slides/` plus lecture transcripts).
+HP output: per tier hits (path, page or `[mm:ss]`, excerpt), "none found" when empty; `--json`; OR terms default, 5 per tier; exit 1 when all empty.
+HP why a command, not a `search` flag: tiering, order and the packet format would bend `search`'s output contract.
+HP trace (2026-10-29): `Homework/` is exported; only ECE 158A posts solutions (`HW1_sol`); below-50-median-word PDFs and images are never exported.
+Owner (2026-10-29): HP enforcement is the `academic-study` skill's mandatory first step only; no hooks.
+Owner (2026-10-29): HP lists unexported folder files per tier (agent reads them directly); export rules unchanged.
+Owner (2026-10-29): owner's own submissions (`*submission*`) are never precedents; only posted solutions form tier 1.
+HP done 2026-10-29: `precedents.py`, `cli.py` wiring, `tests/test_precedents.py`; 10 dispatches (5 re-prompts), 404 pass, 7 mutants caught.
+HP same change: `select_courses` now in `library.py`; `catalog.folder_entries`, `search.print_*` and `search.rank_hits` public; skill section "Homework help" added.
+HP live 2026-10-29: ECE 158A store-and-forward puts `HW1_sol` first; ECE 108 lists Discussion 4 and three PNGs as unsearched.
+Seam: solution names need a `sol|solution|key|answer` token; a solution file named otherwise (e.g. `hw1_ans.pdf`) lands in no tier.
+Seam: `precedents.tier_of` repeats the folder names held in `_TIER_TABLE`; derive it from the table when next touched.
+Trap: DeepSeek whole-file replies for new modules needed 3 rounds (name slicing, raw course key, JSON header); prefer a skeleton then small edit dispatches.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 Trap: `libra read` paths are vault-relative (`ECE 108/Discussion/x.pdf`), not course-relative; a course-relative path answers `unknown_source`.
 Trap: TriAPI `llm_client.is_deepseek_peak_hours` fails to import from a bare `python3 -c`; check the clock (UTC 01-04, 06-10 weekdays) instead.
 Trap: never smoke-test fetch-side commands with `LIBRA_VAULT_DIR` on the real vault; use a scratch vault.
 Seam: `whisper` and `fetch` take no lock against each other; concurrent vault commits can fail on the git index lock and retry next run.
 Seam: `cmd_whisper` counts only successes; a failing job ends the loop early (logged), rest waits for the next night.
-Seam: `search.py` and `mapview.py` import private `_select_courses` from `catalog.py`; promote it to `library.py` when next touched.
 Seam: `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS` are two lists of non-course folders; merge when next touched.
 Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead without waiting for exams.
 Trap: renaming a ported file breaks cross-test imports (`from test_sources import ...`); grep `^from test_` after any test rename.
@@ -190,7 +198,7 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `lecture_poll.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps (`ensure_book_maps` builds new textbook maps); `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
-`src/libra/library.py` course discovery, transcript and page loaders; `search.py`, `catalog.py`, `mapview.py` subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
+`src/libra/library.py` course discovery (`select_courses`), transcript and page loaders; `search.py`, `catalog.py`, `mapview.py`, `precedents.py` (tiered homework precedents) subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, adopts renamed sources); `login.py` sign-in (every frame).
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

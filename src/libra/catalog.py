@@ -17,9 +17,8 @@ from libra.library import (
     Segment,
     _parse_transcript_file,
     _transcript_name,
-    find_courses,
     format_ts,
-    match_course,
+    select_courses,
 )
 
 
@@ -59,7 +58,7 @@ def _file_entry(path: Path, course_dir: Path, root: Path) -> Optional[dict]:
     }
 
 
-def _folder_entries(folder: Path, course_dir: Path, root: Path) -> List[dict]:
+def folder_entries(folder: Path, course_dir: Path, root: Path) -> List[dict]:
     """Return file entries for all files under a folder recursively."""
     entries = []
     for path in sorted(folder.rglob("*"), key=lambda p: p.as_posix()):
@@ -120,7 +119,7 @@ def catalog_course(course: str, course_dir: Path, root: Path) -> dict:
     for material_dir in MATERIAL_DIRS:
         folder = course_dir / material_dir
         if folder.is_dir():
-            result["folders"][material_dir] = _folder_entries(folder, course_dir, root)
+            result["folders"][material_dir] = folder_entries(folder, course_dir, root)
 
     root_entries = []
     for path in sorted(course_dir.iterdir(), key=lambda p: p.name):
@@ -132,34 +131,6 @@ def catalog_course(course: str, course_dir: Path, root: Path) -> dict:
     result["root_files"] = root_entries
 
     return result
-
-
-def _select_courses(root: Path, course_arg: Optional[str], *, catalog: bool) -> Optional[dict]:
-    """Select courses by argument; return None on error."""
-    if not root.exists() or not root.is_dir():
-        print(f"error: root not found: {root}", file=sys.stderr)
-        return None
-
-    courses = find_courses(root, catalog=catalog)
-    if not courses:
-        if catalog:
-            print(f"error: no course folders under {root}", file=sys.stderr)
-        else:
-            print(f"error: no course folders with Transcripts/ under {root}", file=sys.stderr)
-        return None
-
-    if course_arg is None:
-        return courses
-
-    course_name = match_course(course_arg, courses)
-    if course_name is None:
-        known = ", ".join(sorted(courses))
-        print(
-            f"error: unknown course '{course_arg}'; known: {known}",
-            file=sys.stderr,
-        )
-        return None
-    return {course_name: courses[course_name]}
 
 
 def _print_catalog_block(course_data: dict) -> None:
@@ -197,7 +168,7 @@ def _print_catalog_block(course_data: dict) -> None:
 
 def cmd_catalog(args: argparse.Namespace, root: Path) -> int:
     """Execute the catalog subcommand."""
-    selected = _select_courses(root, args.course, catalog=True)
+    selected = select_courses(root, args.course, catalog=True)
     if selected is None:
         return 2
 

@@ -1,6 +1,7 @@
 """The `libra` command: search transcripts and readings, catalog course material, view lecture maps.
 
 Usage: libra search [--in transcripts|readings|textbooks|all] [options] <terms...>
+       libra precedents --course X [--all] [-C N] [--limit N] [--json] <terms...>   (course precedents before explaining a problem)
        libra catalog [--course X] [--json]
        libra map [--course X] [--date D] [--json]
        libra map --confirm --course X --transcript ID --deck DECK [--from T] [--to T]
@@ -23,9 +24,10 @@ from typing import Any, List, Optional
 from libra.catalog import cmd_catalog
 from libra.config import Settings, SettingsError
 from libra.mapview import cmd_map
+from libra.precedents import cmd_precedents
 from libra.search import _validate_date, cmd_search
 
-VAULT_COMMANDS = frozenset({"search", "catalog", "map"})
+VAULT_COMMANDS = frozenset({"search", "catalog", "map", "precedents"})
 
 AGENT_VARS = ("CLAUDECODE", "ANTIGRAVITY_AGENT", "AI_AGENT")
 OWNER_ONLY_COMMANDS = frozenset({"login", "fetch", "export", "whisper"})
@@ -83,6 +85,43 @@ def _add_search_parser(subparsers: Any) -> None:
     )
     search_parser.add_argument(
         "--json", action="store_true", default=False, help="structured hits instead of text"
+    )
+
+
+def _add_precedents_parser(subparsers: Any) -> None:
+    """Register the precedents subcommand."""
+    precedents_parser = subparsers.add_parser(
+        "precedents",
+        help=(
+            "course precedents for a problem, in order: posted solutions, "
+            "discussion, lectures; run before explaining; exit 1 means none found"
+        ),
+    )
+    precedents_parser.add_argument(
+        "terms",
+        nargs="+",
+        help=(
+            "key terms of the problem; any may match unless --all; "
+            "quote a phrase; a trailing * is a prefix match and must be quoted"
+        ),
+    )
+    precedents_parser.add_argument(
+        "--course", required=True, help="course folder name such as 'ECE 108'"
+    )
+    precedents_parser.add_argument(
+        "--all", dest="all_terms", action="store_true", default=False,
+        help="require every term instead of any",
+    )
+    precedents_parser.add_argument(
+        "-C", "--context", type=int, default=1,
+        help="context lines printed around each hit",
+    )
+    precedents_parser.add_argument(
+        "--limit", type=int, default=5, help="maximum hits printed per tier"
+    )
+    precedents_parser.add_argument(
+        "--json", action="store_true", default=False,
+        help="structured packet instead of text",
     )
 
 
@@ -199,6 +238,7 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     _add_search_parser(subparsers)
+    _add_precedents_parser(subparsers)
     _add_vault_parsers(subparsers)
     _add_fedora_parsers(subparsers)
     return parser
@@ -323,6 +363,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if args.command == "search":
         return cmd_search(args, root)
+    if args.command == "precedents":
+        return cmd_precedents(args, root)
     if args.command == "catalog":
         return cmd_catalog(args, root)
     if args.command == "map":

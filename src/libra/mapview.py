@@ -9,8 +9,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from libra.catalog import _select_courses
-from libra.library import format_ts
+from libra.library import format_ts, select_courses
 
 
 def maps_dir(root: Path) -> Path:
@@ -210,7 +209,7 @@ def _print_map_block(course: str, map_data: dict, root: Path) -> None:
 
 
 def cmd_map(args: argparse.Namespace, root: Path) -> int:
-    selected = _select_courses(root, args.course, catalog=False)
+    selected = select_courses(root, args.course, catalog=False)
     if selected is None:
         return 2
     if args.confirm:

@@ -9,9 +9,8 @@ import shlex
 import sys
 from datetime import date
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
-from libra.catalog import _select_courses
 from libra.library import (
     Hit,
     Page,
@@ -21,6 +20,7 @@ from libra.library import (
     format_ts,
     load_pages,
     load_transcripts,
+    select_courses,
 )
 
 
@@ -174,7 +174,7 @@ def search(
     return hits
 
 
-def _print_hit_text(hit: Hit, context: int) -> None:
+def print_hit_text(hit: Hit, context: int) -> None:
     """Print one hit in text format."""
     t = hit.transcript
     time_label = format_ts(t.segments[hit.first].start)
@@ -191,7 +191,7 @@ def _print_hit_text(hit: Hit, context: int) -> None:
         print(f"{prefix}[{label}] {seg.text.strip()}")
 
 
-def _print_hit_json(hit: Hit, context: int) -> dict:
+def print_hit_json(hit: Hit, context: int) -> dict:
     """Build the JSON-serializable dictionary for one hit."""
     t = hit.transcript
     first = max(0, hit.first - context)
@@ -268,7 +268,7 @@ def _page_line_range(hit: PageHit, context: int) -> List[Tuple[int, bool]]:
     return result
 
 
-def _print_page_text(hit: PageHit, context: int) -> None:
+def print_page_text(hit: PageHit, context: int) -> None:
     page = hit.page
     suffix = " (textbook)" if page.kind == "textbook" else ""
     print(f"{page.course} · {page.rel} · p.{page.number}{suffix}")
@@ -277,7 +277,7 @@ def _print_page_text(hit: PageHit, context: int) -> None:
         print(f"{prefix}{page.lines[idx]}")
 
 
-def _print_page_json(hit: PageHit, context: int) -> dict:
+def print_page_json(hit: PageHit, context: int) -> dict:
     lines = []
     for idx, is_hit in _page_line_range(hit, context):
         lines.append({"text": hit.page.lines[idx], "hit": is_hit})
@@ -301,9 +301,18 @@ def _validate_date(value: str) -> date:
         raise argparse.ArgumentTypeError(f"invalid date: {value}")
 
 
+def rank_hits(transcript_hits: List[Hit], page_hits: List[PageHit]) -> List[Union[Hit, PageHit]]:
+    """Merge transcript and page hits into a single ranked list."""
+    combined = []
+    combined.extend((h.terms_matched, h.occurrences, 0, i, h) for i, h in enumerate(transcript_hits))
+    combined.extend((h.terms_matched, h.occurrences, 1, p, h) for p, h in enumerate(page_hits))
+    combined.sort(key=lambda item: (-item[0], -item[1], item[2], item[3]))
+    return [item[4] for item in combined]
+
+
 def cmd_search(args: argparse.Namespace, root: Path) -> int:
     """Execute the search subcommand."""
-    courses = _select_courses(root, args.course, catalog=False)
+    courses = select_courses(root, args.course, catalog=False)
     if courses is None:
         return 2
 
@@ -363,18 +372,14 @@ def cmd_search(args: argparse.Namespace, root: Path) -> int:
             pages.extend(load_pages(root, name, scope))
         page_hits = search_pages(pages, terms, any_mode=args.any_mode)
 
-    combined = []
-    combined.extend((h.terms_matched, h.occurrences, 0, i, h) for i, h in enumerate(transcript_hits))
-    combined.extend((h.terms_matched, h.occurrences, 1, p, h) for p, h in enumerate(page_hits))
-    combined.sort(key=lambda item: (-item[0], -item[1], item[2], item[3]))
-    hits = [item[4] for item in combined]
+    hits = rank_hits(transcript_hits, page_hits)
 
     total = len(hits)
     limited = hits[: args.limit]
 
     if args.json:
         data = [
-            _print_page_json(h, args.context) if isinstance(h, PageHit) else _print_hit_json(h, args.context)
+            print_page_json(h, args.context) if isinstance(h, PageHit) else print_hit_json(h, args.context)
             for h in limited
         ]
         json.dump(data, sys.stdout, ensure_ascii=False, indent=2)
@@ -394,9 +399,9 @@ def cmd_search(args: argparse.Namespace, root: Path) -> int:
         if i > 0:
             print()
         if isinstance(hit, PageHit):
-            _print_page_text(hit, args.context)
+            print_page_text(hit, args.context)
         else:
-            _print_hit_text(hit, args.context)
+            print_hit_text(hit, args.context)
 
     if total > args.limit:
         print(f"{args.limit} of {total} hits", file=sys.stderr)
