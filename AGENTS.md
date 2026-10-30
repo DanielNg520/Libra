@@ -36,7 +36,7 @@ Owner (2026-10-26): readings export to vault `Tools/readings/`; maps live in `To
 Trap: vault `Tools/` has no hooks; set `PYTHONDONTWRITEBYTECODE=1` when testing there, or `__pycache__` syncs to Drive.
 Cleanup 2026-10-24: 174 writer files trashed (vault `d3fe20d`); restore from Fedora `~/.local/share/Trash`; manifest `~/.cache/spike-20261024/cleanup-manifest.txt`.
 Idea: vector search could port SemAI `memory/indexer.py` (heading chunks, hash diff) and `retriever.py` `hybrid_search` (BM25 plus local vectors).
-Next step is the owner's pick: further reading (owner, 2026-10-16) or a textbook `read` route.
+Owner (2026-10-29): both queued, textbook `read` route first, then further reading; each plans before code in its own session.
 
 ### Incoming from SemAI (owner, 2026-10-28; plan before code)
 Owner (2026-10-28): OCR comes to Libra: SemAI `adapters/ocr.py` `transcribe_image`, its prompts, `ocr_model`; reuse Libra `gemini.py` and `ocr_model`.
@@ -57,7 +57,7 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
-Next: owner picks further reading or textbook `read` route; open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
+Next (owner, 2026-10-29): TR textbook `read` route, then FR further reading (lines "TR", "FR" below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
 Pending (irreversible, ask owner first): delete SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) after a clean Libra week, earliest 2026-11-03.
 Mac login command: `ssh -t -L 9222:127.0.0.1:9222 dyne@fedora /home/dyne/.local/bin/libra login`; a bare `~` expands on the Mac.
 Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --notes < image.png`; the image travels on stdin.
@@ -103,6 +103,11 @@ Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora f
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 Owner (2026-10-28): the homework-precedent rule (Hivemind `libra/homework-workflow.md`) must be built into Libra deterministically, not left to agent memory.
 SN done 2026-10-29 (no code): rule in skill, Hivemind `libra/homework-workflow.md`, vault `AGENTS.md`; 19 vault files renamed, 1 duplicate deleted, links verified.
+TR goal: read textbooks by chapter or printed page; Gemini page reads for math and figures that `pdftotext` mangles.
+TR trace (2026-10-29): all 10 books searchable, exported, mapped (10 to 24 chapters); `libra read` takes textbook paths, cache empty.
+TR gaps: printed-to-PDF page offset (maps hold labels), chapter addressing; base `expand_books` (no caller); `--fetch` on full books unverified.
+FR goal: trimmed notes end with further-reading sources (SemAI ADR-0030 decision 7, owner 2026-10-11); no Libra base exists.
+FR Ask owner at plan time: skill rule with agent web search (Claude recommends, no code) or a scholarly-API client (OpenAlex, Crossref, arXiv).
 SN decisions:
 Owner (2026-10-29): agent-written homework solutions end in `solution`: `Problem M solution.md`, `Problem M a solution.md`, `homework N solution.md`; in `Study notes/homework N/`.
 Owner (2026-10-29): agent solutions stay separate; never precedents; tier 1 stays posted solutions (`Homework/`).
