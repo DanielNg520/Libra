@@ -12,19 +12,16 @@ import time
 from collections.abc import Callable, Collection, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 from libra.config import Settings
 from libra.library import OUTDATED_DIR
-from libra.textbooks import BookMap, BookMapError, book_map, check_copies
 from libra.gemini import GeminiCapError, GeminiError
 from libra.lecture_docs import (
-    MAX_PAGES,
     READ_PROMPT,
     READS_DIR,
     TEXTBOOK_READ_PROMPT,
     TooManyPages,
-    pdf_page_count,
     read_document,
     reading_key,
     render_pages,
@@ -213,83 +210,6 @@ def split_entry(entry: str) -> tuple[str, tuple[int, int] | None]:
     if first < 1 or first > last:
         raise ValueError(f"bad page range entry: {entry!r}")
     return rel, (first, last)
-
-
-def expand_books(settings: Settings, sources: list[SourceFile]) -> tuple[list[SourceFile], dict[str, str]]:
-    vault = settings.obsidian_academic_vault_dir
-    if vault is None:
-        raise ValueError("Obsidian academic vault is not configured")
-    index = load_index(settings)
-    index_changed = False
-    mapped: dict[str, BookMap] = {}
-    notices: dict[str, str] = {}
-    result: list[SourceFile] = []
-    for source in sources:
-        if source.kind != "doc" or Path(source.rel).suffix.lower() == ".pptx" or not _is_book_rel(source.rel):
-            result.append(source)
-            continue
-        path = vault / source.rel
-        try:
-            pages = pdf_page_count(path)
-        except (OSError, ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-            result.append(source)
-            continue
-        if pages <= MAX_PAGES:
-            result.append(source)
-            continue
-        entry = index.get(source.rel)
-        if isinstance(entry, list) and len(entry) == 4 and entry[0] == source.size and entry[1] == source.mtime_ns:
-            sha = str(entry[2])
-        else:
-            try:
-                sha = sha256_file(path)
-            except OSError:
-                log.warning("skipping unreadable book: %s", source.rel)
-                notices[source.rel] = "skipped: unreadable file"
-                continue
-            index[source.rel] = [source.size, source.mtime_ns, sha, ""]
-            index_changed = True
-        try:
-            book = book_map(settings, path, sha)
-        except (BookMapError, GeminiError, OSError, ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
-            log.warning("chapter map failed for %s: %s", source.rel, type(exc).__name__)
-            notices[source.rel] = f"skipped: chapter map failed ({type(exc).__name__})"
-            continue
-        if not book.usable:
-            log.warning("no usable chapter map for %s", source.rel)
-            notices[source.rel] = "skipped: no usable chapter map"
-            continue
-        mapped[source.rel] = book
-        for chapter in book.entries:
-            label = f"{book.title}, {chapter.title}"
-            if chapter.sections:
-                label += f" ({'; '.join(chapter.sections)})"
-            result.append(
-                SourceFile(
-                    rel=source.rel,
-                    kind="doc",
-                    size=source.size,
-                    mtime_ns=source.mtime_ns,
-                    pages=(chapter.first, chapter.last),
-                    label=label,
-                )
-            )
-        valid_entries = {entry.entry for entry in result if entry.rel == source.rel}
-        for key in list(index):
-            if key.startswith(f"{source.rel}#pages=") and key not in valid_entries:
-                del index[key]
-                index_changed = True
-    if index_changed:
-        save_checkpoint(settings.state_dir / READS_DIR / INDEX_NAME, {"version": 1, "files": index})
-    if len(mapped) > 1:
-        check_copies(settings, mapped, linked=frozenset(), delete=False)
-    return result, notices
-
-
-def _is_book_rel(rel: str) -> bool:
-    """True for a book rel, `<course>/Textbooks/...`."""
-    parts = PurePosixPath(rel).parts
-    return len(parts) >= 3 and parts[1] == TEXTBOOKS_DIR
 
 
 def load_index(settings: Settings) -> dict[str, list]:

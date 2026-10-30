@@ -684,3 +684,29 @@ def test_check_copies_same_title_other_authors_not_grouped(tmp_path: Path) -> No
     a = _make_book("Signals and Systems", "1st", 2000, 100, authors="Oppenheim, Willsky")
     b = _make_book("Signals and Systems", "1st", 2000, 100, complete=False, authors="Haykin, Van Veen")
     assert textbooks.check_copies(settings, {"a.pdf": a, "b.pdf": b}, linked=set(), delete=True) == []
+
+
+def test_check_copies_report_only_marks_linked_by_name(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path)
+    good = _make_book("Pattern Recognition", "1st", 2000, 100)
+    incomplete = _make_book("Pattern Recognition", "1st", 2000, 100, complete=False)
+    books = {"ECE 253/Textbooks/good.pdf": good, "ECE 253/Textbooks/bad.pdf": incomplete}
+    assert textbooks.check_copies(settings, books, linked={"bad.pdf"}, delete=False) == [
+        "ECE 253/Textbooks/bad.pdf: incomplete; keep ECE 253/Textbooks/good.pdf (report only, linked)"
+    ]
+
+
+def test_check_copies_delete_keeps_copy_linked_by_name(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path)
+    good = _make_book("Pattern Recognition", "1st", 2000, 100)
+    incomplete = _make_book("Pattern Recognition", "1st", 2000, 100, complete=False)
+    books = {"ECE 253/Textbooks/good.pdf": good, "ECE 253/Textbooks/bad.pdf": incomplete}
+    textbooks_dir = tmp_path / "vault" / "ECE 253" / "Textbooks"
+    textbooks_dir.mkdir(parents=True)
+    (textbooks_dir / "good.pdf").write_bytes(b"good")
+    bad_file = textbooks_dir / "bad.pdf"
+    bad_file.write_bytes(b"data")
+    assert textbooks.check_copies(settings, books, linked={"bad.pdf"}, delete=True) == [
+        "ECE 253/Textbooks/bad.pdf: incomplete; keep ECE 253/Textbooks/good.pdf (linked, kept)"
+    ]
+    assert bad_file.exists()

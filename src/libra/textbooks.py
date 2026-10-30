@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from libra.config import Settings
 from libra.gemini import chat
@@ -20,6 +20,7 @@ from libra.lecture_docs import (
     render_pages,
     save_checkpoint,
 )
+from libra.sources import TEXTBOOKS_DIR
 
 log = logging.getLogger(__name__)
 
@@ -529,6 +530,7 @@ def check_copies(
     linked: Collection[str],
     delete: bool,
 ) -> list[str]:
+    """Find redundant copies; `linked` holds PDF file names (not paths) cited by vault notes."""
     lines: list[str] = []
     groups: dict[tuple[str, str], list[tuple[str, BookMap]]] = {}
     for rel, book in books.items():
@@ -550,6 +552,7 @@ def check_copies(
         )
         winner_rel, winner = group[0]
         for loser_rel, loser in group[1:]:
+            cited = PurePosixPath(loser_rel).name in linked
             if not loser.complete:
                 reason = "incomplete"
             elif not loser.searchable:
@@ -560,8 +563,8 @@ def check_copies(
             if reason == "older or same edition":
                 outcome = "logged only"
             elif not delete:
-                outcome = "report only"
-            elif loser_rel in linked:
+                outcome = "report only, linked" if cited else "report only"
+            elif cited:
                 outcome = "linked, kept"
             elif loser.built:
                 outcome = "built this run, kept"
@@ -572,7 +575,6 @@ def check_copies(
                 if vault is None:
                     raise ValueError("obsidian_academic_vault_dir is not set")
                 loser_path = (vault / loser_rel).resolve()
-                from libra.sources import TEXTBOOKS_DIR  # local: sources imports this module
                 if loser_path.parent.name != TEXTBOOKS_DIR or loser_path.parent.parent.parent != vault.resolve():
                     outcome = "outside Textbooks, kept"
                 else:

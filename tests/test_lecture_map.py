@@ -529,3 +529,117 @@ def test_write_maps_order_ensure_before_fingerprint(
     lecture_map.write_maps(settings)
 
     assert events == ["ensure", "fingerprint"]
+
+
+def test_linked_pdf_names_link_forms(tmp_path: Path) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    notes = vault / "ECE 1" / "Study notes" / "n.md"
+    notes.parent.mkdir(parents=True, exist_ok=True)
+    notes.write_text(
+        "[b](../../Textbooks/ECE%201/Big%20Book%20%282nd%29.pdf#page=4)\n"
+        "[[ECE 1/Textbooks/Other.pdf#page=2|Other]]\n"
+        "![[Third.PDF]]\n"
+        "[f](file:///Users/x/My%20Drive/Classes/ECE%201/Fourth.pdf)\n"
+        "[s](slides.pptx)\n",
+        encoding="utf-8",
+    )
+    tools = vault / "Tools" / "readings" / "x.md"
+    tools.parent.mkdir(parents=True, exist_ok=True)
+    tools.write_text("[t](Hidden.pdf)\n", encoding="utf-8")
+    obsidian = vault / ".obsidian" / "y.md"
+    obsidian.parent.mkdir(parents=True, exist_ok=True)
+    obsidian.write_text("[u](Dot.pdf)\n", encoding="utf-8")
+
+    assert lecture_map.linked_pdf_names(settings) == frozenset(
+        {"Big Book (2nd).pdf", "Other.pdf", "Third.PDF", "Fourth.pdf"}
+    )
+
+
+def test_ensure_book_maps_runs_copy_check_report_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = _setup_course(tmp_path)
+    textbook_dir = (
+        settings.obsidian_academic_vault_dir / "ECE 1" / "Textbooks"
+    )
+    assert settings.obsidian_academic_vault_dir is not None
+    textbook_dir.mkdir(parents=True, exist_ok=True)
+    (textbook_dir / "a.pdf").write_bytes(b"same")
+    (textbook_dir / "b.pdf").write_bytes(b"same")
+    (textbook_dir / "c.pdf").write_bytes(b"other")
+
+    monkeypatch.setattr(lecture_map, "load_secrets", lambda s: s)
+
+    c_sha = lecture_map.sha256_file(textbook_dir / "c.pdf")
+    built: list[str] = []
+
+    def fake_book_map(settings: Any, path: Path, sha: str) -> None:
+        built.append(sha)
+
+    monkeypatch.setattr(lecture_map, "book_map", fake_book_map)
+
+    def fake_load_cached_map(cache_file: Path, path: Path) -> BookMap | None:
+        sha = cache_file.stem
+        if sha == c_sha:
+            if sha in built:
+                return BookMap("T", "A", None, None, 100, True, False, ())
+            return None
+        return BookMap("T", "A", None, None, 100, True, True, ())
+
+    monkeypatch.setattr(lecture_map, "load_cached_map", fake_load_cached_map)
+    monkeypatch.setattr(
+        lecture_map,
+        "linked_pdf_names",
+        lambda settings: frozenset({"b.pdf"}),
+    )
+    calls: list[tuple[Any, Any, Any]] = []
+
+    def fake_check_copies(
+        settings: Any, books: Any, *, linked: Any, delete: Any
+    ) -> list[Any]:
+        calls.append((books, linked, delete))
+        return []
+
+    monkeypatch.setattr(lecture_map, "check_copies", fake_check_copies)
+
+    assert lecture_map.ensure_book_maps(settings, "ECE 1") == 1
+    assert len(calls) == 1
+    books, linked, delete = calls[0]
+    assert delete is False
+    assert linked == frozenset({"b.pdf"})
+    assert set(books) == {
+        "ECE 1/Textbooks/a.pdf",
+        "ECE 1/Textbooks/b.pdf",
+        "ECE 1/Textbooks/c.pdf",
+    }
+    assert books["ECE 1/Textbooks/c.pdf"].built is True
+    assert books["ECE 1/Textbooks/a.pdf"].built is False
+
+
+def test_ensure_book_maps_single_book_skips_copy_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = _setup_course(tmp_path)
+    textbook_dir = (
+        settings.obsidian_academic_vault_dir / "ECE 1" / "Textbooks"
+    )
+    assert settings.obsidian_academic_vault_dir is not None
+    textbook_dir.mkdir(parents=True, exist_ok=True)
+    (textbook_dir / "a.pdf").write_bytes(b"data")
+
+    monkeypatch.setattr(lecture_map, "load_secrets", lambda s: s)
+    monkeypatch.setattr(lecture_map, "book_map", lambda *args: None)
+
+    def fake_load_cached_map(cache_file: Path, path: Path) -> BookMap | None:
+        return BookMap("T", "A", None, None, 100, True, True, ())
+
+    monkeypatch.setattr(lecture_map, "load_cached_map", fake_load_cached_map)
+
+    def fail_check_copies(*args: Any, **kwargs: Any) -> list[Any]:
+        pytest.fail("check_copies must not be called for a single book")
+
+    monkeypatch.setattr(lecture_map, "check_copies", fail_check_copies)
+
+    assert lecture_map.ensure_book_maps(settings, "ECE 1") == 0

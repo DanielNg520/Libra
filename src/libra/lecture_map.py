@@ -11,10 +11,11 @@ import contextlib
 import re
 import subprocess
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+from urllib.parse import unquote
 
 from libra.config import Settings, load_secrets
 from libra.lecture_align import (
@@ -44,7 +45,7 @@ from libra.sources import (
     list_sources,
 )
 from libra.gemini import GeminiError
-from libra.textbooks import BOOKS_DIR, book_map, load_cached_map, pdf_page_texts
+from libra.textbooks import BOOKS_DIR, BookMap, book_map, check_copies, load_cached_map, pdf_page_texts
 from libra.lecture_docs import READS_DIR, sha256_file
 
 log = logging.getLogger(__name__)
@@ -399,6 +400,35 @@ def _write_json(path: Path, data: Mapping[str, Any]) -> None:
     os.replace(tmp, path)
 
 
+_LINK_RE = re.compile(r"(?<=\]\(<)[^>]+(?=>\))|(?<=\]\()[^)<][^)]*(?=\))|(?<=\[\[)[^\]]+(?=\]\])")
+
+
+def linked_pdf_names(settings: Settings) -> frozenset[str]:
+    """File names of PDFs any vault note links to (copy-check guard)."""
+    vault = settings.obsidian_academic_vault_dir
+    if vault is None:
+        return frozenset()
+    names: set[str] = set()
+    for md_file in vault.rglob("*.md"):
+        rel = md_file.relative_to(vault)
+        parts = rel.parts
+        if not parts or parts[0] == "Tools" or any(part.startswith(".") for part in parts):
+            continue
+        try:
+            text = md_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for target in _LINK_RE.findall(text):
+            target = target.split("|", 1)[0]
+            target = target.split("#", 1)[0]
+            target = target.strip().strip("<>")
+            target = unquote(target)
+            name = target.rsplit("/", 1)[-1]
+            if name.lower().endswith(".pdf"):
+                names.add(name)
+    return frozenset(names)
+
+
 def ensure_book_maps(settings: Settings, course: str) -> int:
     """Build chapter maps for the course's textbooks that have no cached map."""
     if settings.obsidian_academic_vault_dir is None:
@@ -408,6 +438,8 @@ def ensure_book_maps(settings: Settings, course: str) -> int:
     seen_shas: set[str] = set()
     vault = settings.obsidian_academic_vault_dir
     built = 0
+    recorded: list[tuple[str, Path, str]] = []
+    built_shas: set[str] = set()
     for source in sources:
         path = vault / source.rel
         try:
@@ -415,6 +447,7 @@ def ensure_book_maps(settings: Settings, course: str) -> int:
         except OSError as exc:
             log.warning("chapter map failed for %s: %s", source.rel, type(exc).__name__)
             continue
+        recorded.append((source.rel, path, sha))
         if sha in seen_shas:
             continue
         seen_shas.add(sha)
@@ -432,12 +465,27 @@ def ensure_book_maps(settings: Settings, course: str) -> int:
         try:
             book_map(keyed_settings, path, sha)
             built += 1
+            built_shas.add(sha)
         except (GeminiError, OSError, ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             log.warning("chapter map failed for %s: %s", source.rel, type(exc).__name__)
             with contextlib.suppress(OSError):
                 failed_marker.parent.mkdir(parents=True, exist_ok=True)
                 failed_marker.touch()
             continue
+    books: dict[str, BookMap] = {}
+    for rel, path, sha in recorded:
+        cache_file = settings.state_dir / READS_DIR / BOOKS_DIR / f"{sha}.json"
+        book = load_cached_map(cache_file, path)
+        if book is None:
+            continue
+        if sha in built_shas:
+            book = replace(book, built=True)
+        books[rel] = book
+    if len(books) > 1:
+        try:
+            check_copies(settings, books, linked=linked_pdf_names(settings), delete=False)
+        except (OSError, ValueError) as exc:
+            log.warning("copy check failed for %s: %s", course, type(exc).__name__)
     return built
 
 

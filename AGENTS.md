@@ -57,6 +57,9 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-10-30 (CC, attended): copy check rewired nightly, linked guard rebuilt, deletion off; `expand_books` gone; 6 dispatches plus 5 fixes; 424 pass; 5 mutants caught.
+Seam (CC): a note citing a book only in prose (no link) is not in `linked`; once deletion is armed that copy is unguarded.
+Seam (CC): ECE 158A and ECE 108 notes link vault-root `../../Textbooks/<course>/` paths, broken since the course-first layout (ADR-0040, 2026-10-24).
 Summary 2026-10-30 (FR plan pass, autofire): traced notes; options a and b written as `FR plan` lines; no code; ends in `Ask owner: FR option a or b?`.
 FR sync: Libra `a915692` pushed, Mac pulled to `a915692`.
 Summary 2026-10-30 (TR, autofire): plan closed all gaps, built, 425 pass; no Gemini spent; owner live check: one `read --chapter ... --fetch` slice (25 pages max).
@@ -79,7 +82,6 @@ F13 rule: `lecture_map.ensure_book_maps` runs per course before `fingerprint` in
 F13 why first: a failed build leaves no cache, so the next run retries; a build changes `books` mtime, so the map rebuilds.
 F13 units: both services set `Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin`; without it `sops` is missing and keys never load (verified).
 F13 live 2026-10-29: scratch rebuild of ECE 158A `978-3-031-79281-6.pdf` via unit env: 1 Gemini call, 16 s; equal to the cached map.
-Owner (2026-10-29): keep `expand_books` (no production caller); base for a textbook `read` route.
 Owner (2026-10-29): a scanned textbook, once identified, is never retried (no weekly vision call).
 Scanned rule: `load_cached_map` retries an empty map weekly only if searchable; a scanned map (`searchable` false) is final; a new copy has a new sha.
 Seam: fetch and Whisper can build the same new book at once; double call, last atomic write wins; harmless.
@@ -91,7 +93,7 @@ Trap: Claude Code `!libra fetch` runs with `CLAUDECODE` set and is refused; pref
 Seam: the guard stops careless agents, not deliberate ones; an agent can still set `LIBRA_OWNER_OK=1`; agent harnesses beyond Claude Code and agy are unchecked.
 F14 fix: `read_pages` runs `reconcile_index` (outside the lock) when cached pages are missing; re-reads only if it adopted.
 F7 fix: recitation-retry pages carry `lecture_docs.PARAPHRASE_NOTE` under each `### Page N`; earlier cached reads stay unmarked (no re-read).
-Closed 2026-10-29: F8 delete path has no production caller (`expand_books` passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
+Closed 2026-10-29: F8 delete path has no production caller (CC passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
 Owner (2026-10-29): F13 approved, "important, do it optimally and efficiently"; done `85d9b90`.
 Owner (2026-10-29): F3 keep repo-relative `.config/`, `.secret/`; editable installs only; `config._read_config_env` warns with the path when `libra.env` is unreadable.
 Ask owner: merge `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS`? Contents differ; a union hides `Concepts`, `Archive` from catalog.
@@ -115,17 +117,21 @@ TR plan chapter: cached map only (`load_cached_map`, sha from index or `sha256_f
 TR plan chapter match: parts merge by base title; digits pick the Nth chapter, appendices excluded; else casefold title substring, exact title breaks ties.
 TR plan chapter errors: `unknown_chapter` lists all titles, `ambiguous_chapter` the matching ones, in an additive `chapters` key; answers add `chapter` (title, first, last).
 TR plan fetch: unchanged `MAX_FETCH_PAGES` 25 on missing pages; a whole-book or long-chapter `--fetch` answers `too_many_pages` (verified by code); fetch in `--pages` slices.
-TR plan reuse: `expand_books` not reused (builds maps with Gemini, rewrites the index, runs copy checks); kept per owner 2026-10-29; `find_chapter` lives in `read.py` (`textbooks.py` at 595 lines).
+TR plan reuse: `find_chapter` lives in `read.py` (`textbooks.py` at 597 lines); `expand_books` deleted in CC (owner, 2026-10-30).
 TR plan help: `--pages` says PDF page; `--printed` says book numbering; `--chapter` says map order; `--fetch` names the 25-page cap; module usage line updated.
 TR plan dispatches: `read.py`, `commands.py` (`cmd_read` chapter, printed; error `chapters`), `cli.py`, `tests/test_read.py`, `tests/test_commands.py`; fakes only.
 Seam (TR): `--printed` fails (`printed_page_unknown`) on about the last 20 printed pages (no labels ahead) and on roman front matter; verified live (PRML 738).
 Seam (TR): chapter numbers follow map order; a map opening with a part heading (BDA `Background`) shifts them; the answer names the title read.
 Seam (TR): `--printed` runs `pdftotext` over the whole book per call (about 2 s); `_resolve_printed_pages` leaves `int | None` unnarrowed for mypy.
 Owner (2026-10-30): `check_copies` is needed (SemAI ADR-0038 P2, owner 2026-10-15); keep it and give it a real caller.
-Orphan cause (verified 2026-10-30): SemAI `6965aaa` (2026-10-24) retired the ask flow, `expand_books`' only caller; `check_copies` lost its caller and was ported orphaned.
-CC plan (Claude, 2026-10-30): call `check_copies` from nightly `lecture_map.ensure_book_maps` per course over cached maps; report lines go to the journal.
+Orphan cause (verified 2026-10-30): SemAI `6965aaa` (2026-10-24) retired the ask flow, `expand_books`' only caller, orphaning `check_copies`.
+CC done 2026-10-30 (attended): nightly `ensure_book_maps` runs `check_copies` per course over cached maps, `delete=False`; lines go to the journal.
+CC guard: `lecture_map.linked_pdf_names` collects PDF file names from vault note links (Markdown, `<...>`, wikilinks, `file:///`); skips `Tools/` and dot dirs.
+CC rule: `linked` matches by file name, not path, because notes keep stale `../../Textbooks/<course>/` and Mac `file:///` links; report-only lines say `report only, linked`.
+CC live 2026-10-30: 24 linked names; ECE 158A Kurose 6th edition twice, logged only, kept copy is the linked one; no Gemini (all maps cached).
+To arm deletion: change `delete=False` in `ensure_book_maps` to `True` (owner only); same-edition duplicates stay logged only by design.
 Owner (2026-10-30): CC rebuilds the `linked` guard (copies cited by vault notes are kept); deletion stays off (`delete=False`) until the owner arms it.
-Owner (2026-10-30): delete `sources.expand_books`, `_is_book_rel` and their tests in CC.
+Owner (2026-10-30): delete `sources.expand_books`, `_is_book_rel` and their tests in CC; done 2026-10-30.
 FR goal: trimmed notes end with further-reading sources (SemAI ADR-0030 decision 7, owner 2026-10-11); no Libra base exists.
 FR plan (Claude, 2026-10-30) trace: no rule trims topics or adds further reading; vault `AGENTS.md` note spec governs note shape; skill and Hivemind `libra/` defer to it.
 FR plan trace: vault line "Do only what is asked: no extra ... sections" blocks an unasked further-reading section; either option amends that line in the same change.
@@ -245,7 +251,7 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `lecture_poll.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
-`src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps (`ensure_book_maps` builds new textbook maps); `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
+`src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps (`ensure_book_maps` builds new textbook maps, runs the copy check; `linked_pdf_names`); `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery (`select_courses`), transcript and page loaders; `search.py`, `catalog.py`, `mapview.py`, `precedents.py` (tiered homework precedents) subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, renamed-source adoption, `--chapter`, `--printed`); `login.py` sign-in.
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
