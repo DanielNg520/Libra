@@ -57,6 +57,7 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-10-30 (FR plan pass, autofire): traced notes; options a and b written as `FR plan` lines; no code; ends in `Ask owner: FR option a or b?`.
 Summary 2026-10-30 (TR, autofire): plan closed all gaps, built, 425 pass; no Gemini spent; owner live check: one `read --chapter ... --fetch` slice (25 pages max).
 TR sync: Libra `1240b1a` pushed, Mac pulled to `1240b1a`; Hivemind skill `8ccddee` (`--chapter`, `--printed` line).
 Next (owner, 2026-10-29): TR textbook `read` route, then FR further reading (lines "TR", "FR" below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
@@ -121,7 +122,23 @@ Seam (TR): chapter numbers follow map order; a map opening with a part heading (
 Seam (TR): `--printed` runs `pdftotext` over the whole book per call (about 2 s); `_resolve_printed_pages` leaves `int | None` unnarrowed for mypy.
 Ask owner: delete `sources.expand_books`, `_is_book_rel`, `textbooks.check_copies` and their tests? TR does not use them; no other caller (verified 2026-10-30).
 FR goal: trimmed notes end with further-reading sources (SemAI ADR-0030 decision 7, owner 2026-10-11); no Libra base exists.
-FR Ask owner at plan time: skill rule with agent web search (Claude recommends, no code) or a scholarly-API client (OpenAlex, Crossref, arXiv).
+FR plan (Claude, 2026-10-30) trace: no rule trims topics or adds further reading; vault `AGENTS.md` note spec governs note shape; skill and Hivemind `libra/` defer to it.
+FR plan trace: vault line "Do only what is asked: no extra ... sections" blocks an unasked further-reading section; either option amends that line in the same change.
+FR plan trace: decision 7's trim half has no rule either; both options add "trim to what syllabus and lectures cover, then list further reading".
+FR plan trace: Libra's only network code is `lecture_fetch.py` and `gemini.py` (httpx, extra `fedora`); core is stdlib, so a Mac client needs `urllib`.
+FR plan (a): rule lines in vault note spec, one skill pointer, Hivemind `libra/study-note-style.md`; the agent searches itself (Claude WebSearch, agy Google search).
+FR plan (a) reuse: both agents already search the web on both machines; no code, no dependency, no key; size about 4 doc lines in 3 files.
+FR plan (a) sources: course textbook chapters first, then other textbooks, review papers (DOI), university course notes; never blogs, forums, AI pages, paywall-only links.
+FR plan (a) format: section `Further reading` at the note end, 3 to 5 items (title, authors, year, link, one-line why); each link opened before listing.
+FR plan (a) failure modes: invented or dead links (open-before-list rule), agy and Claude drift apart, no test enforces it; owner spots misses in use.
+FR plan (b): `libra further <terms> [--json]`, new `scholar.py`; Crossref, arXiv, optional OpenAlex behind one `_send` host allowlist; dedupe by DOI; label peer-reviewed or preprint.
+FR plan (b) reuse: port SemAI ADR-0030 Stage 4 `ScholarClient` contract (no code exists to port); CLI and `--json` packet follow `precedents.py`.
+FR plan (b) live 2026-10-30: Crossref and arXiv keyless 200 under 1 s; OpenAlex keyless now shares a $0.10 daily per-IP budget; its free key needs an email.
+FR plan (b) failure modes: off-topic hits on course terms (SearXNG failed so 2026-10-11), arXiv 1 call per 3 s, API drift; tests on fakes only.
+FR plan (b) size: about 250 lines plus tests, 5 to 8 dispatches; the agent still picks and judges items, so (b) needs the (a) rule lines too.
+FR plan privacy: either option sends topic terms only, never note text, transcripts or owner data; Google Scholar excluded (decision 7).
+FR plan recommendation (Claude): (a) now; build (b) only if (a) lists bad or invented sources in use; (b) is (a) plus a client.
+Ask owner: FR option a or b? (a: rule plus agent web search, no code; b: `libra further` client, Crossref and arXiv keyless, OpenAlex key needs email.)
 SN decisions:
 Owner (2026-10-29): agent-written homework solutions end in `solution`: `Problem M solution.md`, `Problem M a solution.md`, `homework N solution.md`; in `Study notes/homework N/`.
 Owner (2026-10-29): agent solutions stay separate; never precedents; tier 1 stays posted solutions (`Homework/`).
