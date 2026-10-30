@@ -124,8 +124,8 @@ Seam (TR): `--printed` runs `pdftotext` over the whole book per call (about 2 s)
 Owner (2026-10-30): `check_copies` is needed (SemAI ADR-0038 P2, owner 2026-10-15); keep it and give it a real caller.
 Orphan cause (verified 2026-10-30): SemAI `6965aaa` (2026-10-24) retired the ask flow, `expand_books`' only caller; `check_copies` lost its caller and was ported orphaned.
 CC plan (Claude, 2026-10-30): call `check_copies` from nightly `lecture_map.ensure_book_maps` per course over cached maps; report lines go to the journal.
-Ask owner: CC arm deletion (`delete=True`, incomplete or unsearchable copies under `Textbooks/<course>/`, edition logged only), or report-only first? `linked` source unknown.
-Ask owner: delete `sources.expand_books`, `_is_book_rel` and their tests? Unused once CC moves `check_copies` to `ensure_book_maps`.
+Owner (2026-10-30): CC rebuilds the `linked` guard (copies cited by vault notes are kept); deletion stays off (`delete=False`) until the owner arms it.
+Owner (2026-10-30): delete `sources.expand_books`, `_is_book_rel` and their tests in CC.
 FR goal: trimmed notes end with further-reading sources (SemAI ADR-0030 decision 7, owner 2026-10-11); no Libra base exists.
 FR plan (Claude, 2026-10-30) trace: no rule trims topics or adds further reading; vault `AGENTS.md` note spec governs note shape; skill and Hivemind `libra/` defer to it.
 FR plan trace: vault line "Do only what is asked: no extra ... sections" blocks an unasked further-reading section; either option amends that line in the same change.
