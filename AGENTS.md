@@ -58,6 +58,7 @@ SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course 
 
 ## Carryover
 Summary 2026-10-30 (FR plan pass, autofire): traced notes; options a and b written as `FR plan` lines; no code; ends in `Ask owner: FR option a or b?`.
+FR sync: Libra `a915692` pushed, Mac pulled to `a915692`.
 Summary 2026-10-30 (TR, autofire): plan closed all gaps, built, 425 pass; no Gemini spent; owner live check: one `read --chapter ... --fetch` slice (25 pages max).
 TR sync: Libra `1240b1a` pushed, Mac pulled to `1240b1a`; Hivemind skill `8ccddee` (`--chapter`, `--printed` line).
 Next (owner, 2026-10-29): TR textbook `read` route, then FR further reading (lines "TR", "FR" below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
