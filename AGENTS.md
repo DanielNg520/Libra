@@ -57,7 +57,7 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
-Next: owner picks (further reading or textbook `read` route); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
+Next: SN plan (lines "SN" below), then owner picks further reading or textbook `read` route; open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
 Pending (irreversible, ask owner first): delete SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) after a clean Libra week, earliest 2026-11-03.
 Mac login command: `ssh -t -L 9222:127.0.0.1:9222 dyne@fedora /home/dyne/.local/bin/libra login`; a bare `~` expands on the Mac.
 Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --notes < image.png`; the image travels on stdin.
@@ -102,6 +102,10 @@ Seam: OCR has no OpenRouter cap fallback (SemAI parity); a Gemini cap hit exits 
 Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora fails host-key checks; test the ssh path from the Mac.
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 Owner (2026-10-28): the homework-precedent rule (Hivemind `libra/homework-workflow.md`) must be built into Libra deterministically, not left to agent memory.
+Owner (2026-10-29): SN next session: enforce the solution naming scheme whenever an agent writes out solutions; plan before code.
+SN open: where agent solutions land today (`Study notes/homework N/`, not `Homework/`); `precedents` never searches `Study notes/`, trace first.
+SN open: do agent-written solutions become precedents, or stay separate from posted ones? Ask owner; tier 1 means posted solutions (owner, 2026-10-29).
+SN open: enforcement point: `academic-study` skill rule, a Libra name check (reuse `precedents.is_solution_name`), or both; agy has no hooks.
 HP plan (Claude, 2026-10-29; approved by owner 2026-10-29): `libra precedents --course C <terms>`, new `precedents.py` on search primitives; stdlib, runs on Mac.
 HP tiers, fixed order: 1 solutions (`Homework/` names matching `sol|solution|key|answer`), 2 discussion (`Discussion/` plus `-DI` transcripts), 3 lectures (`Slides/` plus lecture transcripts).
 HP output: per tier hits (path, page or `[mm:ss]`, excerpt), "none found" when empty; `--json`; OR terms default, 5 per tier; exit 1 when all empty.
