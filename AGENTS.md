@@ -58,6 +58,7 @@ SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course 
 
 ## Carryover
 Summary 2026-10-30 (TR, autofire): plan closed all gaps, built, 425 pass; no Gemini spent; owner live check: one `read --chapter ... --fetch` slice (25 pages max).
+TR sync: Libra `1240b1a` pushed, Mac pulled to `1240b1a`; Hivemind skill `8ccddee` (`--chapter`, `--printed` line).
 Next (owner, 2026-10-29): TR textbook `read` route, then FR further reading (lines "TR", "FR" below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
 Owner (2026-10-29 ~22:05 PDT): TR (plan then build) and FR (plan pass, ends in `Ask owner`) autofire 2026-10-30 03:04 PDT; prompts `~/.cache/semai-autorun/prompt_{tr,fr}.md`.
 Pending (irreversible, ask owner first): delete SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) after a clean Libra week, earliest 2026-11-03.
