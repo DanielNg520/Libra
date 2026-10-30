@@ -139,7 +139,8 @@ FR plan (b) failure modes: off-topic hits on course terms (SearXNG failed so 202
 FR plan (b) size: about 250 lines plus tests, 5 to 8 dispatches; the agent still picks and judges items, so (b) needs the (a) rule lines too.
 FR plan privacy: either option sends topic terms only, never note text, transcripts or owner data; Google Scholar excluded (decision 7).
 FR plan recommendation (Claude): (a) now; build (b) only if (a) lists bad or invented sources in use; (b) is (a) plus a client.
-Ask owner: FR option a or b? (a: rule plus agent web search, no code; b: `libra further` client, Crossref and arXiv keyless, OpenAlex key needs email.)
+Owner (2026-10-30): FR option (a) now; done 2026-10-30: vault note spec `1f0af3c`, skill and Hivemind `study-note-style.md` `1a51e50`.
+Owner (2026-10-30): FR option (b) `libra further` client logged as a polish feature; build only after (a) proves short in use.
 SN decisions:
 Owner (2026-10-29): agent-written homework solutions end in `solution`: `Problem M solution.md`, `Problem M a solution.md`, `homework N solution.md`; in `Study notes/homework N/`.
 Owner (2026-10-29): agent solutions stay separate; never precedents; tier 1 stays posted solutions (`Homework/`).
