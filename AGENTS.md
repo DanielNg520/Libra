@@ -58,10 +58,9 @@ SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course 
 
 ## Carryover
 Summary 2026-10-30 (CC, attended): copy check rewired nightly, linked guard rebuilt, deletion off; `expand_books` gone; 6 dispatches plus 5 fixes; 424 pass; 5 mutants caught.
-Seam (CC): a note citing a book only in prose (no link) is not in `linked`; once deletion is armed that copy is unguarded.
-Seam (CC): ECE 158A and ECE 108 notes link vault-root `../../Textbooks/<course>/` paths, broken since the course-first layout (ADR-0040, 2026-10-24).
-Summary 2026-10-30 (FR plan pass, autofire): traced notes; options a and b written as `FR plan` lines; no code; ends in `Ask owner: FR option a or b?`.
-FR sync: Libra `a915692` pushed, Mac pulled to `a915692`.
+Seam (CC): a note citing a book only in prose (no link) is not in `linked`; owner (2026-10-30): record only, no protection.
+Fixed 2026-10-30 (owner ask): 61 broken vault note links rewritten to current relative paths (old layout, Mac `file:///`, 4 renamed decks); script `~/.cache/spike-20261030/vault_links.py`.
+Seam: Study notes are untracked in vault git (owner, 2026-10-29), so the link rewrite has no git undo; Drive keeps 30-day versions.
 Summary 2026-10-30 (TR, autofire): plan closed all gaps, built, 425 pass; no Gemini spent; owner live check: one `read --chapter ... --fetch` slice (25 pages max).
 TR sync: Libra `1240b1a` pushed, Mac pulled to `1240b1a`; Hivemind skill `8ccddee` (`--chapter`, `--printed` line).
 Next (owner, 2026-10-29): TR textbook `read` route, then FR further reading (lines "TR", "FR" below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
@@ -129,7 +128,7 @@ CC done 2026-10-30 (attended): nightly `ensure_book_maps` runs `check_copies` pe
 CC guard: `lecture_map.linked_pdf_names` collects PDF file names from vault note links (Markdown, `<...>`, wikilinks, `file:///`); skips `Tools/` and dot dirs.
 CC rule: `linked` matches by file name, not path, because notes keep stale `../../Textbooks/<course>/` and Mac `file:///` links; report-only lines say `report only, linked`.
 CC live 2026-10-30: 24 linked names; ECE 158A Kurose 6th edition twice, logged only, kept copy is the linked one; no Gemini (all maps cached).
-To arm deletion: change `delete=False` in `ensure_book_maps` to `True` (owner only); same-edition duplicates stay logged only by design.
+To arm deletion: change `delete=False` in `ensure_book_maps` to `True` (owner only); first raise Hivemind `libra/copy-check-deletion-arm.md`.
 Owner (2026-10-30): CC rebuilds the `linked` guard (copies cited by vault notes are kept); deletion stays off (`delete=False`) until the owner arms it.
 Owner (2026-10-30): delete `sources.expand_books`, `_is_book_rel` and their tests in CC; done 2026-10-30.
 FR goal: trimmed notes end with further-reading sources (SemAI ADR-0030 decision 7, owner 2026-10-11); no Libra base exists.
@@ -186,12 +185,15 @@ Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixtur
 Owner (2026-10-27): Libra alone fetches and runs Whisper from now; SemAI's login is never refreshed; `libra login` is the only sign-in.
 Done 2026-10-27 20:20 PDT: Libra timers enabled (fetch 23:30, Whisper 01:00); SemAI's hourly poll logs expired-login warnings until L5 removes it.
 Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/libra.env`, but `--root` skips `Settings.load`; harmless today (verified).
-Last audit: 2026-10-29 wrap-up (audited through `3758aee`; 2 new findings F16, F17).
+Last audit: 2026-10-30 wrap-up (audited through `5860c8e` plus uncommitted AGENTS.md; 2 new findings F18, F19).
 
 ## Findings
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
+F18 [medium · 1 · 2026-10-30→2026-10-30] `lecture_map.py` `_LINK_RE`: raw `(` `)` or a `"title"` in a link target truncates the PDF name; guard misses it (verified by run).
+F19 [low · 1 · 2026-10-30→2026-10-30] `lecture_map.py` `ensure_book_maps`: `linked_pdf_names` rescans the whole vault for every course each night (verified by code).
+Fix proposal (F18, F19): parse link targets with a balanced-paren scan, strip a trailing quoted title, and compute `linked_pdf_names` once per `write_maps`; fix F18 before arming deletion.
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
 Goal: Libra owns transcript fetch, Whisper, readings, maps, search and page reads; SemAI and vault `Tools/librarian.py` keep none of it.
