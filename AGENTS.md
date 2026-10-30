@@ -57,6 +57,7 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-10-30 (TR, autofire): plan closed all gaps, built, 425 pass; no Gemini spent; owner live check: one `read --chapter ... --fetch` slice (25 pages max).
 Next (owner, 2026-10-29): TR textbook `read` route, then FR further reading (lines "TR", "FR" below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
 Owner (2026-10-29 ~22:05 PDT): TR (plan then build) and FR (plan pass, ends in `Ask owner`) autofire 2026-10-30 03:04 PDT; prompts `~/.cache/semai-autorun/prompt_{tr,fr}.md`.
 Pending (irreversible, ask owner first): delete SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) after a clean Libra week, earliest 2026-11-03.
@@ -104,9 +105,20 @@ Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora f
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 Owner (2026-10-28): the homework-precedent rule (Hivemind `libra/homework-workflow.md`) must be built into Libra deterministically, not left to agent memory.
 SN done 2026-10-29 (no code): rule in skill, Hivemind `libra/homework-workflow.md`, vault `AGENTS.md`; 19 vault files renamed, 1 duplicate deleted, links verified.
-TR goal: read textbooks by chapter or printed page; Gemini page reads for math and figures that `pdftotext` mangles.
-TR trace (2026-10-29): all 10 books searchable, exported, mapped (10 to 24 chapters); `libra read` takes textbook paths, cache empty.
-TR gaps: printed-to-PDF page offset (maps hold labels), chapter addressing; base `expand_books` (no caller); `--fetch` on full books unverified.
+TR done 2026-10-30 (autofire): `libra read --chapter N|TITLE`, `--printed N|A-B`; 7 dispatches (2 fix rounds), 425 pass, 5 mutants caught; live PRML ch 3 = PDF 157-198.
+TR plan (Claude, 2026-10-30): `libra read` gains `--printed N|A-B` and `--chapter N|TITLE`, mutually exclusive with `--pages`; additive, `--pages` contract unchanged.
+TR plan printed: each end maps via `textbooks.page_labels(pdf_page_texts)` plus `locate`; no vote answers `printed_page_unknown`; live PRML printed 137 to PDF 157, 2 s.
+TR plan chapter: cached map only (`load_cached_map`, sha from index or `sha256_file`), never builds, no Gemini; no usable map answers `no_chapter_map`.
+TR plan chapter match: parts merge by base title; digits pick the Nth chapter, appendices excluded; else casefold title substring, exact title breaks ties.
+TR plan chapter errors: `unknown_chapter` lists all titles, `ambiguous_chapter` the matching ones, in an additive `chapters` key; answers add `chapter` (title, first, last).
+TR plan fetch: unchanged `MAX_FETCH_PAGES` 25 on missing pages; a whole-book or long-chapter `--fetch` answers `too_many_pages` (verified by code); fetch in `--pages` slices.
+TR plan reuse: `expand_books` not reused (builds maps with Gemini, rewrites the index, runs copy checks); kept per owner 2026-10-29; `find_chapter` lives in `read.py` (`textbooks.py` at 595 lines).
+TR plan help: `--pages` says PDF page; `--printed` says book numbering; `--chapter` says map order; `--fetch` names the 25-page cap; module usage line updated.
+TR plan dispatches: `read.py`, `commands.py` (`cmd_read` chapter, printed; error `chapters`), `cli.py`, `tests/test_read.py`, `tests/test_commands.py`; fakes only.
+Seam (TR): `--printed` fails (`printed_page_unknown`) on about the last 20 printed pages (no labels ahead) and on roman front matter; verified live (PRML 738).
+Seam (TR): chapter numbers follow map order; a map opening with a part heading (BDA `Background`) shifts them; the answer names the title read.
+Seam (TR): `--printed` runs `pdftotext` over the whole book per call (about 2 s); `_resolve_printed_pages` leaves `int | None` unnarrowed for mypy.
+Ask owner: delete `sources.expand_books`, `_is_book_rel`, `textbooks.check_copies` and their tests? TR does not use them; no other caller (verified 2026-10-30).
 FR goal: trimmed notes end with further-reading sources (SemAI ADR-0030 decision 7, owner 2026-10-11); no Libra base exists.
 FR Ask owner at plan time: skill rule with agent web search (Claude recommends, no code) or a scholarly-API client (OpenAlex, Crossref, arXiv).
 SN decisions:
@@ -211,6 +223,6 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps (`ensure_book_maps` builds new textbook maps); `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery (`select_courses`), transcript and page loaders; `search.py`, `catalog.py`, `mapview.py`, `precedents.py` (tiered homework precedents) subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
-`src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, adopts renamed sources); `login.py` sign-in (every frame).
+`src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, renamed-source adoption, `--chapter`, `--printed`); `login.py` sign-in.
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

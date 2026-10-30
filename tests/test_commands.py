@@ -236,6 +236,46 @@ def test_read_json(
     assert "invalid_pages" in out
 
 
+def test_read_chapter_and_printed(
+    settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_read_pages(*args: object, **kwargs: object) -> dict[str, object]:
+        calls.append(kwargs)
+        return {"ok": True}
+
+    def failing_read_pages(*args: object, **kwargs: object) -> dict[str, object]:
+        raise ReadError("ambiguous_chapter", chapters=("A", "B"))
+
+    monkeypatch.setattr(commands, "read_pages", fake_read_pages)
+
+    assert commands.cmd_read(settings, "ECE 271A", "b.pdf", None, False, chapter="2") == 0
+    assert calls[-1]["chapter"] == "2"
+    assert calls[-1]["printed"] is None
+
+    assert commands.cmd_read(settings, "ECE 271A", "b.pdf", None, False, printed="5-7") == 0
+    assert calls[-1]["printed"] == (5, 7)
+    assert calls[-1]["chapter"] is None
+
+    assert commands.cmd_read(settings, "ECE 271A", "b.pdf", None, False, printed="9") == 0
+    assert calls[-1]["printed"] == (9, 9)
+
+    capsys.readouterr()
+    assert commands.cmd_read(settings, "ECE 271A", "b.pdf", None, False, printed="x") == 1
+    out, _ = capsys.readouterr()
+    assert "invalid_pages" in out
+    assert len(calls) == 3
+
+    monkeypatch.setattr(commands, "read_pages", failing_read_pages)
+    capsys.readouterr()
+    assert commands.cmd_read(settings, "ECE 271A", "b.pdf", None, False, chapter="2") == 1
+    out, _ = capsys.readouterr()
+    assert out.strip() == '{"ok": false, "error": "ambiguous_chapter", "chapters": ["A", "B"]}'
+
+
 def test_status(
     settings: Settings,
     monkeypatch: pytest.MonkeyPatch,

@@ -7,7 +7,7 @@ Usage: libra search [--in transcripts|readings|textbooks|all] [options] <terms..
        libra map --confirm --course X --transcript ID --deck DECK [--from T] [--to T]
        libra login [--timeout S]   (sign in to podcast.ucsd.edu, then fetch)
        libra fetch | libra whisper [--until H] | libra export | libra status
-       libra read --course X PATH [--pages A-B] [--fetch]
+       libra read --course X PATH [--pages A-B | --printed A-B | --chapter N|TITLE] [--fetch]
        libra ocr IMAGE|- [--notes] [--mime TYPE]   (Gemini transcription; - reads stdin)
 """
 
@@ -204,12 +204,27 @@ def _add_fedora_parsers(subparsers: Any) -> None:
         help="vault-relative path such as 'ECE 108/Slides/x.pdf', not course-relative",
     )
     read_parser.add_argument("--course", required=True, help="course folder name")
-    read_parser.add_argument("--pages", default=None, help="N or A-B")
+    page_group = read_parser.add_mutually_exclusive_group()
+    page_group.add_argument(
+        "--pages",
+        default=None,
+        help="PDF page N or A-B, as the PDF viewer numbers them",
+    )
+    page_group.add_argument(
+        "--printed",
+        default=None,
+        help="printed page N or A-B, as numbered in the book; mapped to PDF pages by the page-number labels",
+    )
+    page_group.add_argument(
+        "--chapter",
+        default=None,
+        help="textbook chapter: N (Nth chapter of the cached map, parts merged, appendices excluded) or title words",
+    )
     read_parser.add_argument(
         "--fetch",
         action="store_true",
         default=False,
-        help="read uncached pages with Gemini (costs money; owner only)",
+        help="read uncached pages with Gemini, at most 25 per call (costs money; owner only)",
     )
     ocr_parser = subparsers.add_parser(
         "ocr", help="transcribe an image with Gemini"
@@ -273,7 +288,15 @@ def _run_command(args: argparse.Namespace, settings: Settings) -> int:
     if args.command == "whisper":
         return commands.cmd_whisper(settings, args.until_hour)
     if args.command == "read":
-        return commands.cmd_read(settings, args.course, args.path, args.pages, args.fetch)
+        return commands.cmd_read(
+            settings,
+            args.course,
+            args.path,
+            args.pages,
+            args.fetch,
+            chapter=args.chapter,
+            printed=args.printed,
+        )
     if args.command == "export":
         return commands.cmd_export(settings)
     if args.command == "status":

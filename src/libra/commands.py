@@ -111,9 +111,13 @@ def cmd_read(
     path: str,
     pages: str | None,
     fetch: bool,
+    *,
+    chapter: str | None = None,
+    printed: str | None = None,
 ) -> int:
     try:
         first, last = parse_pages(pages)
+        printed_pages = parse_pages(printed) if printed is not None else None
         if fetch:
             settings = load_secrets(settings)
         result = read_pages(
@@ -123,9 +127,14 @@ def cmd_read(
             first=first,
             last=last,
             fetch=fetch,
+            chapter=chapter,
+            printed=printed_pages,
         )
     except ReadError as exc:
-        print(json.dumps({"ok": False, "error": exc.code}))
+        payload: dict[str, object] = {"ok": False, "error": exc.code}
+        if exc.chapters:
+            payload["chapters"] = list(exc.chapters)
+        print(json.dumps(payload))
         return EXIT_FAILED
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
