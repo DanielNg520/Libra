@@ -122,7 +122,7 @@ Seam (TR): `--printed` fails (`printed_page_unknown`) on about the last 20 print
 Seam (TR): chapter numbers follow map order; a map opening with a part heading (BDA `Background`) shifts them; the answer names the title read.
 Seam (TR): `--printed` runs `pdftotext` over the whole book per call (about 2 s); `_resolve_printed_pages` leaves `int | None` unnarrowed for mypy.
 Owner (2026-10-30): `check_copies` is needed (SemAI ADR-0038 P2, owner 2026-10-15); keep it and give it a real caller.
-F15 cause (verified 2026-10-30): SemAI `6965aaa` (2026-10-24) retired the ask flow, `expand_books`' only caller; `check_copies` lost its caller and was ported orphaned.
+Orphan cause (verified 2026-10-30): SemAI `6965aaa` (2026-10-24) retired the ask flow, `expand_books`' only caller; `check_copies` lost its caller and was ported orphaned.
 CC plan (Claude, 2026-10-30): call `check_copies` from nightly `lecture_map.ensure_book_maps` per course over cached maps; report lines go to the journal.
 Ask owner: CC arm deletion (`delete=True`, incomplete or unsearchable copies under `Textbooks/<course>/`, edition logged only), or report-only first? `linked` source unknown.
 Ask owner: delete `sources.expand_books`, `_is_book_rel` and their tests? Unused once CC moves `check_copies` to `ensure_book_maps`.
