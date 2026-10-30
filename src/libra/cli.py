@@ -191,7 +191,8 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="libra",
         description=(
             "course librarian over the vault; search/catalog/map run on any "
-            "machine, the other commands are Fedora-only"
+            "machine, the other commands are Fedora-only; owner-only commands "
+            "over ssh need ssh -t or LIBRA_OWNER_OK=1"
         ),
     )
     parser.add_argument("--root", type=Path, default=None, help="vault root (default: LIBRA_VAULT_DIR)")
@@ -264,7 +265,8 @@ def _agent_refusal(
     if env.get(OWNER_OK_VAR) == "1":
         return None
 
-    if any(env.get(var) for var in AGENT_VARS):
+    agent_vars_set = any(env.get(var) for var in AGENT_VARS)
+    if agent_vars_set:
         is_agent = True
     else:
         is_agent = bool(env.get("SSH_CONNECTION")) and not stdin_tty
@@ -279,10 +281,13 @@ def _agent_refusal(
     else:
         return None
 
-    return (
+    message = (
         f"libra: {name} is owner-only; rerun with {OWNER_OK_VAR}=1 "
         "only if the owner asked"
     )
+    if not agent_vars_set:
+        message += "; if you are the owner on ssh, rerun with ssh -t"
+    return message
 
 
 def main(argv: Optional[List[str]] = None) -> int:

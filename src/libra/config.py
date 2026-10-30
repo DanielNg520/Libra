@@ -10,12 +10,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 import json
+import logging
 from pathlib import Path
 import os
 import re
 import shutil
 import subprocess
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+log = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -38,6 +41,7 @@ def _read_config_env() -> dict[str, str]:
     try:
         text = path.read_text()
     except OSError:
+        log.warning("Could not read config file %s; settings come from the environment only", path)
         return {}
 
     result: dict[str, str] = {}

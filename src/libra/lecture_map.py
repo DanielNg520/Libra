@@ -7,8 +7,10 @@ import json
 import logging
 import math
 import os
+import contextlib
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -50,6 +52,7 @@ log = logging.getLogger(__name__)
 MAPS_DIR = "Tools/maps"
 MAP_VERSION = 1
 CONFIRMED_SUFFIX = ".confirmed.json"
+FAILED_RETRY_S = 24 * 60 * 60
 TRACKS: tuple[tuple[str, str], ...] = (("lecture", SLIDES_DIR), ("discussion", DISCUSSION_DIR))
 _TRANSCRIPT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(-DI)?$")
 
@@ -418,6 +421,12 @@ def ensure_book_maps(settings: Settings, course: str) -> int:
         cache_file = settings.state_dir / READS_DIR / BOOKS_DIR / f"{sha}.json"
         if load_cached_map(cache_file, path) is not None:
             continue
+        failed_marker = cache_file.with_suffix(".failed")
+        try:
+            if failed_marker.stat().st_mtime > time.time() - FAILED_RETRY_S:
+                continue
+        except OSError:
+            pass
         if keyed_settings is None:
             keyed_settings = load_secrets(settings)
         try:
@@ -425,6 +434,9 @@ def ensure_book_maps(settings: Settings, course: str) -> int:
             built += 1
         except (GeminiError, OSError, ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             log.warning("chapter map failed for %s: %s", source.rel, type(exc).__name__)
+            with contextlib.suppress(OSError):
+                failed_marker.parent.mkdir(parents=True, exist_ok=True)
+                failed_marker.touch()
             continue
     return built
 

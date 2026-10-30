@@ -64,6 +64,11 @@ Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --n
 Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing.
 Guard: `fetch` and `export` refuse without `lecture_reads/source_index.json` in the state dir (`commands._cache_ready`); never smoke-test on the real vault.
 Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
+Summary 2026-10-29 (F3, F16, F17 closed): 6 dispatches (4 re-prompts: display-indented excerpts, one misleading name), 394 pass, 6 mutants caught.
+F16 rule: a failed `book_map` touches `<sha>.failed` beside the cache; `ensure_book_maps` skips it for `FAILED_RETRY_S` (24 h); never name it `.json` (`_books_mtime` globs those).
+F17 rule: an ssh-only refusal (no agent var) adds the `ssh -t` hint; `libra --help` names `ssh -t` or `LIBRA_OWNER_OK=1`.
+Trap: Claude Code sets `AI_AGENT` as well as `CLAUDECODE`; a live guard test must unset both.
+Trap: dispatch excerpts go in fences at real indentation; DeepSeek copies a display indent into SEARCH (4 misses, 2026-10-29).
 Summary 2026-10-29 (F13 done, attended): new textbooks get chapter maps nightly; 7 dispatches (4 re-prompts), 390 pass; 6 mutants caught; live build matched cache.
 F13 rule: `lecture_map.ensure_book_maps` runs per course before `fingerprint` in `write_maps`; `book_map` builds uncached books only; keys load lazily, once.
 F13 why first: a failed build leaves no cache, so the next run retries; a build changes `books` mtime, so the map rebuilds.
@@ -83,7 +88,7 @@ F14 fix: `read_pages` runs `reconcile_index` (outside the lock) when cached page
 F7 fix: recitation-retry pages carry `lecture_docs.PARAPHRASE_NOTE` under each `### Page N`; earlier cached reads stay unmarked (no re-read).
 Closed 2026-10-29: F8 delete path has no production caller (`expand_books` passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
 Owner (2026-10-29): F13 approved, "important, do it optimally and efficiently"; done `85d9b90`.
-Ask owner: F3 config home: keep repo-relative `.config/` (editable installs only) or move to `~/.config/libra/`?
+Owner (2026-10-29): F3 keep repo-relative `.config/`, `.secret/`; editable installs only; `config._read_config_env` warns with the path when `libra.env` is unreadable.
 Ask owner: merge `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS`? Contents differ; a union hides `Concepts`, `Archive` from catalog.
 Owner (2026-10-29): approved the F12 content-adoption design ("go for it"), replacing options (a) and (b); built as `8c30b71`.
 Guard: `test_reconcile_never_runs_under_index_lock` (`tests/test_read.py`) fails if `read_pages` reconciles while holding `index_lock`.
@@ -125,12 +130,6 @@ Last audit: 2026-10-29 wrap-up (audited through `3758aee`; 2 new findings F16, F
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
-F3 [low · 2 · 2026-10-27→2026-10-29] `config.py` `_REPO_ROOT`: `.config/libra.env` and `.secret` resolve from `__file__`; a non-editable install silently loses both (verified by code trace).
-
-F16 [medium · 1 · 2026-10-29] `lecture_map.ensure_book_maps`: no negative cache; a failing book retries Gemini on every `_refresh_maps`, once per Whisper transcript (suspected).
-F17 [low · 1 · 2026-10-29] `cli._agent_refusal`: owner `ssh` without TTY (Mac to Fedora `export`, `read --fetch`) is refused; env guard is advisory (verified by code trace).
-Fix F16: record failed shas with a timestamp in state, skip them for 24 h; one change in `ensure_book_maps`.
-Fix F17: document `ssh -t` or `LIBRA_OWNER_OK=1` in `--help`; no code change needed.
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
 Goal: Libra owns transcript fetch, Whisper, readings, maps, search and page reads; SemAI and vault `Tools/librarian.py` keep none of it.
@@ -155,7 +154,7 @@ Schedule: user timers on Fedora, `libra-fetch.timer` nightly catch-up, `libra-wh
 Dropped by this: SemAI `CourseStore` meetings gating, `TaskStore` meta keys, the daemon tick; fetch already skips existing transcripts.
 Wanted courses: vault course folders (`course_dir` rule plus `NON_COURSE_DIRS`); term from config `LIBRA_TERM` (e.g. `FA26`), set once per quarter.
 Reads: `libra read` runs the Gemini page fetch in process under a file lock; replaces the socket, `JobRegistry`, and `web/body.py` helpers.
-Mac: search, catalog, map run locally on the Drive vault; `read`, `fetch`, `export` go over `ssh -o BatchMode=yes dyne@fedora libra ...`.
+Mac: search, catalog, map run locally on the Drive vault; `read` over `ssh -o BatchMode=yes dyne@fedora libra ...`; owner-only commands need `ssh -t`.
 Config: `Settings` slim dataclass from env plus gitignored `.config/libra.env`; time zone `LIBRA_TZ` default `America/Los_Angeles` replaces `event_tz`.
 State: `~/.local/state/libra/` (btrfs `+C` not needed, no sqlite); holds podcast login state, `lecture_audio/`, `lecture_reads/` cache.
 Ports with seams: `canonical_course_code` (from `memory/course_store.py`), `commit_paths` and `has_uncommitted_changes`, Gemini `chat` and its errors.

@@ -455,9 +455,12 @@ def test_ensure_book_maps_first_fails_second_succeeds(
     )
 
 
-def test_ensure_book_maps_retry_after_failed_build(
+def test_ensure_book_maps_skips_recent_failure(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    import os
+    import time
+
     settings = _setup_course(tmp_path)
     vault = settings.obsidian_academic_vault_dir
     assert vault is not None
@@ -488,6 +491,20 @@ def test_ensure_book_maps_retry_after_failed_build(
     )
 
     lecture_map.write_maps(settings)
+    lecture_map.write_maps(settings)
+
+    assert len(book_map_calls) == 1
+    marker = (
+        settings.state_dir
+        / lecture_map.READS_DIR
+        / lecture_map.BOOKS_DIR
+        / f"{lecture_map.sha256_file(book)}.failed"
+    )
+    assert marker.exists()
+
+    old = time.time() - lecture_map.FAILED_RETRY_S - 60
+    os.utime(marker, (old, old))
+
     lecture_map.write_maps(settings)
 
     assert len(book_map_calls) == 2

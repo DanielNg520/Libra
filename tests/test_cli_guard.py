@@ -60,6 +60,16 @@ def test_agent_refusal_ssh_connection(stdin_tty: bool) -> None:
         assert message is None
     else:
         assert message is not None
+        assert "ssh -t" in message
+        assert message.startswith("libra: fetch is owner-only")
+
+
+def test_agent_refusal_agent_var_has_no_ssh_hint() -> None:
+    args = _parse_args(["fetch"])
+    env = {"CLAUDECODE": "1", "SSH_CONNECTION": "1.2.3.4 1 5.6.7.8 22"}
+    message = cli._agent_refusal(args, env, False)
+    assert message is not None
+    assert "ssh -t" not in message
 
 
 @pytest.mark.parametrize("override", ["1", "0"])
