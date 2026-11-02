@@ -57,6 +57,12 @@ LM4 (docs only): copy `note_draft` `_SYSTEM_PROMPT` rules (keep every line, `[?]
 SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course workers gone; SemAI `courses` tables dropped 2026-10-28 (owner).
 
 ## Carryover
+Summary 2026-11-01 (CC): ADR-0001 pre-problem note standard accepted; P0, P1 done; P2 dropped (owner); P3 `libra check-note` only on its D7 trigger.
+Next session (owner, 2026-11-01): new Libra features; read Hivemind `libra/guide-run-log.md` gaps first. Ask owner: which feature first.
+Candidate G1: list sources newer than a study note (staleness by hand today); dispatch-ready, extend `catalog.py` or `status` (unverified fit).
+Candidate G6: `libra status` flags `*.conflictN` copies beside notes; dispatch-ready; handling rule already in global rules (owner, 2026-10-30).
+Candidate G2: index Canvas announcement screenshots for `search`; needs a design; check `ocr.py` reuse first (unverified fit).
+Candidate G4 (optional): map homework problems to guide sections. Also open: F18 before arming deletion, F19.
 Summary 2026-10-30 (CC, attended): copy check rewired nightly, linked guard rebuilt, deletion off; `expand_books` gone; 6 dispatches plus 5 fixes; 424 pass; 5 mutants caught.
 Seam (CC): a note citing a book only in prose (no link) is not in `linked`; owner (2026-10-30): record only, no protection.
 Fixed 2026-10-30 (owner ask): 61 broken vault note links rewritten to current relative paths (old layout, Mac `file:///`, 4 renamed decks); script `~/.cache/spike-20261030/vault_links.py`.
@@ -185,7 +191,7 @@ Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixtur
 Owner (2026-10-27): Libra alone fetches and runs Whisper from now; SemAI's login is never refreshed; `libra login` is the only sign-in.
 Done 2026-10-27 20:20 PDT: Libra timers enabled (fetch 23:30, Whisper 01:00); SemAI's hourly poll logs expired-login warnings until L5 removes it.
 Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/libra.env`, but `--root` skips `Settings.load`; harmless today (verified).
-Last audit: 2026-10-30 wrap-up (audited through `5860c8e` plus uncommitted AGENTS.md; 2 new findings F18, F19).
+Last audit: 2026-11-01 wrap-up (audited through `ce7f99b`; 0 new findings; light path, docs only).
 
 ## Findings
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
