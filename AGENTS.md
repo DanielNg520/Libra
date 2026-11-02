@@ -72,6 +72,14 @@ F19 done 2026-11-01: `write_maps` passes a `functools.cache` getter `linked`; `e
 Cleanups done 2026-11-01: `precedents.tier_of` reads `_FOLDER_TO_TIER` (from `_TIER_TABLE`); `lecture_poll.py` renamed `jobs.py`, `tests/test_jobs.py`.
 F18/F19 run: 11 dispatches (1 test line added for a surviving mutant), 434 pass, 7 mutants caught; live vault: 35 linked names, old and new equal.
 Ask owner: add a nightly export-only timer (maps, readings, copy check) now that the fetch timer is off?
+Next session (owner, 2026-11-01): F21 then F22, plan first; F21 waits on the `Ask owner` timer answer above.
+F21 trace: `libra export` = `jobs.refresh_exports`: `write_maps` (vault git commit) then `write_readings`; pdftotext and cached pages, no Gemini except new textbooks.
+F21 trace: a new textbook costs one Gemini map call (about 16 s); a quiet run took about 3 s (fetch journal 2026-10-31).
+F21 option (a): new `deploy/libra-export.service` (`ExecStart=%h/.local/bin/libra export`, same PATH line) and `.timer` 23:30; no code; enabling needs owner.
+F21 option (b): no timer; agents ask the owner to run `export` after new sources; `export` stays owner-only (`_agent_refusal`).
+F21 seams: export takes `index_lock` and waits on a running `read --fetch` (up to 900 s); `_cache_ready` refuses without `source_index.json` (exists on Fedora).
+F22 plan: `catalog._note_course(note, root) -> str | None` (top folder, None outside a course); `cmd_catalog` prints the `pass --course` error once.
+F22 trace: the `_conflict_copies` walk claim is not duplication; catalog skips copies per course, status lists them vault-wide; no change.
 Next session: fetch with the owner when asked (none after 10-28); F15: the 10-29 login failed by 23:30; open owner item: deletion arming; SemAI podcast profile trashed (owner, 2026-11-01).
 Summary 2026-10-30 (CC, attended): copy check rewired into map refresh, linked guard rebuilt, deletion off; `expand_books` gone; 6 dispatches plus 5 fixes; 424 pass; 5 mutants caught.
 Seam (CC): a note citing a book only in prose (no link) is not in `linked`; owner (2026-10-30): record only, no protection.
