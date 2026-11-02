@@ -21,6 +21,7 @@ Owner (2026-10-27): Libra is modular; her memory lives in Hivemind, shared by ev
 Owner (2026-10-27): an instance may hold a feature others lack; sharing every feature across instances is the long-run goal.
 Owner (2026-10-27): Whisper runs on Fedora only; Fedora makes every Whisper output available to Libra instances on other machines.
 Clones: Fedora `~/Documents/Coding/Libra`, Mac `~/Developer/Libra`.
+Vault: Fedora `~/Classes/Current` (git); Mac `~/Library/CloudStorage/GoogleDrive-danielnguyen520@gmail.com/My Drive/Classes/Current` (Drive, no git) (owner, 2026-11-01).
 Superseded (owner, 2026-10-28): course calendar workers do not stay in SemAI; they go off with the transition, never ported here.
 Owner (2026-10-27): Libra absorbs vault `Tools/librarian.py` (search, catalog, maps, readings); one librarian, not two.
 Owner (2026-10-27): start and finish Libra as soon as possible; no wait for the 11-04 and 11-05 midterms.
