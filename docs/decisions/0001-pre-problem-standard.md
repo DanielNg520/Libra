@@ -1,9 +1,10 @@
 # 0001 – Pre-problem notes: foundations, not solutions
 
-**Status:** Proposed 2026-11-01; phase 0 done 2026-11-01
+**Status:** Accepted 2026-11-01; P0 and P1 done 2026-11-01; P2 dropped; P3 conditional
 
 ## Status
-Proposed 2026-11-01 (Claude, from the owner's 2026-10-31 test-use findings). Phase 0 (memory) done 2026-11-01; phases 1-3 open.
+Proposed 2026-11-01 (Claude, from the owner's 2026-10-31 test-use findings). Accepted: P1 approved (owner, 2026-11-01).
+P0 and P1 done 2026-11-01. P2 dropped: "not necessary" (owner, 2026-11-01). P3 stays conditional on the D7 trigger.
 
 ## Context
 Source: owner note `Current/Libra_test_use_finding.md` (2026-10-31, ECE 158A HW2 audit); content carried into Hivemind `libra/pre-problem-standard.md`, then the note was deleted (owner, 2026-11-01).
@@ -46,18 +47,17 @@ D7 trigger: if a run in `guide-run-log` shows the grep checklist missed a defect
 
 ## Phases
 P0, done 2026-11-01: Hivemind memory `pre-problem-standard`, pointers in `MEMORY.md` and `homework-workflow`; this ADR; owner note deleted.
-P1, docs, owner sign-off: skill `academic-study` gains a "Pre-problem notes" block (template pointer, checklist greps); amend `study-note-style` (D4).
+P1, done 2026-11-01 (owner approved): skill `academic-study` gains a "Pre-problem notes" block (template pointer, checklist greps); amend `study-note-style` (D4).
 P1, vault `AGENTS.md`: owner reviews and commits the pending 2026-10-31 diff, plus the D2 and D3 rewordings, on Fedora.
-P2, backfill, owner ask only: fix embeds and em dashes in the 4 files above; restructure only notes for still-open homework.
+P2, dropped (owner, 2026-11-01): no backfill of the 4 files above; they stay as written.
 P3, conditional (D7 trigger): `libra check-note <path>`, read-only, exit 1 on a failed grep item; TriAPI dispatch, tests first.
 
 ## Consequences
 Claude and agy load the same skill by symlink, so P1 reaches both agents on Fedora and Mac in one Hivemind push.
 Semantic checks (newcomer test, concept order) stay agent judgment; no grep can verify them.
-Older pre-problem files stay non-compliant until P2; agents must not treat them as the template.
-Ask owner: approve P1 (skill and vault `AGENTS.md` edits) and say whether P2 backfill should run.
+Older pre-problem files stay non-compliant (P2 dropped); the skill tells agents never to copy their structure.
 
 ## Self-review (Claude, 2026-11-01)
 Checked: no worker, table, daemon or command added; P3 is gated on evidence.
 Checked: grep of vault `AGENTS.md`, the skill and Hivemind `libra/` found the three conflicting lines that D2-D4 resolve.
-Unverified: whether ECE 158A HW2 `pre-problem4` and `pre-problem5` pass the newcomer test after the 10-31 refactor; reread in P2.
+Unverified: whether ECE 158A HW2 `pre-problem4` and `pre-problem5` pass the newcomer test after the 10-31 refactor; no reread planned (P2 dropped).
