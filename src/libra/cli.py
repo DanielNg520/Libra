@@ -2,7 +2,7 @@
 
 Usage: libra search [--in transcripts|readings|textbooks|all] [options] <terms...>
        libra precedents --course X [--all] [-C N] [--limit N] [--json] <terms...>   (course precedents before explaining a problem)
-       libra catalog [--course X] [--json]
+       libra catalog [--course X] [--newer-than NOTE] [--json]   (NOTE: sources changed since a study note)
        libra map [--course X] [--date D] [--json]
        libra map --confirm --course X --transcript ID --deck DECK [--from T] [--to T]
        libra login [--timeout S]   (sign in to podcast.ucsd.edu, then fetch)
@@ -132,6 +132,12 @@ def _add_vault_parsers(subparsers: Any) -> None:
         help="list transcripts by date (duration, opening line) and every course file",
     )
     catalog_parser.add_argument("--course", default=None, help="one course, default all")
+    catalog_parser.add_argument(
+        "--newer-than",
+        default=None,
+        metavar="NOTE",
+        help="only sources modified after this note (path relative to the vault root, or absolute)",
+    )
     catalog_parser.add_argument(
         "--json", action="store_true", default=False, help="structured output"
     )

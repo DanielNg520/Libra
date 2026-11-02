@@ -299,3 +299,63 @@ def test_status(
     assert commands.cmd_status(settings, now=lambda zone: later) == 0
     out = capsys.readouterr().out
     assert "login state: saved 2.0 h ago" in out
+
+
+def test_status_lists_conflict_copies(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(commands, "state_path", lambda s: s.state_dir / "ucsd-podcast-state.json")
+    vault = Path(settings.obsidian_academic_vault_dir)
+    vault.mkdir(parents=True)
+    (vault / "ECE 108" / "Study notes").mkdir(parents=True)
+    (vault / "ECE 108" / "Slides").mkdir(parents=True)
+    (vault / ".obsidian").mkdir()
+    (vault / "ECE 108" / "Study notes" / "lecture 1.md").write_text("", encoding="utf-8")
+    (vault / "ECE 108" / "Study notes" / "lecture 1.conflict1.md").write_text("", encoding="utf-8")
+    (vault / "ECE 108" / "Slides" / "deck.pdf.conflict2").write_text("", encoding="utf-8")
+    (vault / "notes.conflict.md").write_text("", encoding="utf-8")
+    (vault / ".obsidian" / "workspace.conflict1.json").write_text("", encoding="utf-8")
+
+    assert commands.cmd_status(settings) == 0
+    out = capsys.readouterr().out
+    lines = out.splitlines()
+    idx = lines.index("conflict copies: 2")
+    assert lines[idx : idx + 4] == [
+        "conflict copies: 2",
+        "  ECE 108/Slides/deck.pdf.conflict2",
+        "  ECE 108/Study notes/lecture 1.conflict1.md",
+        "  diff each against its original, merge or delete (owner rule, 2026-10-30)",
+    ]
+    assert ".obsidian" not in out
+    assert "notes.conflict.md" not in out
+
+
+def test_status_no_conflict_copies(
+    settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(commands, "state_path", lambda s: s.state_dir / "ucsd-podcast-state.json")
+    vault = Path(settings.obsidian_academic_vault_dir)
+    vault.mkdir(parents=True)
+    (vault / "plain note.md").write_text("", encoding="utf-8")
+
+    assert commands.cmd_status(settings) == 0
+    out = capsys.readouterr().out
+    assert "conflict copies: 0" in out
+    assert "diff each" not in out
+
+    missing_settings = Settings.load(
+        {
+            "LIBRA_STATE_DIR": str(tmp_path / "state"),
+            "LIBRA_VAULT_DIR": str(tmp_path / "missing"),
+            "LIBRA_TERM": "FA26",
+        }
+    )
+    monkeypatch.setattr(
+        commands, "state_path", lambda s: s.state_dir / "ucsd-podcast-state.json"
+    )
+    assert commands.cmd_status(missing_settings) == 0
+    out = capsys.readouterr().out
+    assert "conflict copies" not in out

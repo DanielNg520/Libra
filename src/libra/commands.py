@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import fnmatch
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +16,7 @@ from libra.config import Settings, load_secrets
 from libra.gemini import GeminiError
 from libra.lecture_docs import READS_DIR
 from libra.lecture_fetch import AUDIO_DIR, state_path
+from libra.library import CONFLICT_GLOB
 from libra.login import cmd_podcast_login
 from libra.ocr import DEFAULT_OCR_PROMPT, NOTES_OCR_PROMPT, transcribe_image
 from libra.read import ReadError, read_pages
@@ -152,6 +155,19 @@ def cmd_export(settings: Settings) -> int:
     return EXIT_OK
 
 
+def _conflict_copies(vault: Path) -> list[str]:
+    """Return sorted POSIX paths of conflict copies under vault."""
+    matches: list[str] = []
+    for root, dirs, files in os.walk(vault):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for f in files:
+            if fnmatch.fnmatch(f, CONFLICT_GLOB):
+                full = Path(root) / f
+                matches.append(full.relative_to(vault).as_posix())
+    matches.sort()
+    return matches
+
+
 def cmd_status(
     settings: Settings,
     *,
@@ -169,6 +185,16 @@ def cmd_status(
         print("login state: none (run `libra login`)")
 
     print(f"whisper queue: {_queued(settings)}")
+
+    vault_path = settings.obsidian_academic_vault_dir
+    if vault_path and vault_path.is_dir():
+        copies = _conflict_copies(vault_path)
+        print(f"conflict copies: {len(copies)}")
+        for c in copies:
+            print(f"  {c}")
+        if copies:
+            print("  diff each against its original, merge or delete (owner rule, 2026-10-30)")
+
     return EXIT_OK
 
 

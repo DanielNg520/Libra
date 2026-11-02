@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -419,6 +420,100 @@ class CatalogTests(unittest.TestCase):
             ["ECE 108/Slides/lecture1.pdf"],
         )
         self.assertNotIn("Outdated", out)
+
+    T0 = 1_800_000_000_000_000_000
+    NOTE = "ECE 108/Study notes/lecture 1.md"
+
+    def _age_all(self) -> None:
+        for path in self.root.rglob("*"):
+            if path.is_file():
+                os.utime(path, ns=(self.T0, self.T0))
+
+    def _touch(self, path: Path, ns: int) -> None:
+        os.utime(path, ns=(ns, ns))
+
+    def test_newer_than_lists_only_newer_sources(self) -> None:
+        self._age_all()
+        note_ns = self.T0 + 10**9
+        self._touch(self.root / self.NOTE, note_ns)
+        self._touch(self.course1 / "Slides" / "lecture1.pdf", self.T0 + 2 * 10**9)
+        self._touch(self.course1 / "Transcripts" / "2026-10-20.json", self.T0 + 2 * 10**9)
+        code, out, _ = self._run("catalog", "--newer-than", self.NOTE, "--json")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        self.assertEqual([c["course"] for c in data["courses"]], ["ECE 108"])
+        ece108 = next(c for c in data["courses"] if c["course"] == "ECE 108")
+        self.assertEqual(
+            [e["path"] for e in ece108["transcripts"]],
+            ["ECE 108/Transcripts/2026-10-20.json"],
+        )
+        self.assertEqual(
+            [e["path"] for e in ece108["folders"]["Slides"]],
+            ["ECE 108/Slides/lecture1.pdf"],
+        )
+        self.assertEqual(ece108["root_files"], [])
+        self.assertEqual(data["newer_than"]["path"], self.NOTE)
+        self.assertRegex(data["newer_than"]["modified"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$")
+
+    def test_newer_than_is_strict_and_sub_second(self) -> None:
+        self._age_all()
+        note_ns = self.T0 + 10**9
+        self._touch(self.root / self.NOTE, note_ns)
+        self._touch(self.course1 / "syllabus.pdf", note_ns + 1_000_000)
+        self._touch(self.course1 / "Slides" / "lecture1.pdf", note_ns)
+        code, out, _ = self._run("catalog", "--newer-than", self.NOTE, "--json")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        ece108 = next(c for c in data["courses"] if c["course"] == "ECE 108")
+        self.assertEqual(
+            [e["path"] for e in ece108["root_files"]],
+            ["ECE 108/syllabus.pdf"],
+        )
+        self.assertNotIn("Slides", ece108["folders"])
+
+    def test_newer_than_text_output(self) -> None:
+        self._age_all()
+        self._touch(self.root / self.NOTE, self.T0 + 10**9)
+        code, out, _ = self._run("catalog", "--newer-than", self.NOTE)
+        self.assertEqual(code, 0)
+        lines = out.splitlines()
+        self.assertTrue(lines[0].startswith(f"newer than {self.NOTE} (modified "))
+        self.assertTrue(lines[0].endswith("):"))
+        self.assertIn("nothing newer", out)
+        self.assertNotIn("## ECE 271A", out)
+        self.assertTrue(lines[-1].startswith("readings and textbook text: "))
+
+    def test_newer_than_course_override_and_errors(self) -> None:
+        (self.root / "guide.md").write_text("guide")
+        self._age_all()
+        self._touch(self.root / "guide.md", self.T0 + 10**9)
+        self._touch(self.course2 / "Homework" / "hw1.pdf", self.T0 + 2 * 10**9)
+        code, _, err = self._run("catalog", "--newer-than", "guide.md")
+        self.assertEqual(code, 2)
+        self.assertIn("pass --course", err)
+        code, out, _ = self._run("catalog", "--newer-than", "guide.md", "--course", "ece271a", "--json")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        self.assertEqual([c["course"] for c in data["courses"]], ["ECE 271A"])
+        ece271a = next(c for c in data["courses"] if c["course"] == "ECE 271A")
+        self.assertEqual(len(ece271a["folders"]["Homework"]), 1)
+        code, _, err = self._run("catalog", "--newer-than", "nope.md")
+        self.assertEqual(code, 2)
+        self.assertIn("note not found", err)
+
+    def test_newer_than_absolute_path(self) -> None:
+        self._age_all()
+        self._touch(self.root / self.NOTE, self.T0 + 10**9)
+        self._touch(self.course1 / "syllabus.pdf", self.T0 + 2 * 10**9)
+        code, out, _ = self._run("catalog", "--newer-than", str(self.root / self.NOTE), "--json")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        self.assertEqual(data["newer_than"]["path"], self.NOTE)
+        ece108 = next(c for c in data["courses"] if c["course"] == "ECE 108")
+        self.assertEqual(
+            [e["path"] for e in ece108["root_files"]],
+            ["ECE 108/syllabus.pdf"],
+        )
 
     def test_search_still_works(self) -> None:
         code, _, _ = self._run("search", "logical")

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from libra.library import (
+    CONFLICT_GLOB,
     MATERIAL_DIRS,
     OUTDATED_DIR,
     Segment,
@@ -43,7 +44,7 @@ def _file_entry(path: Path, course_dir: Path, root: Path) -> Optional[dict]:
         return None
     if OUTDATED_DIR in relative_parts[:-1]:
         return None
-    if fnmatch.fnmatch(path.name, "*.conflict[0-9]*"):
+    if fnmatch.fnmatch(path.name, CONFLICT_GLOB):
         return None
     try:
         stat = path.stat()
@@ -133,6 +134,29 @@ def catalog_course(course: str, course_dir: Path, root: Path) -> dict:
     return result
 
 
+def filter_newer(course_data: dict, root: Path, cutoff_ns: int) -> dict:
+    """Return a new catalog dict keeping only entries newer than cutoff_ns."""
+    def is_newer(entry: dict) -> bool:
+        try:
+            return (root / entry["path"]).stat().st_mtime_ns > cutoff_ns
+        except OSError:
+            return False
+
+    transcripts = [entry for entry in course_data["transcripts"] if is_newer(entry)]
+    folders = {
+        name: kept
+        for name, entries in course_data["folders"].items()
+        if (kept := [entry for entry in entries if is_newer(entry)])
+    }
+    root_files = [entry for entry in course_data["root_files"] if is_newer(entry)]
+    return {
+        "course": course_data["course"],
+        "transcripts": transcripts,
+        "folders": folders,
+        "root_files": root_files,
+    }
+
+
 def _print_catalog_block(course_data: dict) -> None:
     """Print one course block in text format."""
     course = course_data["course"]
@@ -166,9 +190,61 @@ def _print_catalog_block(course_data: dict) -> None:
             )
 
 
+def _resolve_note(arg: str, root: Path) -> Path | None:
+    """Resolve a note path argument to an absolute Path, or None if not a file."""
+    p = Path(arg).expanduser()
+    if not p.is_absolute():
+        candidate = root / p
+        if candidate.exists():
+            p = candidate
+        else:
+            p = Path.cwd() / p
+    if p.is_file():
+        return p
+    return None
+
+
 def cmd_catalog(args: argparse.Namespace, root: Path) -> int:
     """Execute the catalog subcommand."""
-    selected = select_courses(root, args.course, catalog=True)
+    note_path = None
+    newer_than_info = None
+    course_arg = args.course
+
+    if args.newer_than is not None:
+        note_path = _resolve_note(args.newer_than, root)
+        if note_path is None:
+            print(f"error: note not found: {args.newer_than}", file=sys.stderr)
+            return 2
+        # Determine course if not provided
+        if course_arg is None:
+            try:
+                rel = note_path.resolve().relative_to(root.resolve())
+            except ValueError:
+                print(
+                    f"error: note {args.newer_than} is not inside a course folder; pass --course",
+                    file=sys.stderr,
+                )
+                return 2
+            parts = rel.parts
+            if len(parts) < 2:
+                print(
+                    f"error: note {args.newer_than} is not inside a course folder; pass --course",
+                    file=sys.stderr,
+                )
+                return 2
+            course_arg = parts[0]
+        cutoff_ns = note_path.stat().st_mtime_ns
+        # Display path: POSIX relative to root.resolve() when under it, else str(p)
+        try:
+            display_path = note_path.resolve().relative_to(root.resolve()).as_posix()
+        except ValueError:
+            display_path = str(note_path)
+        modified_stamp = datetime.fromtimestamp(note_path.stat().st_mtime).isoformat(timespec="minutes")
+        newer_than_info = {"path": display_path, "modified": modified_stamp}
+    else:
+        cutoff_ns = None
+
+    selected = select_courses(root, course_arg, catalog=True)
     if selected is None:
         return 2
 
@@ -176,17 +252,35 @@ def cmd_catalog(args: argparse.Namespace, root: Path) -> int:
     for name in sorted(selected):
         course_dir = selected[name]
         course_data = catalog_course(name, course_dir, root)
+        if cutoff_ns is not None:
+            course_data = filter_newer(course_data, root, cutoff_ns)
         course_data_list.append(course_data)
 
     if args.json:
-        json.dump({"courses": course_data_list}, sys.stdout, ensure_ascii=False, indent=2)
+        output = {"courses": course_data_list}
+        if newer_than_info is not None:
+            output["newer_than"] = newer_than_info
+        json.dump(output, sys.stdout, ensure_ascii=False, indent=2)
         sys.stdout.write("\n")
         return 0
+
+    if newer_than_info is not None:
+        print(f'newer than {newer_than_info["path"]} (modified {newer_than_info["modified"]}):')
+        print()
 
     for i, course_data in enumerate(course_data_list):
         if i > 0:
             print()
         _print_catalog_block(course_data)
+        # Check if this course block is empty (no transcripts, no folders, no root_files)
+        if newer_than_info is not None:
+            has_content = (
+                course_data["transcripts"]
+                or course_data["folders"]
+                or course_data["root_files"]
+            )
+            if not has_content:
+                print("nothing newer")
 
     print()
     print(

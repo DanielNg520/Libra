@@ -61,6 +61,8 @@ class PageHit:
 
 MATERIAL_DIRS = ("Slides", "Discussion", "Homework", "Textbooks", "Readings")
 OUTDATED_DIR: str = "Outdated"
+# rclone bisync conflict copies, fnmatch pattern
+CONFLICT_GLOB: str = "*.conflict[0-9]*"
 
 
 EXCLUDED_DIRS = frozenset({"Study notes", "Agent scratch", "Personal", "Academic Planning"})
