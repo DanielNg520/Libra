@@ -71,8 +71,8 @@ F18 done 2026-11-01: `lecture_map._link_targets` scans links (angle, balanced pa
 F19 done 2026-11-01: `write_maps` passes a `functools.cache` getter `linked`; `ensure_book_maps(..., linked=)` scans the vault at most once per run, lazily.
 Cleanups done 2026-11-01: `precedents.tier_of` reads `_FOLDER_TO_TIER` (from `_TIER_TABLE`); `lecture_poll.py` renamed `jobs.py`, `tests/test_jobs.py`.
 F18/F19 run: 11 dispatches (1 test line added for a surviving mutant), 434 pass, 7 mutants caught; live vault: 35 linked names, old and new equal.
-Ask owner: add a nightly export-only timer (maps, readings, copy check) now that the fetch timer is off?
-Next session (owner, 2026-11-01): F21 then F22, plan first; F21 waits on the `Ask owner` timer answer above.
+Owner (2026-11-01): F21 option (a): nightly export-only timer, `deploy/libra-export.service` and `.timer` 23:30; owner approved enabling it.
+Next session (owner, 2026-11-01): F21 option (a) then F22, plan first; new session.
 F21 trace: `libra export` = `jobs.refresh_exports`: `write_maps` (vault git commit) then `write_readings`; pdftotext and cached pages, no Gemini except new textbooks.
 F21 trace: a new textbook costs one Gemini map call (about 16 s); a quiet run took about 3 s (fetch journal 2026-10-31).
 F21 option (a): new `deploy/libra-export.service` (`ExecStart=%h/.local/bin/libra export`, same PATH line) and `.timer` 23:30; no code; enabling needs owner.
@@ -212,7 +212,7 @@ Last audit: 2026-11-01 wrap-up 2 (audited through `fc28ec6`; F21, F22 added; F18
 ## Findings
 F21 [medium · 1 · 2026-11-01→2026-11-01] `jobs.py`: fetch timer off, so maps, readings, `check_copies` refresh only after fetch, Whisper transcript or manual `libra export` (verified).
 F22 [low · 1 · 2026-11-01→2026-11-01] `catalog.cmd_catalog`: ~80 lines, two identical `not inside a course folder` errors; `commands._conflict_copies` walk repeats catalog's (verified).
-Fix proposal (F21): owner decides the export-only timer (`Ask owner` in Carryover); no code until answered.
+Fix proposal (F21): option (a), owner 2026-11-01; units in `deploy/`, install and enable on Fedora (Carryover).
 Fix proposal (F22): extract `_note_course(note, root)` returning course or None from `cmd_catalog`; dispatch when next touched.
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
