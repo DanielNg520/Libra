@@ -66,13 +66,16 @@ G1/G6 run: 8 dispatches (fold re-dispatch, no re-prompts), 431 pass, 7 mutants c
 Seam (G1): mtime means rewritten on disk; the 2026-10-19 vault move made every ECE 108 transcript "newer"; lists too much, never too little.
 Verified (G1, 2026-11-01): Drive keeps mtimes; Mac `--newer-than` matched Fedora on the same note (14 transcripts, 16 folder files).
 Seam (G6): `status` walks the whole vault each call (`os.walk`, dot dirs pruned); fine at today's size.
-Next session: candidates G2 (design first), G4 (optional), F18 before arming deletion, F19.
+Owner (2026-11-01): G2 and G4 dropped as unnecessary; do F18, F19, then cleanups (`tier_of` from `_TIER_TABLE`, `lecture_poll.py` rename).
+F18 done 2026-11-01: `lecture_map._link_targets` scans links (angle, balanced parens, newline ends a target), strips a trailing quoted title; replaces `_LINK_RE`.
+F19 done 2026-11-01: `write_maps` passes a `functools.cache` getter `linked`; `ensure_book_maps(..., linked=)` scans the vault at most once per run, lazily.
+Cleanups done 2026-11-01: `precedents.tier_of` reads `_FOLDER_TO_TIER` (from `_TIER_TABLE`); `lecture_poll.py` renamed `jobs.py`, `tests/test_jobs.py`.
+F18/F19 run: 11 dispatches (1 test line added for a surviving mutant), 434 pass, 7 mutants caught; live vault: 35 linked names, old and new equal.
+Next session: no queued work; open owner items are the SemAI state-file delete (from 11-03), deletion arming, the dirs-merge question.
 G1 plan (Claude, 2026-11-01): `libra catalog --newer-than NOTE` keeps entries whose file mtime_ns exceeds the note's; reuses `catalog_course`, new `catalog.filter_newer`.
 G1 rules: NOTE relative resolves against vault root, then cwd; course defaults to the note's top folder, `--course` overrides; JSON adds `newer_than`.
 G1 why mtime_ns: run 1's stale guide and revised HW2 shared a date; the catalog `modified` date alone would miss it.
 G6 plan (Claude, 2026-11-01): `libra status` prints `conflict copies: N` and each vault-relative path; `library.CONFLICT_GLOB` shared with `catalog._file_entry`.
-Candidate G2: index Canvas announcement screenshots for `search`; needs a design; check `ocr.py` reuse first (unverified fit).
-Candidate G4 (optional): map homework problems to guide sections. Also open: F18 before arming deletion, F19.
 Summary 2026-10-30 (CC, attended): copy check rewired nightly, linked guard rebuilt, deletion off; `expand_books` gone; 6 dispatches plus 5 fixes; 424 pass; 5 mutants caught.
 Seam (CC): a note citing a book only in prose (no link) is not in `linked`; owner (2026-10-30): record only, no protection.
 Fixed 2026-10-30 (owner ask): 61 broken vault note links rewritten to current relative paths (old layout, Mac `file:///`, 4 renamed decks); script `~/.cache/spike-20261030/vault_links.py`.
@@ -144,7 +147,7 @@ CC done 2026-10-30 (attended): nightly `ensure_book_maps` runs `check_copies` pe
 CC guard: `lecture_map.linked_pdf_names` collects PDF file names from vault note links (Markdown, `<...>`, wikilinks, `file:///`); skips `Tools/` and dot dirs.
 CC rule: `linked` matches by file name, not path, because notes keep stale `../../Textbooks/<course>/` and Mac `file:///` links; report-only lines say `report only, linked`.
 CC live 2026-10-30: 24 linked names; ECE 158A Kurose 6th edition twice, logged only, kept copy is the linked one; no Gemini (all maps cached).
-To arm deletion: change `delete=False` in `ensure_book_maps` to `True` (owner only); first raise Hivemind `libra/copy-check-deletion-arm.md`.
+To arm deletion: change `delete=False` in `ensure_book_maps` to `True` (owner only); first raise Hivemind `libra/copy-check-deletion-arm.md`; F18 fixed 2026-11-01.
 Owner (2026-10-30): CC rebuilds the `linked` guard (copies cited by vault notes are kept); deletion stays off (`delete=False`) until the owner arms it.
 Owner (2026-10-30): delete `sources.expand_books`, `_is_book_rel` and their tests in CC; done 2026-10-30.
 FR goal: trimmed notes end with further-reading sources (SemAI ADR-0030 decision 7, owner 2026-10-11); no Libra base exists.
@@ -183,7 +186,6 @@ HP done 2026-10-29: `precedents.py`, `cli.py` wiring, `tests/test_precedents.py`
 HP same change: `select_courses` now in `library.py`; `catalog.folder_entries`, `search.print_*` and `search.rank_hits` public; skill section "Homework help" added.
 HP live 2026-10-29: ECE 158A store-and-forward puts `HW1_sol` first; ECE 108 lists Discussion 4 and three PNGs as unsearched.
 Seam: solution names need a `sol|solution|key|answer` token; a solution file named otherwise (e.g. `hw1_ans.pdf`) lands in no tier.
-Seam: `precedents.tier_of` repeats the folder names held in `_TIER_TABLE`; derive it from the table when next touched.
 Trap: DeepSeek whole-file replies for new modules needed 3 rounds (name slicing, raw course key, JSON header); prefer a skeleton then small edit dispatches.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 Trap: `libra read` paths are vault-relative (`ECE 108/Discussion/x.pdf`), not course-relative; a course-relative path answers `unknown_source`.
@@ -196,7 +198,6 @@ Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead wi
 Trap: renaming a ported file breaks cross-test imports (`from test_sources import ...`); grep `^from test_` after any test rename.
 Trap: tests must pass `LIBRA_STATE_DIR` to `Settings.load`; the default creates the real `~/.local/state/libra`.
 Trap: the Mac has no ledger-check hook and no dispatch setup; Libra code changes happen on Fedora only.
-Seam: `lecture_poll.py` name is historical (no polling left); rename when next touched.
 Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive, inherited from SemAI.
 Owner (2026-10-27): Libra alone fetches and runs Whisper from now; SemAI's login is never refreshed; `libra login` is the only sign-in.
 Done 2026-10-27 20:20 PDT: Libra timers enabled (fetch 23:30, Whisper 01:00); SemAI's hourly poll logs expired-login warnings until L5 removes it.
@@ -207,9 +208,6 @@ Last audit: 2026-11-01 wrap-up (audited through `ce7f99b`; 0 new findings; light
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
-F18 [medium · 1 · 2026-10-30→2026-10-30] `lecture_map.py` `_LINK_RE`: raw `(` `)` or a `"title"` in a link target truncates the PDF name; guard misses it (verified by run).
-F19 [low · 1 · 2026-10-30→2026-10-30] `lecture_map.py` `ensure_book_maps`: `linked_pdf_names` rescans the whole vault for every course each night (verified by code).
-Fix proposal (F18, F19): parse link targets with a balanced-paren scan, strip a trailing quoted title, and compute `linked_pdf_names` once per `write_maps`; fix F18 before arming deletion.
 
 ## Plan: migration from SemAI (Claude, 2026-10-27; approved by owner 2026-10-27)
 Goal: Libra owns transcript fetch, Whisper, readings, maps, search and page reads; SemAI and vault `Tools/librarian.py` keep none of it.
@@ -267,7 +265,7 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 ## File and directory index
 `AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard). `pyproject.toml` (uv; core stdlib, extra `fedora`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
 `src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
-`src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `lecture_poll.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`.
+`src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `jobs.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`, `refresh_exports`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps (`ensure_book_maps` builds new textbook maps, runs the copy check; `linked_pdf_names`); `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery (`select_courses`), transcript and page loaders; `search.py`, `catalog.py` (`--newer-than`), `mapview.py`, `precedents.py` (tiered homework precedents) subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).

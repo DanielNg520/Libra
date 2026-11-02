@@ -46,6 +46,8 @@ _KIND_TO_TIER: Dict[str, str] = {
     kind: tier for tier, (_, kind) in _TIER_TABLE.items() if kind is not None
 }
 
+_FOLDER_TO_TIER: Dict[str, str] = {folder: tier for tier, (folder, _) in _TIER_TABLE.items()}
+
 
 def is_solution_name(name: str) -> bool:
     """Return whether a file name marks a posted solution."""
@@ -60,15 +62,12 @@ def tier_of(rel: str) -> Optional[str]:
     parts = rel.split("/")
     if len(parts) < 2:
         return None
-    folder = parts[1]
-    if folder == "Homework":
-        file_name = parts[-1]
-        return "solutions" if is_solution_name(file_name) else None
-    if folder == "Discussion":
-        return "discussion"
-    if folder == "Slides":
-        return "lectures"
-    return None
+    tier = _FOLDER_TO_TIER.get(parts[1])
+    if tier is None:
+        return None
+    if tier == "solutions" and not is_solution_name(parts[-1]):
+        return None
+    return tier
 
 
 def _partition_hits(

@@ -8,13 +8,14 @@ import logging
 import math
 import os
 import contextlib
+import functools
 import re
 import subprocess
 import time
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 from urllib.parse import unquote
 
 from libra.config import Settings, load_secrets
@@ -400,7 +401,46 @@ def _write_json(path: Path, data: Mapping[str, Any]) -> None:
     os.replace(tmp, path)
 
 
-_LINK_RE = re.compile(r"(?<=\]\(<)[^>]+(?=>\))|(?<=\]\()[^)<][^)]*(?=\))|(?<=\[\[)[^\]]+(?=\]\])")
+_WIKILINK_RE = re.compile(r"\[\[([^\]\n]+)\]\]")
+_TITLE_RE = re.compile(r"""\s+(?:"[^"\n]*"|'[^'\n]*')\s*$""")
+
+
+def _link_targets(text: str) -> list[str]:
+    """Raw link targets: wikilinks, then Markdown links with balanced parentheses and titles stripped."""
+    targets = _WIKILINK_RE.findall(text)
+    search_from = 0
+    while True:
+        link_start = text.find("](", search_from)
+        if link_start == -1:
+            break
+        start = link_start + 2
+        if text.startswith("<", start):
+            end = text.find(">", start + 1)
+            if end == -1 or "\n" in text[start + 1:end]:
+                search_from = start + 1
+                continue
+            target = text[start + 1:end]
+        else:
+            depth = 1
+            end = start
+            while end < len(text) and depth > 0:
+                char = text[end]
+                if char == "\n":
+                    break
+                if char == "(":
+                    depth += 1
+                elif char == ")":
+                    depth -= 1
+                end += 1
+            if depth != 0:
+                search_from = start
+                continue
+            target = text[start:end - 1]
+            target = _TITLE_RE.sub("", target)
+        if target:
+            targets.append(target)
+        search_from = end
+    return targets
 
 
 def linked_pdf_names(settings: Settings) -> frozenset[str]:
@@ -418,7 +458,7 @@ def linked_pdf_names(settings: Settings) -> frozenset[str]:
             text = md_file.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        for target in _LINK_RE.findall(text):
+        for target in _link_targets(text):
             target = target.split("|", 1)[0]
             target = target.split("#", 1)[0]
             target = target.strip().strip("<>")
@@ -429,8 +469,17 @@ def linked_pdf_names(settings: Settings) -> frozenset[str]:
     return frozenset(names)
 
 
-def ensure_book_maps(settings: Settings, course: str) -> int:
-    """Build chapter maps for the course's textbooks that have no cached map."""
+def ensure_book_maps(
+    settings: Settings,
+    course: str,
+    *,
+    linked: Callable[[], frozenset[str]] | None = None,
+) -> int:
+    """Build chapter maps for the course's textbooks that have no cached map.
+
+    `linked` returns the vault's linked PDF names; `write_maps` passes a cached
+    getter so the vault is scanned at most once per run.
+    """
     if settings.obsidian_academic_vault_dir is None:
         return 0
     sources = _textbook_sources(list_sources(settings, course), course)
@@ -483,7 +532,8 @@ def ensure_book_maps(settings: Settings, course: str) -> int:
         books[rel] = book
     if len(books) > 1:
         try:
-            check_copies(settings, books, linked=linked_pdf_names(settings), delete=False)
+            names = linked() if linked is not None else linked_pdf_names(settings)
+            check_copies(settings, books, linked=names, delete=False)
         except (OSError, ValueError) as exc:
             log.warning("copy check failed for %s: %s", course, type(exc).__name__)
     return built
@@ -496,9 +546,14 @@ def write_maps(settings: Settings) -> list[Path]:
     maps = vault / MAPS_DIR
     maps.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
+
+    @functools.cache
+    def linked() -> frozenset[str]:
+        return linked_pdf_names(settings)
+
     for course in course_names(vault):
         try:
-            ensure_book_maps(settings, course)
+            ensure_book_maps(settings, course, linked=linked)
             inputs = fingerprint(settings, course)
             path = maps / f"{course}.json"
             if _stored_inputs(path) == inputs:

@@ -518,7 +518,7 @@ def test_write_maps_order_ensure_before_fingerprint(
     monkeypatch.setattr(
         lecture_map,
         "ensure_book_maps",
-        lambda settings, course: events.append("ensure"),
+        lambda settings, course, **kwargs: events.append("ensure"),
     )
     monkeypatch.setattr(
         lecture_map,
@@ -554,6 +554,29 @@ def test_linked_pdf_names_link_forms(tmp_path: Path) -> None:
 
     assert lecture_map.linked_pdf_names(settings) == frozenset(
         {"Big Book (2nd).pdf", "Other.pdf", "Third.PDF", "Fourth.pdf"}
+    )
+
+
+def test_linked_pdf_names_parens_and_titles(tmp_path: Path) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    notes_dir = vault / "ECE 1" / "Study notes"
+    notes_dir.mkdir(parents=True)
+    (notes_dir / "n.md").write_text(
+        "[a](../Textbooks/Kurose (6th ed).pdf)\n"
+        '[b](Plain.pdf "Chapter 3")\n'
+        '[c](<../Textbooks/Angle Book.pdf> "Title")\n'
+        "[d](Single.pdf 'quoted')\n"
+        "[e](Nested ((x)) name.pdf#page=2)\n"
+        "[f](Unclosed (bad.pdf\n"
+        "[g](split\n"
+        "line.pdf)\n",
+        encoding="utf-8",
+    )
+
+    assert lecture_map.linked_pdf_names(settings) == frozenset(
+        {"Kurose (6th ed).pdf", "Plain.pdf", "Angle Book.pdf", "Single.pdf", "Nested ((x)) name.pdf"}
     )
 
 
@@ -643,3 +666,63 @@ def test_ensure_book_maps_single_book_skips_copy_check(
     monkeypatch.setattr(lecture_map, "check_copies", fail_check_copies)
 
     assert lecture_map.ensure_book_maps(settings, "ECE 1") == 0
+
+
+def test_write_maps_scans_links_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    (vault / "ECE 2" / "Transcripts").mkdir(parents=True)
+    scans: list[int] = []
+    monkeypatch.setattr(
+        lecture_map,
+        "linked_pdf_names",
+        lambda settings: scans.append(1) or frozenset({"x.pdf"}),
+    )
+    seen: list[frozenset[str]] = []
+
+    def fake_ensure(settings: Any, course: str, *, linked: Any) -> int:
+        seen.append(linked())
+        seen.append(linked())
+        return 0
+
+    monkeypatch.setattr(lecture_map, "ensure_book_maps", fake_ensure)
+    monkeypatch.setattr(lecture_map, "fingerprint", lambda settings, course: "x")
+    monkeypatch.setattr(lecture_map, "_stored_inputs", lambda path: "x")
+
+    lecture_map.write_maps(settings)
+
+    assert scans == [1]
+    assert seen == [frozenset({"x.pdf"})] * 4
+
+
+def test_ensure_book_maps_uses_given_linked(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+    textbook_dir = vault / "ECE 1" / "Textbooks"
+    textbook_dir.mkdir(parents=True, exist_ok=True)
+    (textbook_dir / "a.pdf").write_bytes(b"same")
+    (textbook_dir / "b.pdf").write_bytes(b"same")
+    monkeypatch.setattr(lecture_map, "load_secrets", lambda s: s)
+    monkeypatch.setattr(lecture_map, "book_map", lambda *args, **kwargs: pytest.fail("no build expected"))
+    monkeypatch.setattr(
+        lecture_map,
+        "load_cached_map",
+        lambda cache_file, path: BookMap("T", "A", None, None, 100, True, True, ()),
+    )
+    monkeypatch.setattr(
+        lecture_map,
+        "linked_pdf_names",
+        lambda settings: pytest.fail("vault must not be rescanned"),
+    )
+    got: list[Any] = []
+
+    def fake_check_copies(settings: Any, books: Any, *, linked: Any, delete: Any) -> list[Any]:
+        got.append(linked)
+        return []
+
+    monkeypatch.setattr(lecture_map, "check_copies", fake_check_copies)
+
+    assert lecture_map.ensure_book_maps(settings, "ECE 1", linked=lambda: frozenset({"b.pdf"})) == 0
+    assert got == [frozenset({"b.pdf"})]

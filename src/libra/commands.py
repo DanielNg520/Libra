@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import BinaryIO, Callable
 from zoneinfo import ZoneInfo
 
-from libra import lecture_poll
+from libra import jobs
 from libra.config import Settings, load_secrets
 from libra.gemini import GeminiError
 from libra.lecture_docs import READS_DIR
@@ -52,7 +52,7 @@ def cmd_fetch(settings: Settings) -> int:
     if not _cache_ready(settings):
         return EXIT_USAGE
     try:
-        r = lecture_poll.run_fetch_job(settings)
+        r = jobs.run_fetch_job(settings)
     except ValueError as exc:
         print(f"libra: {exc}", file=sys.stderr)
         return EXIT_USAGE
@@ -85,7 +85,7 @@ def cmd_whisper(
 ) -> int:
     count = 0
     while now(settings.zone).hour < until_hour:
-        path = lecture_poll.run_whisper_job(settings)
+        path = jobs.run_whisper_job(settings)
         if path is None:
             break
         count += 1
@@ -150,7 +150,7 @@ def cmd_export(settings: Settings) -> int:
         return EXIT_USAGE
     if not _cache_ready(settings):
         return EXIT_USAGE
-    lecture_poll.refresh_exports(settings)
+    jobs.refresh_exports(settings)
     print("export: maps and readings refreshed")
     return EXIT_OK
 

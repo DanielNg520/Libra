@@ -1,4 +1,4 @@
-"""Tests for libra.lecture_poll fetch and Whisper jobs."""
+"""Tests for libra.jobs fetch and Whisper jobs."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-import libra.lecture_poll as lp
+import libra.jobs as lp
 from libra.config import Settings
 from libra.lecture_fetch import FetchResult
 

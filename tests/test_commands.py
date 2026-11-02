@@ -38,17 +38,17 @@ def seed_cache(settings: Settings) -> None:
 def patched(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     fakes: dict[str, Any] = {}
     monkeypatch.setattr(
-        commands.lecture_poll,
+        commands.jobs,
         "run_fetch_job",
         lambda *a: fakes["fetch"](*a),
     )
     monkeypatch.setattr(
-        commands.lecture_poll,
+        commands.jobs,
         "run_whisper_job",
         lambda *a: fakes["whisper"](*a),
     )
     monkeypatch.setattr(
-        commands.lecture_poll,
+        commands.jobs,
         "refresh_exports",
         lambda *a: fakes["exports"](*a),
     )

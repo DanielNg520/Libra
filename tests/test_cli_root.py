@@ -124,13 +124,13 @@ def test_internal_import_error_is_not_masked(tmp_path: Path) -> None:
     code = """
 import sys
 
-class BlockLibraLecturePoll:
+class BlockLibraJobs:
     def find_spec(self, name, path=None, target=None):
-        if name == "libra.lecture_poll":
+        if name == "libra.jobs":
             raise ModuleNotFoundError(f"blocked import: {name}", name=name)
         return None
 
-sys.meta_path.insert(0, BlockLibraLecturePoll())
+sys.meta_path.insert(0, BlockLibraJobs())
 
 from libra import cli
 raise SystemExit(cli.main(["status"]))
@@ -145,5 +145,5 @@ raise SystemExit(cli.main(["status"]))
     )
     assert result.returncode == 1
     assert "Traceback" in result.stderr
-    assert "cannot import name 'lecture_poll'" in result.stderr
+    assert "cannot import name 'jobs'" in result.stderr
     assert "needs the fedora extra" not in result.stderr
