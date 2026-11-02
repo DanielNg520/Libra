@@ -204,6 +204,17 @@ def _resolve_note(arg: str, root: Path) -> Path | None:
     return None
 
 
+def _note_course(note: Path, root: Path) -> str | None:
+    """Return the course folder name for a note, or None if outside or at root."""
+    try:
+        rel = note.resolve().relative_to(root.resolve())
+    except ValueError:
+        return None
+    if len(rel.parts) < 2:
+        return None
+    return rel.parts[0]
+
+
 def cmd_catalog(args: argparse.Namespace, root: Path) -> int:
     """Execute the catalog subcommand."""
     note_path = None
@@ -217,22 +228,13 @@ def cmd_catalog(args: argparse.Namespace, root: Path) -> int:
             return 2
         # Determine course if not provided
         if course_arg is None:
-            try:
-                rel = note_path.resolve().relative_to(root.resolve())
-            except ValueError:
+            course_arg = _note_course(note_path, root)
+            if course_arg is None:
                 print(
                     f"error: note {args.newer_than} is not inside a course folder; pass --course",
                     file=sys.stderr,
                 )
                 return 2
-            parts = rel.parts
-            if len(parts) < 2:
-                print(
-                    f"error: note {args.newer_than} is not inside a course folder; pass --course",
-                    file=sys.stderr,
-                )
-                return 2
-            course_arg = parts[0]
         cutoff_ns = note_path.stat().st_mtime_ns
         # Display path: POSIX relative to root.resolve() when under it, else str(p)
         try:

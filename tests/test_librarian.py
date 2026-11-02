@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from libra import cli, library
+from libra import catalog, cli, library
 
 
 class LibrarianTests(unittest.TestCase):
@@ -645,6 +645,32 @@ class ReadingSearchTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("ECE 108 · ECE 108/Slides/lec1.pdf · p.1", stdout)
         self.assertIn("ECE 108 · ECE 108/Textbooks/book.pdf · p.5 (textbook)", stdout)
+
+
+class NoteCourseTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.root = Path(self._tmp.name) / "vault"
+        self.outside = Path(self._tmp.name) / "outside"
+        self.root.mkdir()
+        self.outside.mkdir()
+
+    def test_nested_course_note_returns_course_name(self) -> None:
+        note = self.root / "ECE 108" / "Slides" / "lec1.pdf"
+        note.parent.mkdir(parents=True)
+        note.write_text("")
+        self.assertEqual(catalog._note_course(note, self.root), "ECE 108")
+
+    def test_note_in_root_returns_none(self) -> None:
+        note = self.root / "loose.pdf"
+        note.write_text("")
+        self.assertIsNone(catalog._note_course(note, self.root))
+
+    def test_note_outside_root_returns_none(self) -> None:
+        note = self.outside / "stray.pdf"
+        note.write_text("")
+        self.assertIsNone(catalog._note_course(note, self.root))
 
 
 if __name__ == "__main__":

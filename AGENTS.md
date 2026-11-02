@@ -11,7 +11,7 @@ Never reference or absorb another repo's content; port what Libra needs, then ow
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## Owner decisions
-Owner (2026-11-01): fetches run manually with the owner (`libra login`, then fetch); `libra-fetch.timer` disabled 2026-11-01; `libra-whisper.timer` stays.
+Owner (2026-11-01): fetches run manually with the owner (`libra login`, then fetch); `libra-fetch.timer` disabled 2026-11-01; `libra-whisper.timer` stays; `libra-export.timer` 23:30 enabled 2026-11-01.
 Owner (2026-10-29): agents never run `login`, `fetch`, `export`, `whisper`, `read --fetch` unasked; enforced in `cli._agent_refusal`; the agent sets `LIBRA_OWNER_OK=1` itself when the owner asks or confirms.
 Owner (2026-10-29): agy (Gemini 3.8 Flash) wields Libra too; it loads Hivemind `academic-study` from `~/.gemini/config/skills/` (symlink, Fedora and Mac).
 Owner (2026-10-28): a partial fetch exits 4 (`EXIT_PARTIAL`); `libra-fetch.service` `SuccessExitStatus=4`; crash (1) and expired login (3) still fail the unit.
@@ -71,15 +71,12 @@ F18 done 2026-11-01: `lecture_map._link_targets` scans links (angle, balanced pa
 F19 done 2026-11-01: `write_maps` passes a `functools.cache` getter `linked`; `ensure_book_maps(..., linked=)` scans the vault at most once per run, lazily.
 Cleanups done 2026-11-01: `precedents.tier_of` reads `_FOLDER_TO_TIER` (from `_TIER_TABLE`); `lecture_poll.py` renamed `jobs.py`, `tests/test_jobs.py`.
 F18/F19 run: 11 dispatches (1 test line added for a surviving mutant), 434 pass, 7 mutants caught; live vault: 35 linked names, old and new equal.
-Owner (2026-11-01): F21 option (a): nightly export-only timer, `deploy/libra-export.service` and `.timer` 23:30; owner approved enabling it.
-Next session (owner, 2026-11-01): F21 option (a) then F22, plan first; new session.
-F21 trace: `libra export` = `jobs.refresh_exports`: `write_maps` (vault git commit) then `write_readings`; pdftotext and cached pages, no Gemini except new textbooks.
-F21 trace: a new textbook costs one Gemini map call (about 16 s); a quiet run took about 3 s (fetch journal 2026-10-31).
-F21 option (a): new `deploy/libra-export.service` (`ExecStart=%h/.local/bin/libra export`, same PATH line) and `.timer` 23:30; no code; enabling needs owner.
-F21 option (b): no timer; agents ask the owner to run `export` after new sources; `export` stays owner-only (`_agent_refusal`).
-F21 seams: export takes `index_lock` and waits on a running `read --fetch` (up to 900 s); `_cache_ready` refuses without `source_index.json` (exists on Fedora).
-F22 plan: `catalog._note_course(note, root) -> str | None` (top folder, None outside a course); `cmd_catalog` prints the `pass --course` error once.
-F22 trace: the `_conflict_copies` walk claim is not duplication; catalog skips copies per course, status lists them vault-wide; no change.
+F21 done 2026-11-01 (owner option a): `deploy/libra-export.service` and `.timer` 23:30, installed and enabled; no code; live unit run success, 1.2 s, no vault change.
+F21 cost: a quiet export about 1 to 3 s, no Gemini; a new textbook adds one Gemini map call (about 16 s).
+Seam (F21): export takes `index_lock` and waits on a running `read --fetch` (up to 900 s); `_cache_ready` refuses without `source_index.json` (exists on Fedora).
+F22 done 2026-11-01: `catalog._note_course(note, root) -> str | None`; `cmd_catalog` prints the `pass --course` error once; `NoteCourseTests` covers outside-root.
+F21/F22 run: 2 dispatches, no re-prompts, 437 pass, 3 mutants caught, ruff adds none; live `catalog --newer-than` output identical old and new.
+F22 trace: `_conflict_copies` walk is not duplication; catalog skips copies per course, status lists them vault-wide; no change.
 Next session: fetch with the owner when asked (none after 10-28); F15: the 10-29 login failed by 23:30; open owner item: deletion arming; SemAI podcast profile trashed (owner, 2026-11-01).
 Summary 2026-10-30 (CC, attended): copy check rewired into map refresh, linked guard rebuilt, deletion off; `expand_books` gone; 6 dispatches plus 5 fixes; 424 pass; 5 mutants caught.
 Seam (CC): a note citing a book only in prose (no link) is not in `linked`; owner (2026-10-30): record only, no protection.
@@ -149,7 +146,7 @@ Seam (TR): chapter numbers follow map order; a map opening with a part heading (
 Seam (TR): `--printed` runs `pdftotext` over the whole book per call (about 2 s); `_resolve_printed_pages` leaves `int | None` unnarrowed for mypy.
 Owner (2026-10-30): `check_copies` is needed (SemAI ADR-0038 P2, owner 2026-10-15); keep it and give it a real caller.
 Orphan cause (verified 2026-10-30): SemAI `6965aaa` (2026-10-24) retired the ask flow, `expand_books`' only caller, orphaning `check_copies`.
-CC done 2026-10-30 (attended): `ensure_book_maps` (runs on fetch, Whisper, `libra export`; no nightly trigger since 2026-11-01) runs `check_copies` per course over cached maps, `delete=False`; lines go to the journal.
+CC done 2026-10-30 (attended): `ensure_book_maps` (runs on fetch, Whisper, `libra export`; nightly via `libra-export.timer` 23:30) runs `check_copies` per course over cached maps, `delete=False`; lines go to the journal.
 CC guard: `lecture_map.linked_pdf_names` collects PDF file names from vault note links (Markdown, `<...>`, wikilinks, `file:///`); skips `Tools/` and dot dirs.
 CC rule: `linked` matches by file name, not path, because notes keep stale `../../Textbooks/<course>/` and Mac `file:///` links; report-only lines say `report only, linked`.
 CC live 2026-10-30: 24 linked names; ECE 158A Kurose 6th edition twice, logged only, kept copy is the linked one; no Gemini (all maps cached).
@@ -210,10 +207,6 @@ Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/l
 Last audit: 2026-11-01 wrap-up 2 (audited through `fc28ec6`; F21, F22 added; F18, F19 closed).
 
 ## Findings
-F21 [medium · 1 · 2026-11-01→2026-11-01] `jobs.py`: fetch timer off, so maps, readings, `check_copies` refresh only after fetch, Whisper transcript or manual `libra export` (verified).
-F22 [low · 1 · 2026-11-01→2026-11-01] `catalog.cmd_catalog`: ~80 lines, two identical `not inside a course folder` errors; `commands._conflict_copies` walk repeats catalog's (verified).
-Fix proposal (F21): option (a), owner 2026-11-01; units in `deploy/`, install and enable on Fedora (Carryover).
-Fix proposal (F22): extract `_note_course(note, root)` returning course or None from `cmd_catalog`; dispatch when next touched.
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
@@ -237,7 +230,7 @@ Extras: core is stdlib only (search, catalog, map); extra `fedora` adds fetch, W
 Install: `uv tool install --editable '.[fedora]'` on Fedora, `uv tool install --editable .` on the Mac; console script `libra`.
 CLI: `libra login`, `fetch`, `whisper`, `read`, `export`, `search`, `catalog`, `map`, `status`; one entry point replaces `omll podcast-login` and `omll-study`.
 Login then fetch: `libra login` saves state and fetches at once (ADR-0041 P4 option a); the hourly poll goes.
-Schedule: user timers on Fedora, `libra-fetch.timer` nightly catch-up (disabled 2026-11-01), `libra-whisper.timer` 01:00 (drains queue until 06:00, today's `WHISPER_HOURS`).
+Schedule: user timers on Fedora, `libra-fetch.timer` nightly catch-up (disabled 2026-11-01), `libra-export.timer` 23:30 (maps, readings), `libra-whisper.timer` 01:00 (drains queue until 06:00, today's `WHISPER_HOURS`).
 Dropped by this: SemAI `CourseStore` meetings gating, `TaskStore` meta keys, the daemon tick; fetch already skips existing transcripts.
 Wanted courses: vault course folders (`course_dir` rule plus `NON_COURSE_DIRS`); term from config `LIBRA_TERM` (e.g. `FA26`), set once per quarter.
 Reads: `libra read` runs the Gemini page fetch in process under a file lock; replaces the socket, `JobRegistry`, and `web/body.py` helpers.
@@ -279,5 +272,5 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps (`ensure_book_maps` builds new textbook maps, runs the copy check; `linked_pdf_names`); `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
 `src/libra/library.py` course discovery (`select_courses`, `NON_COURSE_DIRS`), transcript and page loaders; `search.py`, `catalog.py` (`--newer-than`), `mapview.py`, `precedents.py` (tiered homework precedents) subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, `cmd_status` (conflict copies), exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, renamed-source adoption, `--chapter`, `--printed`); `login.py` sign-in.
-`deploy/` user units: `libra-fetch` 23:30 nightly (timer disabled 2026-11-01, owner), `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
+`deploy/` user units: `libra-fetch` 23:30 (timer disabled 2026-11-01, owner), `libra-export` 23:30 (enabled 2026-11-01), `libra-whisper` 01:00 to 06:00; installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

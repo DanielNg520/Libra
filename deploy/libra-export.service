@@ -1,0 +1,8 @@
+[Unit]
+Description=Libra nightly export (maps, readings, copy check; no fetch)
+
+[Service]
+Type=oneshot
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin
+ExecStart=%h/.local/bin/libra export
+Nice=10
