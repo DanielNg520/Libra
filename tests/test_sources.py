@@ -114,8 +114,8 @@ def test_list_sources_kinds_and_order(tmp_path: Path) -> None:
     "course, setup",
     [
         ("../x", None),
-        ("Concepts", "folder"),
-        ("Archive", "folder"),
+        ("Study notes", "folder"),
+        ("Agent scratch", "folder"),
         ("Academic Planning", "folder"),
         ("Personal", "folder"),
         (".git", None),

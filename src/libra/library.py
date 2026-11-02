@@ -65,7 +65,10 @@ OUTDATED_DIR: str = "Outdated"
 CONFLICT_GLOB: str = "*.conflict[0-9]*"
 
 
-EXCLUDED_DIRS = frozenset({"Study notes", "Agent scratch", "Personal", "Academic Planning"})
+# Top-level vault folders that are never courses (catalog, sources, maps).
+NON_COURSE_DIRS: frozenset[str] = frozenset(
+    {"Study notes", "Agent scratch", "Personal", "Academic Planning"}
+)
 
 
 def find_courses(root: Path, *, catalog: bool = False) -> dict:
@@ -78,7 +81,7 @@ def find_courses(root: Path, *, catalog: bool = False) -> dict:
     for entry in sorted(root.iterdir(), key=lambda p: p.name):
         if entry.name.startswith(".") or not entry.is_dir():
             continue
-        if catalog and entry.name in EXCLUDED_DIRS:
+        if catalog and entry.name in NON_COURSE_DIRS:
             continue
         if (entry / "Transcripts").is_dir():
             courses[entry.name] = entry

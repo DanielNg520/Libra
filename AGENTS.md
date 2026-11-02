@@ -71,7 +71,7 @@ F18 done 2026-11-01: `lecture_map._link_targets` scans links (angle, balanced pa
 F19 done 2026-11-01: `write_maps` passes a `functools.cache` getter `linked`; `ensure_book_maps(..., linked=)` scans the vault at most once per run, lazily.
 Cleanups done 2026-11-01: `precedents.tier_of` reads `_FOLDER_TO_TIER` (from `_TIER_TABLE`); `lecture_poll.py` renamed `jobs.py`, `tests/test_jobs.py`.
 F18/F19 run: 11 dispatches (1 test line added for a surviving mutant), 434 pass, 7 mutants caught; live vault: 35 linked names, old and new equal.
-Next session: no queued work; open owner items are the SemAI state-file delete (from 11-03), deletion arming, the dirs-merge question.
+Next session: owner runs `libra login` (F20; check F15 too); open owner item: deletion arming; ask owner about SemAI `.state-semai/ucsd-podcast-profile` (35 MB, unreferenced).
 G1 plan (Claude, 2026-11-01): `libra catalog --newer-than NOTE` keeps entries whose file mtime_ns exceeds the note's; reuses `catalog_course`, new `catalog.filter_newer`.
 G1 rules: NOTE relative resolves against vault root, then cwd; course defaults to the note's top folder, `--course` overrides; JSON adds `newer_than`.
 G1 why mtime_ns: run 1's stale guide and revised HW2 shared a date; the catalog `modified` date alone would miss it.
@@ -84,7 +84,7 @@ Summary 2026-10-30 (TR, autofire): plan closed all gaps, built, 425 pass; no Gem
 TR sync: Libra `1240b1a` pushed, Mac pulled to `1240b1a`; Hivemind skill `8ccddee` (`--chapter`, `--printed` line).
 Next (owner, 2026-10-29): TR textbook `read` route, then FR further reading (lines "TR", "FR" below); open check: next `libra login` saves without a manual `CourseList.aspx` tab (F15).
 Owner (2026-10-29 ~22:05 PDT): TR (plan then build) and FR (plan pass, ends in `Ask owner`) autofire 2026-10-30 03:04 PDT; prompts `~/.cache/semai-autorun/prompt_{tr,fr}.md`.
-Pending (irreversible, ask owner first): delete SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) after a clean Libra week, earliest 2026-11-03.
+Owner (2026-11-01): SemAI state files (`ucsd-podcast-state.json`, `lecture_reads/`, `lecture_audio/`) go to Fedora Trash now; clean-week gate waived (Libra never read them).
 Mac login command: `ssh -t -L 9222:127.0.0.1:9222 dyne@fedora /home/dyne/.local/bin/libra login`; a bare `~` expands on the Mac.
 Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --notes < image.png`; the image travels on stdin.
 Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing.
@@ -114,7 +114,8 @@ F7 fix: recitation-retry pages carry `lecture_docs.PARAPHRASE_NOTE` under each `
 Closed 2026-10-29: F8 delete path has no production caller (CC passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
 Owner (2026-10-29): F13 approved, "important, do it optimally and efficiently"; done `85d9b90`.
 Owner (2026-10-29): F3 keep repo-relative `.config/`, `.secret/`; editable installs only; `config._read_config_env` warns with the path when `libra.env` is unreadable.
-Ask owner: merge `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS`? Contents differ; a union hides `Concepts`, `Archive` from catalog.
+Owner (2026-11-01): merge `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS` into one list; drop `Concepts`, `Archive` (gone since vault `d3fe20d`).
+Done 2026-11-01: `library.NON_COURSE_DIRS` is the one list (catalog, `sources.course_dir`, `lecture_map.course_names`); 4 dispatches, 434 pass, mutant caught.
 Owner (2026-10-29): approved the F12 content-adoption design ("go for it"), replacing options (a) and (b); built as `8c30b71`.
 Guard: `test_reconcile_never_runs_under_index_lock` (`tests/test_read.py`) fails if `read_pages` reconciles while holding `index_lock`.
 F12 rule: `sources._adopt_moved` re-keys a missing or stale-mtime entry to a same-size, same-sha entry (own or same-course orphan); never takes a listed rel.
@@ -193,7 +194,6 @@ Trap: TriAPI `llm_client.is_deepseek_peak_hours` fails to import from a bare `py
 Trap: never smoke-test fetch-side commands with `LIBRA_VAULT_DIR` on the real vault; use a scratch vault.
 Seam: `whisper` and `fetch` take no lock against each other; concurrent vault commits can fail on the git index lock and retry next run.
 Seam: `cmd_whisper` counts only successes; a failing job ends the loop early (logged), rest waits for the next night.
-Seam: `library.EXCLUDED_DIRS` and `sources.NON_COURSE_DIRS` are two lists of non-course folders; merge when next touched.
 Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead without waiting for exams.
 Trap: renaming a ported file breaks cross-test imports (`from test_sources import ...`); grep `^from test_` after any test rename.
 Trap: tests must pass `LIBRA_STATE_DIR` to `Settings.load`; the default creates the real `~/.local/state/libra`.
@@ -205,6 +205,7 @@ Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/l
 Last audit: 2026-11-01 wrap-up (audited through `ce7f99b`; 0 new findings; light path, docs only).
 
 ## Findings
+F20 [high · 1 · 2026-11-01→2026-11-01] `libra-fetch`: exit 3 (login expired) every night since 10-28; the 10-29 10:01 saved login was already expired by 23:30; no transcripts after 10-28 (verified, journal).
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
@@ -268,7 +269,7 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `jobs.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`, `refresh_exports`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
 `src/libra/lecture_align.py`, `lecture_map.py` lecture-to-slide maps (`ensure_book_maps` builds new textbook maps, runs the copy check; `linked_pdf_names`); `gemini.py` chat client; `errors.py` `ProviderError`; `courses.py` `canonical_course_code`.
-`src/libra/library.py` course discovery (`select_courses`), transcript and page loaders; `search.py`, `catalog.py` (`--newer-than`), `mapview.py`, `precedents.py` (tiered homework precedents) subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
+`src/libra/library.py` course discovery (`select_courses`, `NON_COURSE_DIRS`), transcript and page loaders; `search.py`, `catalog.py` (`--newer-than`), `mapview.py`, `precedents.py` (tiered homework precedents) subcommands; `cli.py` `libra` entry (`--root` or `LIBRA_VAULT_DIR`; `_agent_refusal` owner-only guard).
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, `cmd_status` (conflict copies), exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, renamed-source adoption, `--chapter`, `--printed`); `login.py` sign-in.
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).

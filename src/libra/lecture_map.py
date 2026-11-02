@@ -38,7 +38,6 @@ from libra.lecture_align import (
 from libra.source_pages import cached_pages
 from libra.sources import (
     DISCUSSION_DIR,
-    NON_COURSE_DIRS,
     SLIDES_DIR,
     TEXTBOOKS_DIR,
     TRANSCRIPTS_DIR,
@@ -46,6 +45,7 @@ from libra.sources import (
     list_sources,
 )
 from libra.gemini import GeminiError
+from libra.library import NON_COURSE_DIRS
 from libra.textbooks import BOOKS_DIR, BookMap, book_map, check_copies, load_cached_map, pdf_page_texts
 from libra.lecture_docs import READS_DIR, sha256_file
 

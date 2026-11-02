@@ -15,7 +15,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from libra.config import Settings
-from libra.library import OUTDATED_DIR
+from libra.library import NON_COURSE_DIRS, OUTDATED_DIR
 from libra.gemini import GeminiCapError, GeminiError
 from libra.lecture_docs import (
     READ_PROMPT,
@@ -57,9 +57,6 @@ SOURCE_DIRS: tuple[str, ...] = (
 )
 OUTPUT_DIRS: frozenset[str] = frozenset(
     {TRANSCRIPTS_DIR, LECTURE_NOTES_DIR, STUDY_NOTES_DIR, AGENT_SCRATCH_DIR}
-)
-NON_COURSE_DIRS: frozenset[str] = frozenset(
-    {"Concepts", "Archive", "Academic Planning", "Personal"}
 )
 
 
