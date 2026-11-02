@@ -64,7 +64,7 @@ G1 done 2026-11-01: `libra catalog --newer-than NOTE`, `catalog.filter_newer` (o
 G6 done 2026-11-01: `libra status` prints `conflict copies: N`, paths, owner-rule hint; `library.CONFLICT_GLOB` shared with `catalog._file_entry`; dot dirs skipped.
 G1/G6 run: 8 dispatches (fold re-dispatch, no re-prompts), 431 pass, 7 mutants caught, ruff adds none; live vault check both commands.
 Seam (G1): mtime means rewritten on disk; the 2026-10-19 vault move made every ECE 108 transcript "newer"; lists too much, never too little.
-Seam (G1): Drive on the Mac may reset mtimes on sync (unverified); the Fedora git vault is the reliable host.
+Verified (G1, 2026-11-01): Drive keeps mtimes; Mac `--newer-than` matched Fedora on the same note (14 transcripts, 16 folder files).
 Seam (G6): `status` walks the whole vault each call (`os.walk`, dot dirs pruned); fine at today's size.
 Next session: candidates G2 (design first), G4 (optional), F18 before arming deletion, F19.
 G1 plan (Claude, 2026-11-01): `libra catalog --newer-than NOTE` keeps entries whose file mtime_ns exceeds the note's; reuses `catalog_course`, new `catalog.filter_newer`.
