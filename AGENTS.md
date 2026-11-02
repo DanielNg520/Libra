@@ -58,9 +58,19 @@ SemAI M2b done 2026-10-28 (one session, owner): OCR, plot deps, writers, course 
 
 ## Carryover
 Summary 2026-11-01 (CC): ADR-0001 pre-problem note standard accepted; P0, P1 done; P2 dropped (owner); P3 `libra check-note` only on its D7 trigger.
-Next session (owner, 2026-11-01): new Libra features; read Hivemind `libra/guide-run-log.md` gaps first. Ask owner: which feature first.
-Candidate G1: list sources newer than a study note (staleness by hand today); dispatch-ready, extend `catalog.py` or `status` (unverified fit).
-Candidate G6: `libra status` flags `*.conflictN` copies beside notes; dispatch-ready; handling rule already in global rules (owner, 2026-10-30).
+Next session (owner, 2026-11-01): off-peak, resume G1 then G6 from the state lines below; then G2, G4, F18, F19 candidates.
+Owner (2026-11-01): build G1 first, then G6.
+G1 plan (Claude, 2026-11-01): `libra catalog --newer-than NOTE` keeps entries whose file mtime_ns exceeds the note's; reuses `catalog_course`, new `catalog.filter_newer`.
+G1 rules: NOTE relative resolves against vault root, then cwd; course defaults to the note's top folder, `--course` overrides; JSON adds `newer_than`.
+G1 why mtime_ns: run 1's stale guide and revised HW2 shared a date; the catalog `modified` date alone would miss it.
+G6 plan (Claude, 2026-11-01): `libra status` prints `conflict copies: N` and each vault-relative path; `library.CONFLICT_GLOB` shared with `catalog._file_entry`.
+Owner (2026-11-01): stop mid-run during peak; resume G1, G6 at the next DeepSeek off-peak (peak 01-04, 06-10 UTC weekdays = 17-20 PST Sunday).
+G1/G6 state 2026-11-01: nothing applied, Libra tree unchanged; Nemotron fallback answered (peak). Prompts in Libra `tasks/g1/`, `tasks/g6/` (dispatch specs; delete once applied).
+Accepted, apply as is (TriAPI `rebuild/` paths, Fedora): c2 catalog `logs/responses/4e30369b264d5a5442ed5b82055ebb2b473d6e4324bb6ac2dc66d2af9502480d.txt`; d3 commands `logs/responses/53c6e93c2f82553cd447abe71da41256af29a13d1c91c01bf1eb898aae458755.txt`.
+Re-dispatch (prompts already fixed): c1 cli (gave 1 of 2 blocks), c3 tests (invented JSON shape), d1 library (503), d4 tests (invented `settings.vault_dir`).
+Dispatch after d1 applies: `tasks/g6/d2_catalog.md` (catalog uses `CONFLICT_GLOB`), not yet sent; it edits the same file as c2.
+Apply order: c1, c2 (check existing catalog tests), c3 (full suite); d1, d2, d3, d4 (full suite); baseline 424 pass. Then mutation-check, skill and guide-run-log updates.
+Cleanup ask at audit: c2 `filter_newer` repeats one stat check three times; fold into one keep-predicate if a re-dispatch is cheap.
 Candidate G2: index Canvas announcement screenshots for `search`; needs a design; check `ocr.py` reuse first (unverified fit).
 Candidate G4 (optional): map homework problems to guide sections. Also open: F18 before arming deletion, F19.
 Summary 2026-10-30 (CC, attended): copy check rewired nightly, linked guard rebuilt, deletion off; `expand_books` gone; 6 dispatches plus 5 fixes; 424 pass; 5 mutants caught.
@@ -264,3 +274,4 @@ Owner (2026-10-27): port method signed off: script copy with import rewrite, own
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, renamed-source adoption, `--chapter`, `--printed`); `login.py` sign-in.
 `deploy/` user units: `libra-fetch` 23:30 nightly, `libra-whisper` 01:00 to 06:00; enabled 2026-10-27, installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).
+`tasks/`: pending dispatch specs (worker-facing, exempt from doc caps); `g1/`, `g6/` for G1, G6; delete each once applied.
