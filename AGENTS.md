@@ -205,7 +205,7 @@ Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/l
 Last audit: 2026-11-01 wrap-up (audited through `ce7f99b`; 0 new findings; light path, docs only).
 
 ## Findings
-F20 [high · 1 · 2026-11-01→2026-11-01] `libra-fetch`: exit 3 (login expired) every night since 10-28; the 10-29 10:01 saved login was already expired by 23:30; no transcripts after 10-28 (verified, journal).
+F20 [high · 1 · 2026-11-01→2026-11-01] `libra-fetch`: exit 3 (login expired) nightly since 10-28; the 10-29 10:01 saved login was already expired by 23:30; no transcripts after 10-28 (verified, journal).
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Owner (2026-10-28): option b, no new source folder: `Lecture Notes/` into `Slides/` root, superseded into `Slides/Outdated/`, duplicates collapsed; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder; autofire step LN queued for 2026-10-29 03:05 PDT (`~/.cache/semai-autorun/prompt_ln.md`).
