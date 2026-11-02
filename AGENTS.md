@@ -71,7 +71,7 @@ F18 done 2026-11-01: `lecture_map._link_targets` scans links (angle, balanced pa
 F19 done 2026-11-01: `write_maps` passes a `functools.cache` getter `linked`; `ensure_book_maps(..., linked=)` scans the vault at most once per run, lazily.
 Cleanups done 2026-11-01: `precedents.tier_of` reads `_FOLDER_TO_TIER` (from `_TIER_TABLE`); `lecture_poll.py` renamed `jobs.py`, `tests/test_jobs.py`.
 F18/F19 run: 11 dispatches (1 test line added for a surviving mutant), 434 pass, 7 mutants caught; live vault: 35 linked names, old and new equal.
-Next session: owner runs `libra login` (F20; check F15 too); open owner item: deletion arming; ask owner about SemAI `.state-semai/ucsd-podcast-profile` (35 MB, unreferenced).
+Next session: owner runs `libra login` (F20; check F15 too); open owner item: deletion arming; SemAI podcast profile trashed (owner, 2026-11-01).
 G1 plan (Claude, 2026-11-01): `libra catalog --newer-than NOTE` keeps entries whose file mtime_ns exceeds the note's; reuses `catalog_course`, new `catalog.filter_newer`.
 G1 rules: NOTE relative resolves against vault root, then cwd; course defaults to the note's top folder, `--course` overrides; JSON adds `newer_than`.
 G1 why mtime_ns: run 1's stale guide and revised HW2 shared a date; the catalog `modified` date alone would miss it.
