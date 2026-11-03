@@ -98,6 +98,7 @@ Owner (2026-10-30): `check_copies` is needed (SemAI ADR-0038 P2); `ensure_book_m
 CC guard: `lecture_map.linked_pdf_names` collects PDF names from vault note links (Markdown, `<...>`, wikilinks, `file:///`); skips `Tools/` and dot dirs.
 CC rule: `linked` matches by file name, not path, because notes keep stale relative and Mac `file:///` links; report-only lines say `report only, linked`.
 Owner (2026-10-30): deletion stays off (`delete=False`) until the owner arms it; first raise Hivemind `libra/copy-check-deletion-arm.md`.
+To arm: owner changes `delete=False` to `True` in `lecture_map.ensure_book_maps`.
 Seam (CC): a note citing a book only in prose (no link) is not in `linked`; owner (2026-10-30): record only, no protection.
 Seam: `refresh_exports` builds maps before readings, so a renamed deck reaches `Tools/maps/` one export later.
 Seam: fetch and Whisper can build the same new book at once; double call, last atomic write wins; harmless.
@@ -112,6 +113,11 @@ Guard: `test_reconcile_never_runs_under_index_lock` (`tests/test_read.py`) fails
 Seam: export, and a plain `read` with missing pages, wait on `index_lock` while a `libra read --fetch` runs (up to 900 s).
 Closed 2026-10-29: F8 delete path has no production caller (CC passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
 
+## Findings
+F23 [low · 1 · 2026-11-03] deploy/libra-export.service: no `After=network-online.target`; Persistent catch-up at boot may fail a new-book Gemini map, `.failed` blocks retry 24 h (suspected).
+Fix proposal: add `After=`/`Wants=network-online.target` as in `libra-fetch.service`.
+Closed 2026-11-03: F21 timer matches installed copy and live schedule; F22 `_note_course` behaviour identical, tests cover outside-root and root (verified).
+
 ## Polish queue (owner-approved ideas, each plans before code in its own session)
 Owner (2026-10-29): vector search could port SemAI `memory/indexer.py` (heading chunks, hash diff) and `retriever.py` `hybrid_search` (BM25 plus local vectors).
 Owner (2026-10-30): further reading runs as rule lines (agents search themselves); a `libra further` client is built only if that proves short in use.
@@ -120,7 +126,7 @@ Owner (2026-10-30): further reading runs as rule lines (agents search themselves
 ADR-0001 P3 `libra check-note` builds only on its D7 trigger.
 
 ## Carryover
-Last audit: 2026-11-01 wrap-up 2 (audited through `fc28ec6`; F21, F22 added; F18, F19 closed).
+Last audit: 2026-11-03 wrap-up (audited through `8b7deba`; F21, F22 verified closed; F23 added).
 Next session: fetch with the owner when asked (none after 10-28); open owner item: deletion arming.
 Open check (F15): the 10-29 login failed by 23:30; next `libra login` should save without a manual `CourseList.aspx` tab.
 Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing.
