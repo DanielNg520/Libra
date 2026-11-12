@@ -12,7 +12,8 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## Owner decisions
-Owner (2026-11-11): ECE 271A dropped; no podcast access; its transcripts end 2026-10-28; folder handling pending owner answer.
+Owner (2026-11-11): ECE 271A dropped (no podcast access); folder moved to `~/Classes/ECE 271A`, so fetch skips it.
+Seam (271A): vault `Tools/readings/ECE 271A/`, `Tools/maps/ECE 271A.json` stay as leftovers; export prunes only current courses (unverified).
 Owner (2026-11-01): fetches run manually with the owner (`libra login`, then fetch); `libra-fetch.timer` disabled 2026-11-01; `libra-whisper.timer` stays; `libra-export.timer` 23:30 enabled 2026-11-01.
 Owner (2026-10-29): agents never run `login`, `fetch`, `export`, `whisper`, `read --fetch` unasked; enforced in `cli._agent_refusal`; the agent sets `LIBRA_OWNER_OK=1` itself when the owner asks or confirms.
 Owner (2026-10-29): agy (Gemini 3.8 Flash) wields Libra too; it loads Hivemind `academic-study` from `~/.gemini/config/skills/` (symlink, Fedora and Mac).
