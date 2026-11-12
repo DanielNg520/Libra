@@ -13,6 +13,9 @@ Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild p
 
 ## Owner decisions
 Owner (2026-11-11): ECE 271A dropped (no podcast access); folder moved to `~/Classes/ECE 271A`, so fetch skips it.
+Done 2026-11-11 (owner ask): SP26 ECE 153 (lectures, DI) and CSE 151B fetched to `~/Classes/<course>/Transcripts` (43 files, 3 queued for Whisper).
+Past-term fetch: `~/.cache/spike-20261111/fetch_sp26.py` calls `fetch_transcripts` with a scratch vault and term; move files, repoint queue `transcript` paths.
+Seam: cross-listed podcast titles keep both codes (`CSE 151B CSE 251B`), so the transcript folder name is wrong; canonical regex takes one code only.
 Seam (271A): vault `Tools/readings/ECE 271A/`, `Tools/maps/ECE 271A.json` stay as leftovers; export prunes only current courses (unverified).
 Owner (2026-11-01): fetches run manually with the owner (`libra login`, then fetch); `libra-fetch.timer` disabled 2026-11-01; `libra-whisper.timer` stays; `libra-export.timer` 23:30 enabled 2026-11-01.
 Owner (2026-10-29): agents never run `login`, `fetch`, `export`, `whisper`, `read --fetch` unasked; enforced in `cli._agent_refusal`; the agent sets `LIBRA_OWNER_OK=1` itself when the owner asks or confirms.
