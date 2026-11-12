@@ -132,7 +132,8 @@ ADR-0001 P3 `libra check-note` builds only on its D7 trigger.
 
 ## Carryover
 Last audit: 2026-11-03 wrap-up (audited through `8b7deba`; F21, F22 verified closed; F23 added).
-Next session: fetch with the owner when asked (none after 10-28); open owner item: deletion arming.
+Next session: confirm the 2026-11-12 01:00 Whisper run wrote 5 transcripts (ECE 108 11-10, ECE 158A 11-05, ECE 153 05-05, CSE 151B 05-05, 05-07).
+Last fetch 2026-11-11 (login worked, F15 check passed); open owner item: deletion arming.
 Open check (F15): the 10-29 login failed by 23:30; next `libra login` should save without a manual `CourseList.aspx` tab.
 Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing.
 Seam (G1): mtime means rewritten on disk; the 2026-10-19 vault move made every ECE 108 transcript "newer"; lists too much, never too little.
