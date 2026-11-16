@@ -11,8 +11,15 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 ## Code policy
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
+## START HERE (next session)
+Next step: ADR-0002 phase L2 (checker port), on Fedora, in a new session; read the ADR first.
+Owner morning action 1: answer the three ADR-0002 `Asks owner` items (mechanical `sed` import rewrite, SemAI `SEMAI_ANKIWEB_*` sops keys, D-c scope of what SemAI keeps).
+Owner morning action 2: approve starting L2; after Claude copies the L2 verbatim files, the owner runs `dispatch-ledger-hand.sh` on them.
+Owner morning action 3: after L2 code lands, reinstall Libra with `.[fedora,plot,study]` on Fedora and `.[plot,study]` on the Mac.
+L2 baseline: `omll study check --all` gives 29 files, 2 failures, 9 notes, exit 1; `libra study check --all` must match it exactly.
+
 ## Owner decisions
-Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson checker, Anki cards, week files); ADR-0002 next (phase L1).
+Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson checker, Anki cards, week files); design in `docs/decisions/0002-self-study-from-semai.md`.
 Owner (2026-11-16): The lesson generator and figure maker stay parked in SemAI; they do not move to Libra.
 Owner (2026-11-16): After Libra's study code is verified, the SemAI copies of the moved modules and tests are deleted.
 Owner (2026-11-16): Moved files go in verbatim; the owner runs `dispatch-ledger-hand.sh` on them; only import and glue edits use DeepSeek dispatch.
@@ -169,7 +176,7 @@ Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora f
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 
 ## File and directory index
-`AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard). `pyproject.toml` (uv; core stdlib, extras `fedora`, `plot`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
+`AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard, `0002` self study from SemAI). `pyproject.toml` (uv; core stdlib, extras `fedora`, `plot`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
 `src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `jobs.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`, `refresh_exports`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
