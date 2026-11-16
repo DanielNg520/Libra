@@ -1,6 +1,6 @@
 # 0002 – Self study moves from SemAI to Libra
 
-**Status:** Proposed 2026-11-16 (phase L1, design only); L2 to L4 pending owner morning review.
+**Status:** Proposed 2026-11-16 (phase L1, design only); owner asks answered 2026-11-16; L2 to L4 pending.
 
 ## Status
 - Proposed 2026-11-16 by Claude in a headless autofire session (step `lib1`); no code, sops, Anki or vault change made.
@@ -220,10 +220,10 @@ Import edges under SemAI `src/semai/`:
 - Libra `cards` keeps SemAI seams F210, F211, F193 and the 2-day week scan.
 - Mac and Fedora `study check` outputs differ by `code_run` notes only.
 
-## Asks owner
-- Ask owner: allow one mechanical `sed` import rewrite (`semai.` to `libra.`) before the ledger-hand run, instead of about 25 import-only dispatches?
-- Ask owner: delete SemAI sops `SEMAI_ANKIWEB_*` keys after L3 verification, or keep them like the other unused keys?
-- Ask owner: accept D-c (SemAI keeps checker, week, paths, render as parked dependencies) as the scope of "delete SemAI copies"?
+## Owner decisions
+- Allow one mechanical `sed` import rewrite (`semai.` to `libra.`), then the owner runs `dispatch-ledger-hand.sh` (owner, 2026-11-16)
+- Delete SemAI sops `SEMAI_ANKIWEB_*` keys (HKEY, ENDPOINT, USER, PASSWORD) after L3 verification (owner, 2026-11-16)
+- Accept D-c (SemAI keeps checker, week, paths, render as parked dependencies) as the scope for deleting SemAI copies (owner, 2026-11-16)
 
 ## Consequences
 - Libra gains `src/libra/study/` (checker, week parser, cards) and `src/libra/sandbox.py`; core stays stdlib only.

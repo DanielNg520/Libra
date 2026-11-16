@@ -13,9 +13,8 @@ Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild p
 
 ## START HERE (next session)
 Next step: ADR-0002 phase L2 (checker port), on Fedora, in a new session; read the ADR first.
-Owner morning action 1: answer the three ADR-0002 `Asks owner` items (mechanical `sed` import rewrite, SemAI `SEMAI_ANKIWEB_*` sops keys, D-c scope of what SemAI keeps).
-Owner morning action 2: approve starting L2; after Claude copies the L2 verbatim files, the owner runs `dispatch-ledger-hand.sh` on them.
-Owner morning action 3: after L2 code lands, reinstall Libra with `.[fedora,plot,study]` on Fedora and `.[plot,study]` on the Mac.
+Owner (2026-11-16): L2 approved, own session; ADR-0002 asks answered there; after Claude copies the L2 files, the owner runs `dispatch-ledger-hand.sh` on them.
+Owner action: after L2 code lands, reinstall Libra with `.[fedora,plot,study]` on Fedora and `.[plot,study]` on the Mac.
 L2 baseline: `omll study check --all` gives 29 files, 2 failures, 9 notes, exit 1; `libra study check --all` must match it exactly.
 
 ## Owner decisions
