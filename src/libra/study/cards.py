@@ -353,7 +353,7 @@ def make_cards(
                 if not notes:
                     continue
                 try:
-                    added = add_cards(col, DECKS[item.cat], notes, ["semai", lesson_tag(item.path)])
+                    added = add_cards(col, DECKS[item.cat], notes, [lesson_tag(item.path)])
                 except Exception as exc:
                     log.warning("anki: adding cards for %s failed: %s", item.path, exc)
                     failed.append(item.path)

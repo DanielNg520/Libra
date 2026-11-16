@@ -174,7 +174,7 @@ def test_make_cards_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
                 (note_guid(LESSON, "Q one?"), "Q one?", "A one"),
                 (note_guid(LESSON, "Q two?"), "Q two?", "A two"),
             ],
-            ["semai", "lesson::02_events_and_Bayes"],
+            ["lesson::02_events_and_Bayes"],
         )
     ]
     assert len(rec["syncs"]) == 2
@@ -302,7 +302,7 @@ def test_make_cards_reading_cards(
         ),
     ]
     assert rec["added"] == [
-        ("Self study::Probability", expected_notes, ["semai", "lesson::02_events_and_Bayes"])
+        ("Self study::Probability", expected_notes, ["lesson::02_events_and_Bayes"])
     ]
 
 
@@ -400,7 +400,7 @@ def test_make_cards_concept_embeds(
                 (note_guid(EVENTS, "What is an event?"), "What is an event?", "A set"),
                 (note_guid(BAYES, "State Bayes rule."), "State Bayes rule.", "P(A|B)"),
             ],
-            ["semai", "lesson::02_events_and_Bayes"],
+            ["lesson::02_events_and_Bayes"],
         )
     ]
     assert store.data[ANKI_DONE_PREFIX + EVENTS] == "2026-11-10"
@@ -447,7 +447,7 @@ def test_make_cards_dsa_signals_without_runner(tmp_path: Path, monkeypatch: pyte
     assert carded == (DSA_NOTE,)
     assert failed == ()
     assert rec["added"] == [
-        ("Self study::DSA", [(note_guid(DSA_NOTE, F), F, "Two pointers")], ["semai", "lesson::Two_pointers"])
+        ("Self study::DSA", [(note_guid(DSA_NOTE, F), F, "Two pointers")], ["lesson::Two_pointers"])
     ]
 
 
@@ -474,7 +474,7 @@ def test_make_cards_dsa_problem_note_uses_pattern(tmp_path: Path, monkeypatch: p
     F = "Which pattern fits this signal: Sorted array plus pair sum"
     assert carded == (PROBLEM,)
     assert failed == ()
-    assert rec["added"] == [("Self study::DSA", [(note_guid(DSA_NOTE, F), F, "Two pointers")], ["semai", "lesson::LC_167_Two_Sum_II"])]
+    assert rec["added"] == [("Self study::DSA", [(note_guid(DSA_NOTE, F), F, "Two pointers")], ["lesson::LC_167_Two_Sum_II"])]
     assert store.data[ANKI_DONE_PREFIX + PROBLEM] == "2026-11-10"
 
 
@@ -821,7 +821,7 @@ def test_make_cards_concept_label_collision(
                     "A set",
                 ),
             ],
-            ["semai", "lesson::02_events_and_Bayes"],
+            ["lesson::02_events_and_Bayes"],
         )
     ]
     assert ANKI_DONE_PREFIX + EVENTS not in store.data

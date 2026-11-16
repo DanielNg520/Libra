@@ -12,9 +12,7 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## START HERE (next session)
-Next step: ADR-0002 phase L4 (repoint and delete), in a new session; read the ADR first.
-Seam: Libra cards keep SemAI's `semai` tag and `semai-` GUID prefix; renaming changes GUIDs, so carded lessons would duplicate.
-Ask owner: rename the `semai` tag and GUID prefix during L4, or keep them.
+Next step: owner runs `libra study cards` once to push the card deletion to AnkiWeb and regenerate 2 lessons (needs Claude).
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
 
 ## Owner decisions
@@ -105,6 +103,19 @@ Guard: `fetch` and `export` refuse without `lecture_reads/source_index.json` in 
 Mac login command: `ssh -t -L 9222:127.0.0.1:9222 dyne@fedora /home/dyne/.local/bin/libra login`; a bare `~` expands on the Mac.
 Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --notes < image.png`; the image travels on stdin.
 
+### Study cards
+Owner (2026-11-09): cards made after a lesson is ticked; Basic cards per Recall question plus 1-3 per Reading heading; decks `Self study::<Topic>`.
+Owner (2026-11-11): `DSA` category, deck `Self study::DSA`; one Claude-free card per Signals bullet, re-checked each tick (GUID dedupe).
+Owner (2026-11-16): `semai` tag dropped, GUID prefix `libra-`; 32 local `semai-` notes deleted and meta reset; next real run pushes deletion and regenerates.
+Seam: only yesterday's and today's week files are scanned; a lesson ticked in an older week never gets cards.
+Seam: a reworded question or signal makes a new card; the old one stays in Anki (GUID is path plus front text).
+Seam: carded-lesson keys are path-only, so a renamed lesson is re-carded; identical concept bodies under two paths card once.
+Seam: a ticked DSA note costs one AnkiWeb sync per run while in the 2-day scan; `carded` lists only items that added cards.
+Seam: a failed concept step on a DSA note is only logged; the item reports carded; concepts retry next run.
+Seam: a `pattern:` pointing at a note without `### Signals` yields no cards (INFO log only); GUIDs and concept keys use the pattern path.
+Seam: `reading_embeds` follows paragraphs; an embed sharing a paragraph with text or an image gets no card.
+Seam: card source text keeps `Broken:`/`Fixed:` markers; a profile `markers` override is not mirrored.
+
 ### Maps and copy check
 F13 rule: `lecture_map.ensure_book_maps` runs per course before `fingerprint` in `write_maps`; `book_map` builds uncached books only; keys load lazily, once.
 F13 why first: a failed build leaves no cache, so the next run retries; a build changes `books` mtime, so the map rebuilds.
@@ -135,6 +146,7 @@ Seam: export, and a plain `read` with missing pages, wait on `index_lock` while 
 ## Findings
 F23 [low · 1 · 2026-11-03] deploy/libra-export.service: no `After=network-online.target`; Persistent catch-up at boot may fail a new-book Gemini map, `.failed` blocks retry 24 h (suspected).
 Fix proposal: add `After=`/`Wants=network-online.target` as in `libra-fetch.service`.
+F24 [low · 1 · 2026-11-09→2026-11-16] src/libra/study/anki_cards.py: `parse_cards` fails all lesson cards on one bad card; TeX or backslash headings may not echo exactly (suspected).
 
 ## Polish queue (owner-approved ideas, each plans before code in its own session)
 Owner (2026-10-29): vector search could port SemAI `memory/indexer.py` (heading chunks, hash diff) and `retriever.py` `hybrid_search` (BM25 plus local vectors).
@@ -145,7 +157,8 @@ ADR-0001 P3 `libra check-note` builds only on its D7 trigger.
 
 ## Carryover
 Last audit: 2026-11-03 wrap-up (audited through `8b7deba`; F21, F22 verified closed; F23 added).
-Next session: confirm the 2026-11-12 01:00 Whisper run wrote 5 transcripts (ECE 108 11-10, ECE 158A 11-05, ECE 153 05-05, CSE 151B 05-05, 05-07).
+Whisper 2026-11-12 to 11-15: 2 of 5 transcribed; ECE 158A 11-05, CSE 151B 05-05, 05-07 logged "no speech", audio dropped, sidecar kept (cause unverified).
+Check regenerated cards' text for TeX escapes (tab, formfeed) to verify or close F24.
 Last fetch 2026-11-11 (login worked, F15 check passed); open owner item: deletion arming.
 Open check (F15): the 10-29 login failed by 23:30; next `libra login` should save without a manual `CourseList.aspx` tab.
 Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing.

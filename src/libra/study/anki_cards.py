@@ -332,7 +332,7 @@ def to_anki_html(text: str) -> str:
 
 
 def note_guid(path: str, question: str) -> str:
-    return "semai-" + hashlib.sha256(f"{path}\n{question}".encode("utf-8")).hexdigest()[:20]
+    return "libra-" + hashlib.sha256(f"{path}\n{question}".encode("utf-8")).hexdigest()[:20]
 
 
 def lesson_tag(path: str) -> str:

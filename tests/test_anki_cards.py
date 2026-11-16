@@ -368,7 +368,7 @@ def test_note_guid_properties():
     assert guid1 == guid2
     assert guid1 != guid3
     assert guid1 != guid4
-    assert guid1.startswith("semai-")
+    assert guid1.startswith("libra-")
     assert len(guid1) == 26
 
 

@@ -1,5 +1,5 @@
 # Lesson rules: the one source of truth for every Self study and Coding Practice lesson rule (SemAI ADR-0046).
-# Run on Fedora: `omll study check <vault-relative path>...` or `omll study check --all`; Mac: ssh dyne@fedora 'omll study check ...'.
+# Check on Fedora and the Mac: `libra study check <path>` or `--all`; `code_run` checks run only on Fedora.
 # A lesson is finished only when the check exits 0 and every manual checklist item is answered in the reply.
 # A rule is [rules.<id>]: text (owner rule, date), kind, profiles, kind parameters; enabled = false turns it off.
 # kind = "manual" rules print as a checklist every run; planned_kind names the code check that will replace it (ADR-0046 C2, C3).
