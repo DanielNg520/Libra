@@ -13,7 +13,6 @@ Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild p
 
 ## Owner decisions
 Owner (2026-11-11): ECE 271A dropped (no podcast access); folder moved to `~/Classes/ECE 271A`, so fetch skips it.
-Done 2026-11-11 (owner ask): SP26 ECE 153 (lectures, DI) and CSE 151B fetched to `~/Classes/<course>/Transcripts` (43 files, 3 queued for Whisper).
 Past-term fetch: `~/.cache/spike-20261111/fetch_sp26.py` calls `fetch_transcripts` with a scratch vault and term; move files, repoint queue `transcript` paths.
 Seam: cross-listed podcast titles keep both codes (`CSE 151B CSE 251B`), so the transcript folder name is wrong; canonical regex takes one code only.
 Seam (271A): vault `Tools/readings/ECE 271A/`, `Tools/maps/ECE 271A.json` stay as leftovers; export prunes only current courses (unverified).
@@ -34,7 +33,7 @@ Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead wi
 Owner (2026-10-28): Libra's agents are agy and Claude Code; model APIs only Gemini (reads, OCR), plus the OpenRouter cap fallback.
 Owner (2026-10-28): a light local model will later run on the Mac; revisit a local cleaner then, build nothing for it now.
 Owner (2026-10-28): the homework-precedent rule (Hivemind `libra/homework-workflow.md`) must be built into Libra deterministically, not left to agent memory.
-Superseded (owner, 2026-10-28): course calendar workers do not stay in SemAI; they went with the transition, never ported here.
+Owner (2026-10-28): course calendar workers do not stay in SemAI; they went with the transition, never ported here.
 Clones: Fedora `~/Documents/Coding/Libra`, Mac `~/Developer/Libra`.
 Vault: Fedora `~/Classes/Current` (git); Mac `~/Library/CloudStorage/GoogleDrive-danielnguyen520@gmail.com/My Drive/Classes/Current` (Drive, no git) (owner, 2026-11-01).
 
@@ -47,7 +46,7 @@ Owner (2026-10-26): readings export to vault `Tools/readings/`; maps live in `To
 Owner (2026-10-28): no new source folder: `Lecture Notes/` went into `Slides/`, superseded into `Slides/Outdated/`; `In Class Problems/` into `Homework/`.
 Owner (2026-10-28): Libra skips every `Outdated/` child folder.
 Course info (Claude, 2026-10-28): one vault note per course, `<course>/Course info.md`; no table, no Libra code.
-Kept: vault `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
+Vault keeps `Tools/tests/fixtures/ece108_quiz1/` (exam-prep P1 fixture, cited in vault `AGENTS.md`).
 Trap: `LECTURE_NOTES_DIR = "Lecture notes"` is an output dir; a vault folder of that name (any case on the Mac) is never a source.
 Trap: vault `Tools/` has no hooks; set `PYTHONDONTWRITEBYTECODE=1` when testing there, or `__pycache__` syncs to Drive.
 Trap: `libra read` paths are vault-relative (`ECE 108/Discussion/x.pdf`), not course-relative; a course-relative path answers `unknown_source`.
@@ -116,12 +115,10 @@ F7 rule: recitation-retry pages carry `lecture_docs.PARAPHRASE_NOTE` under each 
 Trap: `index_lock` (`read.lock`, flock) is not re-entrant; never call `reconcile_index` while holding it (`read_pages` fetch path).
 Guard: `test_reconcile_never_runs_under_index_lock` (`tests/test_read.py`) fails if `read_pages` reconciles while holding `index_lock`.
 Seam: export, and a plain `read` with missing pages, wait on `index_lock` while a `libra read --fetch` runs (up to 900 s).
-Closed 2026-10-29: F8 delete path has no production caller (CC passes `delete=False`); F9 hashing all 10 textbooks takes 0.07 s.
 
 ## Findings
 F23 [low · 1 · 2026-11-03] deploy/libra-export.service: no `After=network-online.target`; Persistent catch-up at boot may fail a new-book Gemini map, `.failed` blocks retry 24 h (suspected).
 Fix proposal: add `After=`/`Wants=network-online.target` as in `libra-fetch.service`.
-Closed 2026-11-03: F21 timer matches installed copy and live schedule; F22 `_note_course` behaviour identical, tests cover outside-root and root (verified).
 
 ## Polish queue (owner-approved ideas, each plans before code in its own session)
 Owner (2026-10-29): vector search could port SemAI `memory/indexer.py` (heading chunks, hash diff) and `retriever.py` `hybrid_search` (BM25 plus local vectors).
