@@ -14,6 +14,7 @@ Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild p
 ## START HERE (next session)
 Next step: ADR-0002 phase L4 (repoint and delete), in a new session; read the ADR first.
 Seam: Libra cards keep SemAI's `semai` tag and `semai-` GUID prefix; renaming changes GUIDs, so carded lessons would duplicate.
+Ask owner: rename the `semai` tag and GUID prefix during L4, or keep them.
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
 
 ## Owner decisions
