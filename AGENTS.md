@@ -12,7 +12,12 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## Owner decisions
-Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson checker, Anki cards, week files); transfer plan awaits owner answers.
+Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson checker, Anki cards, week files); ADR-0002 next (phase L1).
+Owner (2026-11-16): The lesson generator and figure maker stay parked in SemAI; they do not move to Libra.
+Owner (2026-11-16): After Libra's study code is verified, the SemAI copies of the moved modules and tests are deleted.
+Owner (2026-11-16): Moved files go in verbatim; the owner runs `dispatch-ledger-hand.sh` on them; only import and glue edits use DeepSeek dispatch.
+Owner (2026-11-16): Claude copies the AnkiWeb login values from SemAI sops into Libra sops with `sops set`, never printing them.
+Owner (2026-11-16): The checker runs on Fedora and the Mac, its code-run check on Fedora only (bwrap); Anki cards run on Fedora only.
 Owner (2026-11-11): ECE 271A dropped (no podcast access); folder moved to `~/Classes/ECE 271A`, so fetch skips it.
 Past-term fetch: `~/.cache/spike-20261111/fetch_sp26.py` calls `fetch_transcripts` with a scratch vault and term; move files, repoint queue `transcript` paths.
 Seam: cross-listed podcast titles keep both codes (`CSE 151B CSE 251B`), so the transcript folder name is wrong; canonical regex takes one code only.
