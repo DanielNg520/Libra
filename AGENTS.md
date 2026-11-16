@@ -13,7 +13,7 @@ Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild p
 
 ## START HERE (next session)
 Next step: ADR-0002 phase L4 (repoint and delete), in a new session; read the ADR first.
-Ask owner: delete SemAI sops `SEMAI_ANKIWEB_*` keys and `.state-semai/anki/` (owner decisions in ADR-0002).
+Seam: Libra cards keep SemAI's `semai` tag and `semai-` GUID prefix; renaming changes GUIDs, so carded lessons would duplicate.
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
 
 ## Owner decisions
@@ -21,6 +21,7 @@ Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson 
 Owner (2026-11-16): The lesson generator and figure maker stay parked in SemAI; they do not move to Libra.
 Owner (2026-11-16): After Libra's study code is verified, the SemAI copies of the moved modules and tests are deleted.
 Owner (2026-11-16): Moved files go in verbatim; the owner runs `dispatch-ledger-hand.sh` on them; only import and glue edits use DeepSeek dispatch.
+Owner (2026-11-16): SemAI `SEMAI_ANKIWEB_*` sops keys and `.state-semai/anki/` deleted; AnkiWeb held no SemAI-made cards, so none deleted.
 Owner (2026-11-16): Claude copies the AnkiWeb login values from SemAI sops into Libra sops with `sops set`, never printing them.
 Owner (2026-11-16): The checker runs on Fedora and the Mac, its code-run check on Fedora only (bwrap); Anki cards run on Fedora only.
 Owner (2026-11-11): ECE 271A dropped (no podcast access); folder moved to `~/Classes/ECE 271A`, so fetch skips it.
