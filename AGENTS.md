@@ -13,7 +13,6 @@ Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild p
 
 ## START HERE (next session)
 Next step: ADR-0002 phase L4 (repoint and delete), in a new session; read the ADR first.
-Owner action: reinstall Fedora with `uv tool install --editable --force '.[fedora,plot,study,anki]'`; the Mac with `.[plot,study]`.
 Owner action: first real `libra study cards` run with the owner; dry run lists one lesson, `Coding Practice/Bare Metal C/lessons/01 macros and the preprocessor.md` (needs Claude).
 After that run: delete SemAI sops `SEMAI_ANKIWEB_*` keys and `.state-semai/anki/` (owner decisions in ADR-0002).
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
