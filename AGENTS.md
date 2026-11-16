@@ -12,10 +12,9 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## START HERE (next session)
-Next step: ADR-0002 phase L2 (checker port), on Fedora, in a new session; read the ADR first.
-Owner (2026-11-16): L2 approved, own session; ADR-0002 asks answered there; after Claude copies the L2 files, the owner runs `dispatch-ledger-hand.sh` on them.
-Owner action: after L2 code lands, reinstall Libra with `.[fedora,plot,study]` on Fedora and `.[plot,study]` on the Mac.
-L2 baseline: `omll study check --all` gives 29 files, 2 failures, 9 notes, exit 1; `libra study check --all` must match it exactly.
+Next step: ADR-0002 phase L3 (cards, state, sops), on Fedora, in a new session; read the ADR first.
+Owner action: reinstall Libra with `.[fedora,plot,study]` on Fedora and `.[plot,study]` on the Mac, so the `libra` tool has `study check`.
+Test command: `uv run --extra fedora --extra plot --extra study pytest -q` (the study tests need the `study` extra).
 
 ## Owner decisions
 Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson checker, Anki cards, week files); design in `docs/decisions/0002-self-study-from-semai.md`.
@@ -67,9 +66,9 @@ Seam: Study notes are untracked in vault git (owner, 2026-10-29); vault-wide not
 
 ## Architecture
 Package: uv project, `src/libra`, `requires-python >=3.12`; Mac has uv 0.11.2 with Python 3.12 and 3.13 (verified 2026-10-27).
-Extras: core is stdlib only (search, catalog, map, precedents); `fedora` adds fetch, Whisper, Gemini reads, export; `plot` adds `matplotlib`, `schemdraw`.
-Install: `uv tool install --editable '.[fedora,plot]'` on Fedora, `uv tool install --editable '.[plot]'` on the Mac; console script `libra`.
-CLI: `login`, `fetch`, `whisper`, `read`, `export`, `search`, `catalog`, `map`, `status`, `ocr`, `precedents`; one entry point.
+Extras: core is stdlib only (search, catalog, map, precedents); `fedora` adds fetch, Whisper, Gemini reads, export; `plot` adds `matplotlib`, `schemdraw`; `study` adds `markdown-it-py`, `mdit-py-plugins` (lesson checker).
+Install: `uv tool install --editable '.[fedora,plot,study]'` on Fedora, `uv tool install --editable '.[plot,study]'` on the Mac; console script `libra`.
+CLI: `login`, `fetch`, `whisper`, `read`, `export`, `search`, `catalog`, `map`, `status`, `ocr`, `precedents`, `study check`; one entry point.
 Login then fetch: `libra login` saves state and fetches at once (ADR-0041 P4 option a).
 Schedule: Fedora user timers `libra-export.timer` 23:30 (maps, readings), `libra-whisper.timer` 01:00 (drains queue until 06:00, `WHISPER_HOURS`); fetch timer disabled.
 Wanted courses: vault course folders (`course_dir` rule plus `library.NON_COURSE_DIRS`, the one list); term from config `LIBRA_TERM` (e.g. `FA26`), set once per quarter.
@@ -175,7 +174,7 @@ Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora f
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 
 ## File and directory index
-`AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard, `0002` self study from SemAI). `pyproject.toml` (uv; core stdlib, extras `fedora`, `plot`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
+`AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard, `0002` self study from SemAI). `pyproject.toml` (uv; core stdlib, extras `fedora`, `plot`, `study`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
 `src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `jobs.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`, `refresh_exports`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
@@ -184,3 +183,5 @@ Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HO
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, `cmd_status` (conflict copies), exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, renamed-source adoption, `--chapter`, `--printed`); `login.py` sign-in.
 `deploy/` user units: `libra-fetch` 23:30 (timer disabled 2026-11-01, owner), `libra-export` 23:30 (enabled 2026-11-01), `libra-whisper` 01:00 to 06:00; installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).
+`src/libra/study/`: lesson checker ported from SemAI (`checks` rule engine, `check_*` kinds, `week`, `paths` with `LESSON_ROOTS`, `render` parser and `scan_blocks`, `frontmatter`); `commands.py` `cmd_study_check(vault, paths, all_lessons, profile)`.
+`src/libra/sandbox.py`: bubblewrap sandbox; `SandboxError` (a `RuntimeError`), `SandboxUnavailable` when `bwrap` is missing; `code_run` turns that into a skipped note (Mac).

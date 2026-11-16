@@ -1,6 +1,6 @@
 # 0002 – Self study moves from SemAI to Libra
 
-**Status:** Proposed 2026-11-16 (phase L1, design only); owner asks answered 2026-11-16; L2 to L4 pending.
+**Status:** Accepted; L1 design and L2 checker port implemented 2026-11-16; L3 and L4 pending.
 
 ## Status
 - Proposed 2026-11-16 by Claude in a headless autofire session (step `lib1`); no code, sops, Anki or vault change made.
@@ -137,15 +137,15 @@ Import edges under SemAI `src/semai/`:
 
 **Dispatch (one file per response):**
 - SEARCH block counts: `study/checks.py` 1 (import); `check_kinds.py` 5; `check_concepts.py` 2; `check_refs.py` 2; `check_facts.py` 4; `week.py` 1 (imports `semai.` to `libra.study.`).
-- `check_code.py` 3 SEARCH blocks: imports; missing `bwrap` becomes a `Note` (`code_run: skipped, bwrap not found (Fedora only)`), not failure; other sandbox errors fail.
+- `sandbox.py` raises `SandboxUnavailable` (`SandboxError` subclass) when `bwrap` is missing; `check_code.code_run` emits `Note` (`code_run: skipped, bwrap not found (Fedora only)`) and stops; other sandbox errors fail.
 - `paths.py` 2 SEARCH blocks: define `LESSON_ROOTS = ("Self study/", "Coding Practice/")` instead of importing `lesson`; import `IMAGE_SUFFIXES` from `libra.study.render`.
 - `render.py`: 1 import block plus one deletion block per removed function (`render_note`, `render_concept`, and helpers only they call).
 - `frontmatter.py` 2 SEARCH blocks (module docstring, `NoFrontmatterHeader` docstring naming `semai.memory.fact_note`); `sandbox.py` 1 (`SandboxError` subclasses `RuntimeError`, no `SemaiError`).
-- New `src/libra/study/commands.py`: `cmd_study_check` and `_vault_rel` ported from SemAI `adapters/cli.py`, reading `Settings.obsidian_academic_vault_dir`, `LESSON_ROOTS` from `paths`.
+- `src/libra/study/commands.py`: `cmd_study_check(vault, ...)` and `_vault_rel` ported from SemAI `adapters/cli.py`; takes `libra.cli` vault root (`--root` or `LIBRA_VAULT_DIR`), `LESSON_ROOTS` from `paths`.
 - `src/libra/cli.py`: `study` parser with `check` (paths, `--all`, `--profile`); route to `study.commands`; missing `study` extra exits 2 with hint.
 - `pyproject.toml`: `study` extra (hand config edit with owner sign-off, or dispatch).
 - Tests: import edits per copied test (block counts 9, 5, 2, 3, 3, 1, 5, 1, 2 in verbatim order).
-- Tests: delete `lint_lesson` and `render_note` tests; `cmd_study_check` tests use Libra `Settings.load` env keys; Mac `code_run` test (missing `bwrap` yields note).
+- Tests: `lint_lesson` and `render_note` tests deleted; `cmd_study_check` tests pass vault path; `cli.main` routing test; `SandboxUnavailable` yields skipped note.
 
 **Verify:**
 - `uv run pytest -q tests/` all pass; size guard passes.
@@ -218,7 +218,7 @@ Import edges under SemAI `src/semai/`:
 - Card GUID prefix stays `semai-` (the GUID is the dedupe key, so SemAI-era notes still match); the card tag `semai` stays verbatim.
 - `claude_runner` spawns `claude -p`; under Claude Code it runs nested, as it did from SemAI.
 - Libra `cards` keeps SemAI seams F210, F211, F193 and the 2-day week scan.
-- Mac and Fedora `study check` outputs differ by `code_run` notes only.
+- Mac/Fedora `study check` outputs differ by `code_run` notes only; Mac lessons with runnable code get one skipped note, no notes after first runnable block (verified 2026-11-16).
 
 ## Owner decisions
 - Allow one mechanical `sed` import rewrite (`semai.` to `libra.`), then the owner runs `dispatch-ledger-hand.sh` (owner, 2026-11-16)
