@@ -12,6 +12,7 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## Owner decisions
+Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson checker, Anki cards, week files); transfer plan awaits owner answers.
 Owner (2026-11-11): ECE 271A dropped (no podcast access); folder moved to `~/Classes/ECE 271A`, so fetch skips it.
 Past-term fetch: `~/.cache/spike-20261111/fetch_sp26.py` calls `fetch_transcripts` with a scratch vault and term; move files, repoint queue `transcript` paths.
 Seam: cross-listed podcast titles keep both codes (`CSE 151B CSE 251B`), so the transcript folder name is wrong; canonical regex takes one code only.
