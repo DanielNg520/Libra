@@ -1,1 +1,1 @@
-"""Self study tab support (ADR-0043): week file parsing and editing, lesson generation."""
+"""Self study support (Libra ADR-0002): lesson checker, plan files (Current.md, Master index.md), Anki cards."""

@@ -185,8 +185,8 @@ kind = "manual"
 planned_kind = "vault_links"
 profiles = ["lesson"]
 
-[rules.week-line]
-text = "The week file has the lesson line under today's heading at session start (owner, 2026-11-09)."
+[rules.plan-line]
+text = "Self study Current.md or Master index.md links the lesson (owner, 2026-11-16)."
 kind = "manual"
 planned_kind = "vault_links"
 profiles = ["lesson"]

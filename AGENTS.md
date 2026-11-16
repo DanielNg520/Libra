@@ -107,7 +107,7 @@ Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --n
 Owner (2026-11-09): cards made after a lesson is ticked; Basic cards per Recall question plus 1-3 per Reading heading; decks `Self study::<Topic>`.
 Owner (2026-11-11): `DSA` category, deck `Self study::DSA`; one Claude-free card per Signals bullet, re-checked each tick (GUID dedupe).
 Owner (2026-11-16): `semai` tag dropped, GUID prefix `libra-`; `semai-` notes deleted from AnkiWeb.
-Seam: only yesterday's and today's week files are scanned; a lesson ticked in an older week never gets cards.
+`libra study cards` scans ticked lines in `Current.md` and `Master index.md` every run (carded lessons skipped via card log); `plan-line` (`vault_links`, target `plan`) checks either file.
 Seam: a reworded question or signal makes a new card; the old one stays in Anki (GUID is path plus front text).
 Seam: carded-lesson keys are path-only, so a renamed lesson is re-carded; identical concept bodies under two paths card once.
 Seam: a ticked DSA note costs one AnkiWeb sync per run while in the 2-day scan; `carded` lists only items that added cards.
@@ -199,7 +199,7 @@ Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HO
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, `cmd_status` (conflict copies), exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, renamed-source adoption, `--chapter`, `--printed`); `login.py` sign-in.
 `deploy/` user units: `libra-fetch` 23:30 (timer disabled 2026-11-01, owner), `libra-export` 23:30 (enabled 2026-11-01), `libra-whisper` 01:00 to 06:00; installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).
-`src/libra/study/`: lesson checker ported from SemAI (`checks` rule engine, `check_*` kinds, `week`, `paths` with `LESSON_ROOTS`, `render` parser and `scan_blocks`, `frontmatter`); `commands.py` `cmd_study_check(vault, paths, all_lessons, profile)`.
+`src/libra/study/`: lesson checker ported from SemAI (`checks` rule engine, `check_*` kinds, `plan` (Self study plan files), `paths` with `LESSON_ROOTS`, `render` parser and `scan_blocks`, `frontmatter`); `commands.py` `cmd_study_check(vault, paths, all_lessons, profile)`.
 `src/libra/study/` cards: `anki_cards` (card text, GUID), `anki_sync` (lazy `anki`), `cards` (`make_cards`, `preview_cards`, `JsonMetaStore`), `runner` (`claude_runner`); `commands.py` `cmd_study_cards(settings, vault, day, dry_run)`.
 `scripts/anki_login_once.py`: one-off AnkiWeb login; stores the hkey and endpoint in Libra sops.
 `tests/conftest.py`: autouse guard stubs `_read_sops_secrets` and `_read_config_env` (the latter not in `test_config.py`).

@@ -25,7 +25,7 @@ CLAUDE_READ_DIRS: tuple[Path, ...] = (Path.home() / "Ebooks", Path.home() / "Cla
 
 
 def cmd_study_cards(settings: Settings, vault: Path, day: date | None, dry_run: bool) -> int:
-    """Make Anki cards for lessons ticked in yesterday's and today's week files."""
+    """Make Anki cards for lessons ticked in Self study Current.md and Master index.md."""
     today = day if day is not None else datetime.now(settings.zone).date()
     try:
         store = JsonMetaStore(meta_path(settings.state_dir), persist=not dry_run)
@@ -33,7 +33,7 @@ def cmd_study_cards(settings: Settings, vault: Path, day: date | None, dry_run: 
         print(f"study cards: {exc}", file=sys.stderr)
         return 2
     if dry_run:
-        previews = preview_cards(vault, store, today)
+        previews = preview_cards(vault, store)
         for preview in previews:
             suffix = f" (from {preview.source})" if preview.source != preview.path else ""
             print(f"{preview.path}{suffix}")

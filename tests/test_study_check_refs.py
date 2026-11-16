@@ -316,60 +316,69 @@ class TestVaultLinks:
             (None, "vault_links: cannot read outline Coding Practice/Python/01 outline.md")
         ]
 
-    def test_week_unreadable_skipped(self, tmp_path):
+    def test_plan_unreadable_skipped(self, tmp_path):
         lines = []
-        path = _write(tmp_path, "Self study/Weekly/2026/2026-11-02.md")
+        path = _write(tmp_path, "Self study/Current.md")
         path.write_bytes(b"\xff\xfe bad")
-        assert _run("vault_links", {"target": "week"}, lines, tmp_path, rel=self.REL) == [
-            (None, "vault_links: no week file links the lesson")
+        assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == [
+            (None, "vault_links: no plan file links the lesson")
         ]
         _write(
             tmp_path,
-            "Self study/Weekly/2026/2026-11-09.md",
+            "Self study/Master index.md",
             "- [ ] PY: [[Coding Practice/Python/lessons/01 x|PY 01]]",
         )
-        assert _run("vault_links", {"target": "week"}, lines, tmp_path, rel=self.REL) == []
+        assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == []
 
-    def test_week_row(self, tmp_path):
+    def test_plan_current_row(self, tmp_path):
         lines = []
         _write(
             tmp_path,
-            "Self study/Weekly/2026/2026-11-09.md",
+            "Self study/Current.md",
             "- [ ] PY: [[Coding Practice/Python/lessons/01 x|PY 01]]",
         )
-        assert _run("vault_links", {"target": "week"}, lines, tmp_path, rel=self.REL) == []
+        assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == []
 
-    def test_week_other_lesson(self, tmp_path):
+    def test_plan_master_index_row(self, tmp_path):
         lines = []
         _write(
             tmp_path,
-            "Self study/Weekly/2026/2026-11-09.md",
+            "Self study/Master index.md",
+            "- [ ] PY: [[Coding Practice/Python/lessons/01 x|PY 01]]",
+        )
+        assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == []
+
+    def test_plan_other_lesson(self, tmp_path):
+        lines = []
+        _write(
+            tmp_path,
+            "Self study/Current.md",
             "- [ ] PY: [[Coding Practice/Python/lessons/01 xy|PY 01]]",
         )
-        assert _run("vault_links", {"target": "week"}, lines, tmp_path, rel=self.REL) == [
-            (None, "vault_links: no week file links the lesson")
+        assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == [
+            (None, "vault_links: no plan file links the lesson")
         ]
 
-    def test_week_missing(self, tmp_path):
+    def test_plan_missing(self, tmp_path):
         lines = []
-        assert _run("vault_links", {"target": "week"}, lines, tmp_path, rel=self.REL) == [
-            (None, "vault_links: no week file links the lesson")
+        assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == [
+            (None, "vault_links: no plan file links the lesson")
         ]
 
-    def test_week_custom_dir(self, tmp_path):
+    def test_plan_custom_files(self, tmp_path):
         lines = []
         _write(
             tmp_path,
-            "Plans/2026-11-09.md",
+            "Plans/now.md",
             "- [ ] PY: [[Coding Practice/Python/lessons/01 x|PY 01]]",
         )
         assert _run(
             "vault_links",
-            {"target": "week", "week_dir": "Plans"},
+            {"target": "plan", "files": ["Plans/now.md"]},
             lines,
             tmp_path,
             rel=self.REL,
         ) == []
 
     def test_validate_target(self):
-        assert _validate("vault_links", {"target": "x"}) == "target must be 'outline' or 'week', not 'x'"
+        assert _validate("vault_links", {"target": "x"}) == "target must be 'outline' or 'plan', not 'x'"

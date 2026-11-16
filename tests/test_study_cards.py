@@ -6,7 +6,7 @@ import fcntl
 import json
 import logging
 from datetime import date
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pytest
 
@@ -24,7 +24,7 @@ from libra.study.cards import (
     preview_cards,
     week_lock,
 )
-from libra.study.week import week_relpath
+from libra.study.plan import CURRENT, MASTER_INDEX
 
 
 class FakeStore:
@@ -38,28 +38,10 @@ class FakeStore:
         self.data[key] = value
 
 
-def _week(monday: date, days: dict[int, list[str]], stage: int = 2) -> str:
-    names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    lines = [
-        "---",
-        "tags:",
-        "  - weekly",
-        f"week: {monday.isoformat()}",
-        f"stage: {stage}",
-        "---",
-        "",
-    ]
-    for i in range(7):
-        d = date.fromordinal(monday.toordinal() + i)
-        lines.append(f"## {names[i]} {d.isoformat()}")
-        lines.extend(days.get(i, []))
-    return "\n".join(lines) + "\n"
-
-
-def _write(vault: Path, monday: date, text: str) -> Path:
-    path = vault / week_relpath(monday)
+def _write(vault: Path, lines: list[str], rel: PurePosixPath = CURRENT) -> Path:
+    path = vault / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text)
+    path.write_text("# Current\n\n" + "\n".join(lines) + "\n")
     return path
 
 
@@ -95,19 +77,12 @@ def _anki_vault(
         if lesson_text is not None
         else "# PR 02\n\n## Recall\n\n- Q one?\n- Q two?\n\n## Sources\n\n- Ross\n"
     )
-    monday = date(2026, 11, 9)
     _write(
         vault,
-        monday,
-        _week(
-            monday,
-            {
-            0: [
-                f"- [{'x' if done else ' '}] PR: [[Self study/Probability/02 events and Bayes|PR 02]]",
-                    "- [x] EXTRA: [[Self study/Extra/notes|Notes]]",
-                ]
-            },
-        ),
+        [
+            f"- [{'x' if done else ' '}] PR: [[Self study/Probability/02 events and Bayes|PR 02]]",
+            "- [x] EXTRA: [[Self study/Extra/notes|Notes]]",
+        ],
     )
     return vault
 
@@ -160,6 +135,41 @@ def test_make_cards_without_auth_does_nothing(tmp_path: Path, monkeypatch: pytes
 
 def test_make_cards_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     vault = _anki_vault(tmp_path)
+    store = FakeStore()
+    state = tmp_path / "state"
+    today = date(2026, 11, 10)
+    rec = _fake_anki(monkeypatch)
+    carded, failed = make_cards(vault, state, store, today, _good_runner, AnkiAuth("k"))
+    assert carded == (LESSON,)
+    assert failed == ()
+    assert rec["added"] == [
+        (
+            "Self study::Probability",
+            [
+                (note_guid(LESSON, "Q one?"), "Q one?", "A one"),
+                (note_guid(LESSON, "Q two?"), "Q two?", "A two"),
+            ],
+            ["lesson::02_events_and_Bayes"],
+        )
+    ]
+    assert len(rec["syncs"]) == 2
+    assert len(rec["closed"]) == 1
+    assert store.data[ANKI_DONE_PREFIX + LESSON] == "2026-11-10"
+    assert store.data[ANKI_UNSYNCED_KEY] == ""
+
+    rec2 = _fake_anki(monkeypatch)
+    carded2, failed2 = make_cards(vault, state, store, today, _good_runner, AnkiAuth("k"))
+    assert rec2["opened"] == []
+
+
+def test_make_cards_reads_master_index(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    vault = _anki_vault(tmp_path, done=False)
+    master = vault / MASTER_INDEX
+    master.parent.mkdir(parents=True, exist_ok=True)
+    master.write_text(
+        "## Done\n\n### 2026-11-09\n\n"
+        "- [x] PR: [[Self study/Probability/02 events and Bayes|PR 02]]\n"
+    )
     store = FakeStore()
     state = tmp_path / "state"
     today = date(2026, 11, 10)
@@ -427,8 +437,7 @@ def _dsa_vault(tmp_path: Path, signals: list[str], extra_reading: str = "") -> P
     note.write_text(text)
     _write(
         vault,
-        date(2026, 11, 9),
-        _week(date(2026, 11, 9), {0: ["- [x] DSA: [[Coding Practice/DSA/Two pointers|LC 167 Two Sum II]]"]}),
+        ["- [x] DSA: [[Coding Practice/DSA/Two pointers|LC 167 Two Sum II]]"],
     )
     return vault
 
@@ -463,8 +472,7 @@ def test_make_cards_dsa_problem_note_uses_pattern(tmp_path: Path, monkeypatch: p
     )
     _write(
         vault,
-        date(2026, 11, 9),
-        _week(date(2026, 11, 9), {0: ["- [x] DSA: [[Coding Practice/DSA/problems/LC 167 Two Sum II|LC 167 Two Sum II]]"]}),
+        ["- [x] DSA: [[Coding Practice/DSA/problems/LC 167 Two Sum II|LC 167 Two Sum II]]"],
     )
     store = FakeStore()
     runner = lambda _: (_ for _ in ()).throw(AssertionError())
@@ -492,8 +500,7 @@ def test_make_cards_dsa_problem_note_missing_pattern_fails(
     )
     _write(
         vault,
-        date(2026, 11, 9),
-        _week(date(2026, 11, 9), {0: ["- [x] DSA: [[Coding Practice/DSA/problems/LC 167 Two Sum II|LC 167 Two Sum II]]"]}),
+        ["- [x] DSA: [[Coding Practice/DSA/problems/LC 167 Two Sum II|LC 167 Two Sum II]]"],
     )
     store = FakeStore()
     runner = lambda _: (_ for _ in ()).throw(AssertionError())
@@ -874,7 +881,7 @@ def test_preview_cards_recall_lesson_needs_claude(tmp_path: Path) -> None:
     vault = _anki_vault(tmp_path)
     store = FakeStore()
 
-    previews = preview_cards(vault, store, date(2026, 11, 10))
+    previews = preview_cards(vault, store)
 
     assert len(previews) == 1
     preview = previews[0]
@@ -889,7 +896,7 @@ def test_preview_cards_dsa_signals_without_claude(tmp_path: Path) -> None:
     vault = _dsa_vault(tmp_path, ["Sorted array plus pair sum"])
     store = FakeStore()
 
-    previews = preview_cards(vault, store, date(2026, 11, 10))
+    previews = preview_cards(vault, store)
 
     assert len(previews) == 1
     preview = previews[0]
@@ -905,4 +912,4 @@ def test_preview_cards_skips_carded_lesson(tmp_path: Path) -> None:
     store = FakeStore()
     store.data[ANKI_DONE_PREFIX + LESSON] = "2026-11-10"
 
-    assert preview_cards(vault, store, date(2026, 11, 10)) == []
+    assert preview_cards(vault, store) == []

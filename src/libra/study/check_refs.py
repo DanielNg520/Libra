@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING
 
 from libra.study.check_concepts import IMAGE_EXTS, count_concepts, fence_mask, section_bounds
+from libra.study.plan import PLAN_FILES
 
 if TYPE_CHECKING:
     from libra.study.check_kinds import Finding, Lesson
@@ -238,8 +239,8 @@ def links(
 
 def vault_links_validate(params: Mapping[str, object]) -> str | None:
     target = params["target"]
-    if target not in ("outline", "week"):
-        return f"target must be 'outline' or 'week', not {target!r}"
+    if target not in ("outline", "plan"):
+        return f"target must be 'outline' or 'plan', not {target!r}"
     return None
 
 
@@ -271,15 +272,12 @@ def vault_links(
             if line.startswith("|") and _links_lesson(line, lesson.rel):
                 return []
         return [(None, "vault_links: no outline row links the lesson")]
-    week_dir = str(params.get("week_dir", "Self study/Weekly"))
-    base = vault / week_dir
-    if not base.is_dir():
-        return [(None, "vault_links: no week file links the lesson")]
-    for file in sorted(base.rglob("*.md")):
+    files = params.get("files", PLAN_FILES)
+    for file in files:
         try:
-            content = file.read_text(encoding="utf-8")
+            content = (vault / file).read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
         if _links_lesson(content, lesson.rel):
             return []
-    return [(None, "vault_links: no week file links the lesson")]
+    return [(None, "vault_links: no plan file links the lesson")]

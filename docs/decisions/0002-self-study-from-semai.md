@@ -222,7 +222,7 @@ Import edges under SemAI `src/semai/`:
 - `DECKS` in Libra no longer checked against SemAI `CAT_KIND`; a new category needs both edited.
 - Card GUID prefix stays `semai-` (the GUID is the dedupe key, so SemAI-era notes still match); the card tag `semai` stays verbatim.
 - `claude_runner` spawns `claude -p`; under Claude Code it runs nested, as it did from SemAI.
-- Libra `cards` keeps SemAI seams F210, F211, F193 and the 2-day week scan.
+- Libra `cards` keeps SemAI seams F210, F211, F193; it reads Self study `Current.md` and `Master index.md` (owner, 2026-11-16).
 - Mac/Fedora `study check` outputs differ by `code_run` notes only; Mac lessons with runnable code get one skipped note, no notes after first runnable block (verified 2026-11-16).
 
 ## Owner decisions

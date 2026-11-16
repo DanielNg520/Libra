@@ -11,7 +11,7 @@ import tempfile
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path, PurePosixPath
 from typing import Protocol
 
@@ -31,7 +31,7 @@ from libra.study.anki_sync import AnkiAuth, COLLECTION_DIR, add_cards, open_coll
 from libra.study.runner import LessonError, Runner
 from libra.study.paths import LESSON_ROOTS, make_resolver, note_names
 from libra.study.render import split_frontmatter
-from libra.study.week import Item, parse_week, week_relpath
+from libra.study.plan import Item, plan_items
 
 log = logging.getLogger(__name__)
 
@@ -134,40 +134,29 @@ def week_lock(state_dir: Path, name: str = LOCK_FILE) -> Iterator[None]:
         fd.close()
 
 
-def _done_lessons(vault: Path, store: MetaStore, today: date) -> list[Item]:
+def _done_lessons(vault: Path, store: MetaStore) -> list[Item]:
     kept: list[Item] = []
-    seen: set[PurePosixPath] = set()
     kept_paths: set[str] = set()
-    for d in (today - timedelta(days=1), today):
-        rel = week_relpath(d)
-        if rel in seen:
+    for item in plan_items(vault):
+        if not item.done:
             continue
-        seen.add(rel)
-        path = vault / rel
-        if not path.is_file():
+        if not item.path:
             continue
-        text = path.read_text(encoding="utf-8")
-        week = parse_week(text, str(rel))
-        for item in week.items:
-            if not item.done:
-                continue
-            if not item.path:
-                continue
-            if item.cat not in DECKS:
-                continue
-            p = PurePosixPath(item.path)
-            if p.is_absolute() or ".." in p.parts:
-                continue
-            if not item.path.startswith(LESSON_ROOTS):
-                continue
-            if not (vault / item.path).is_file():
-                continue
-            if item.cat != SIGNAL_CAT and store.meta_get(ANKI_DONE_PREFIX + item.path):
-                continue
-            if item.path in kept_paths:
-                continue
-            kept_paths.add(item.path)
-            kept.append(item)
+        if item.cat not in DECKS:
+            continue
+        p = PurePosixPath(item.path)
+        if p.is_absolute() or ".." in p.parts:
+            continue
+        if not item.path.startswith(LESSON_ROOTS):
+            continue
+        if not (vault / item.path).is_file():
+            continue
+        if item.cat != SIGNAL_CAT and store.meta_get(ANKI_DONE_PREFIX + item.path):
+            continue
+        if item.path in kept_paths:
+            continue
+        kept_paths.add(item.path)
+        kept.append(item)
     return kept
 
 
@@ -330,7 +319,7 @@ def make_cards(
     if auth is None:
         log.info("anki: no sync key; skipped")
         return ((), ())
-    pending = _done_lessons(vault, store, today)
+    pending = _done_lessons(vault, store)
     if not pending and not store.meta_get(ANKI_UNSYNCED_KEY):
         return ((), ())
     carded: list[str] = []
@@ -398,9 +387,9 @@ class CardPreview:
     needs_claude: bool
 
 
-def preview_cards(vault: Path, store: MetaStore, today: date) -> list[CardPreview]:
+def preview_cards(vault: Path, store: MetaStore) -> list[CardPreview]:
     previews: list[CardPreview] = []
-    for item in _done_lessons(vault, store, today):
+    for item in _done_lessons(vault, store):
         sources = _item_sources(vault, item, store)
         if sources is None:
             continue
