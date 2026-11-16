@@ -25,6 +25,10 @@ study = [
     "markdown-it-py>=4.0",
     "mdit-py-plugins>=0.6",
 ]
+# AnkiWeb sync for libra study cards (Libra ADR-0002), Fedora only; imported lazily.
+anki = [
+    "anki>=26.9.4",
+]
 
 [project.scripts]
 libra = "libra.cli:main"

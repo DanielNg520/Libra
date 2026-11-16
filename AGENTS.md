@@ -12,9 +12,11 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## START HERE (next session)
-Next step: ADR-0002 phase L3 (cards, state, sops), on Fedora, in a new session; read the ADR first.
-Owner action: reinstall Libra with `.[fedora,plot,study]` on Fedora and `.[plot,study]` on the Mac, so the `libra` tool has `study check`.
-Test command: `uv run --extra fedora --extra plot --extra study pytest -q` (the study tests need the `study` extra).
+Next step: ADR-0002 phase L4 (repoint and delete), in a new session; read the ADR first.
+Owner action: reinstall Fedora with `uv tool install --editable --force '.[fedora,plot,study,anki]'`; the Mac with `.[plot,study]`.
+Owner action: first real `libra study cards` run with the owner; dry run lists one lesson, `Coding Practice/Bare Metal C/lessons/01 macros and the preprocessor.md` (needs Claude).
+After that run: delete SemAI sops `SEMAI_ANKIWEB_*` keys and `.state-semai/anki/` (owner decisions in ADR-0002).
+Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
 
 ## Owner decisions
 Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson checker, Anki cards, week files); design in `docs/decisions/0002-self-study-from-semai.md`.
@@ -67,8 +69,10 @@ Seam: Study notes are untracked in vault git (owner, 2026-10-29); vault-wide not
 ## Architecture
 Package: uv project, `src/libra`, `requires-python >=3.12`; Mac has uv 0.11.2 with Python 3.12 and 3.13 (verified 2026-10-27).
 Extras: core is stdlib only (search, catalog, map, precedents); `fedora` adds fetch, Whisper, Gemini reads, export; `plot` adds `matplotlib`, `schemdraw`; `study` adds `markdown-it-py`, `mdit-py-plugins` (lesson checker).
-Install: `uv tool install --editable '.[fedora,plot,study]'` on Fedora, `uv tool install --editable '.[plot,study]'` on the Mac; console script `libra`.
-CLI: `login`, `fetch`, `whisper`, `read`, `export`, `search`, `catalog`, `map`, `status`, `ocr`, `precedents`, `study check`; one entry point.
+Extra `anki` adds `anki` (AnkiWeb sync for `study cards`, Fedora only).
+Install: `uv tool install --editable '.[fedora,plot,study,anki]'` on Fedora, `uv tool install --editable '.[plot,study]'` on the Mac; console script `libra`.
+CLI: `login`, `fetch`, `whisper`, `read`, `export`, `search`, `catalog`, `map`, `status`, `ocr`, `precedents`, `study check`, `study cards`; one entry point.
+`study cards` without `--dry-run` is owner-only in `cli._agent_refusal`; `--dry-run` does not open any collection, sync, call Claude, or write state.
 Login then fetch: `libra login` saves state and fetches at once (ADR-0041 P4 option a).
 Schedule: Fedora user timers `libra-export.timer` 23:30 (maps, readings), `libra-whisper.timer` 01:00 (drains queue until 06:00, `WHISPER_HOURS`); fetch timer disabled.
 Wanted courses: vault course folders (`course_dir` rule plus `library.NON_COURSE_DIRS`, the one list); term from config `LIBRA_TERM` (e.g. `FA26`), set once per quarter.
@@ -76,7 +80,8 @@ Reads: `libra read` runs the Gemini page fetch in process under a file lock (`in
 Mac: search, catalog, map run locally on the Drive vault; `read`, `ocr` over `ssh -o BatchMode=yes dyne@fedora libra ...`; owner-only commands need `ssh -t`.
 Config: `Settings` slim dataclass from env plus gitignored `.config/libra.env`; time zone `LIBRA_TZ` default `America/Los_Angeles`.
 Owner (2026-10-29): keep repo-relative `.config/`, `.secret/`; editable installs only; `config._read_config_env` warns with the path when `libra.env` is unreadable.
-State: `~/.local/state/libra/` (no sqlite); holds podcast login state, `lecture_audio/`, `lecture_reads/` cache.
+State: `~/.local/state/libra/` (no sqlite); holds podcast login state, `lecture_audio/`, `lecture_reads/` cache, `anki/` (`collection.anki2`, `meta.json` card bookkeeping).
+Secrets: Libra sops holds `LIBRA_ANKIWEB_HKEY`, `LIBRA_ANKIWEB_ENDPOINT` (read by `load_secrets`), `LIBRA_ANKIWEB_USER`, `LIBRA_ANKIWEB_PASSWORD` (only `scripts/anki_login_once.py`).
 Exam prep: vault ADR-0001 D1, D2, D7 (inventory, coverage, aliases) become Libra commands; `examprep.py` (D3 to D6) stays vault tutor code.
 `examprep.py` imports Libra loaders via PEP 723 `[tool.uv.sources] libra = { path = "/home/dyne/Documents/Coding/Libra" }` (Fedora only, as planned).
 Size guard: `tests/test_size_guard.py` (600 lines a file, 100 code lines a function).
@@ -174,7 +179,7 @@ Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora f
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 
 ## File and directory index
-`AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard, `0002` self study from SemAI). `pyproject.toml` (uv; core stdlib, extras `fedora`, `plot`, `study`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
+`AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard, `0002` self study from SemAI). `pyproject.toml` (uv; core stdlib, extras `fedora`, `plot`, `study`, `anki`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
 `src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `jobs.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`, `refresh_exports`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
@@ -184,4 +189,7 @@ Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HO
 `deploy/` user units: `libra-fetch` 23:30 (timer disabled 2026-11-01, owner), `libra-export` 23:30 (enabled 2026-11-01), `libra-whisper` 01:00 to 06:00; installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).
 `src/libra/study/`: lesson checker ported from SemAI (`checks` rule engine, `check_*` kinds, `week`, `paths` with `LESSON_ROOTS`, `render` parser and `scan_blocks`, `frontmatter`); `commands.py` `cmd_study_check(vault, paths, all_lessons, profile)`.
+`src/libra/study/` cards: `anki_cards` (card text, GUID), `anki_sync` (lazy `anki`), `cards` (`make_cards`, `preview_cards`, `JsonMetaStore`), `runner` (`claude_runner`); `commands.py` `cmd_study_cards(settings, vault, day, dry_run)`.
+`scripts/anki_login_once.py`: one-off AnkiWeb login; stores the hkey and endpoint in Libra sops.
+`tests/conftest.py`: autouse guard stubs `_read_sops_secrets` and `_read_config_env` (the latter not in `test_config.py`).
 `src/libra/sandbox.py`: bubblewrap sandbox; `SandboxError` (a `RuntimeError`), `SandboxUnavailable` when `bwrap` is missing; `code_run` turns that into a skipped note (Mac).

@@ -7,7 +7,7 @@ which then ignores the `.config/libra.env` file entirely.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 import json
 import logging
@@ -24,7 +24,12 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 DEFAULT_OCR_MODEL = "gemini-3.5-flash-lite"
 DEFAULT_TZ = "America/Los_Angeles"
-SECRET_KEYS: tuple[str, str] = ("GEMINI_API_KEY", "OPENROUTER_API_KEY")
+SECRET_KEYS: tuple[str, ...] = (
+    "GEMINI_API_KEY",
+    "OPENROUTER_API_KEY",
+    "LIBRA_ANKIWEB_HKEY",
+    "LIBRA_ANKIWEB_ENDPOINT",
+)
 SOPS_TIMEOUT_S: float = 30.0
 
 
@@ -61,8 +66,13 @@ def _read_config_env() -> dict[str, str]:
     return result
 
 
-def _read_sops_secrets(path: Path) -> dict[str, str]:
-    """Decrypt `path` with sops; any failure (no file, no sops, bad output) yields {}."""
+def _read_sops_secrets(
+    path: Path, keys: Sequence[str] = SECRET_KEYS
+) -> dict[str, str]:
+    """Decrypt `path` with sops; any failure (no file, no sops, bad output) yields {}.
+
+    Only secrets named in `keys` are returned.
+    """
     try:
         sops = shutil.which("sops")
         if sops is None:
@@ -83,7 +93,7 @@ def _read_sops_secrets(path: Path) -> dict[str, str]:
 
     return {
         key: str(data[key])
-        for key in SECRET_KEYS
+        for key in keys
         if isinstance(data.get(key), str) and data[key]
     }
 
@@ -103,8 +113,10 @@ def default_state_dir() -> Path:
 class Settings:
     state_dir: Path = field(default_factory=default_state_dir)
     obsidian_academic_vault_dir: Path | None = None
-    gemini_api_key: str | None = None
-    openrouter_api_key: str | None = None
+    gemini_api_key: str | None = field(default=None, repr=False)
+    openrouter_api_key: str | None = field(default=None, repr=False)
+    anki_hkey: str | None = field(default=None, repr=False)
+    anki_endpoint: str | None = field(default=None, repr=False)
     ocr_model: str = DEFAULT_OCR_MODEL
     term: str | None = None
     tz: str = DEFAULT_TZ
@@ -138,6 +150,8 @@ class Settings:
         vault_dir = get("LIBRA_VAULT_DIR")
         gemini_api_key = get("GEMINI_API_KEY")
         openrouter_api_key = get("OPENROUTER_API_KEY")
+        anki_hkey = get("LIBRA_ANKIWEB_HKEY")
+        anki_endpoint = get("LIBRA_ANKIWEB_ENDPOINT")
         ocr_model = get("LIBRA_READ_MODEL") or DEFAULT_OCR_MODEL
         term = get("LIBRA_TERM")
         tz = get("LIBRA_TZ") or DEFAULT_TZ
@@ -161,6 +175,8 @@ class Settings:
             ),
             gemini_api_key=gemini_api_key,
             openrouter_api_key=openrouter_api_key,
+            anki_hkey=anki_hkey,
+            anki_endpoint=anki_endpoint,
             ocr_model=ocr_model,
             term=term,
             tz=tz,
@@ -168,12 +184,19 @@ class Settings:
 
 
 def load_secrets(settings: Settings, *, path: Path | None = None) -> Settings:
-    """Fill unset API keys from Libra's sops file; already-set keys are kept."""
-    if settings.gemini_api_key and settings.openrouter_api_key:
+    """Fill unset secrets from Libra's sops file; already-set values are kept."""
+    if (
+        settings.gemini_api_key
+        and settings.openrouter_api_key
+        and settings.anki_hkey
+        and settings.anki_endpoint
+    ):
         return settings
     found = _read_sops_secrets(path or secrets_path())
     return replace(
         settings,
         gemini_api_key=settings.gemini_api_key or found.get("GEMINI_API_KEY"),
         openrouter_api_key=settings.openrouter_api_key or found.get("OPENROUTER_API_KEY"),
+        anki_hkey=settings.anki_hkey or found.get("LIBRA_ANKIWEB_HKEY"),
+        anki_endpoint=settings.anki_endpoint or found.get("LIBRA_ANKIWEB_ENDPOINT"),
     )

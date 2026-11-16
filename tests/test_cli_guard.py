@@ -20,6 +20,7 @@ def _parse_args(argv: list[str]) -> Any:
         (["export"], "export"),
         (["whisper"], "whisper"),
         (["read", "--course", "ECE 108", "ECE 108/x.pdf", "--fetch"], "read --fetch"),
+        (["study", "cards"], "study cards"),
     ],
 )
 def test_agent_refusal_owner_only_commands(agent_var: str, argv: list[str], name: str) -> None:
@@ -37,6 +38,8 @@ def test_agent_refusal_owner_only_commands(agent_var: str, argv: list[str], name
         ["status"],
         ["read", "--course", "ECE 108", "ECE 108/x.pdf"],
         ["ocr", "x.png"],
+        ["study", "cards", "--dry-run"],
+        ["study", "check", "--all"],
     ],
 )
 def test_agent_refusal_allows_non_owner_commands(argv: list[str]) -> None:

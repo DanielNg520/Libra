@@ -6,6 +6,7 @@ Usage: libra search [--in transcripts|readings|textbooks|all] [options] <terms..
        libra map [--course X] [--date D] [--json]
        libra map --confirm --course X --transcript ID --deck DECK [--from T] [--to T]
        libra study check [--all] [--profile P] [PATH ...]   (lesson rule check)
+       libra study cards [--date YYYY-MM-DD] [--dry-run]   (Anki cards for ticked lessons; Fedora)
        libra login [--timeout S]   (sign in to podcast.ucsd.edu, then fetch)
        libra fetch | libra whisper [--until H] | libra export | libra status
        libra read --course X PATH [--pages A-B | --printed A-B | --chapter N|TITLE] [--fetch]
@@ -138,6 +139,13 @@ def _add_study_parser(subparsers: Any) -> None:
     check.add_argument("paths", nargs="*", help="vault-relative or absolute lesson paths")
     check.add_argument("--all", dest="all_lessons", action="store_true", help="check every lesson under the lesson roots")
     check.add_argument("--profile", default=None, help="use this profile instead of the path match")
+
+    cards = study_subparsers.add_parser(
+        "cards",
+        help="make Anki cards for lessons ticked yesterday and today",
+    )
+    cards.add_argument("--date", type=_validate_date, default=None, dest="day", help="YYYY-MM-DD, default today")
+    cards.add_argument("--dry-run", action="store_true", help="list the cards without syncing, calling Claude, or writing state")
 
 
 def _add_vault_parsers(subparsers: Any) -> None:
@@ -361,6 +369,8 @@ def _agent_refusal(
 
     if args.command == "read" and args.fetch:
         name = "read --fetch"
+    elif args.command == "study" and getattr(args, "study_command", None) == "cards" and not getattr(args, "dry_run", False):
+        name = "study cards"
     elif args.command in OWNER_ONLY_COMMANDS:
         name = args.command
     else:
@@ -390,13 +400,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s"
     )
 
-    if args.command not in VAULT_COMMANDS:
-        stdin_tty = sys.stdin.isatty() if sys.stdin is not None else False
-        refusal = _agent_refusal(args, os.environ, stdin_tty)
-        if refusal is not None:
-            print(refusal, file=sys.stderr)
-            return 2
+    stdin_tty = sys.stdin.isatty() if sys.stdin is not None else False
+    refusal = _agent_refusal(args, os.environ, stdin_tty)
+    if refusal is not None:
+        print(refusal, file=sys.stderr)
+        return 2
 
+    if args.command not in VAULT_COMMANDS:
         settings = _settings()
         if settings is None:
             return 2
@@ -426,6 +436,11 @@ def main(argv: Optional[List[str]] = None) -> int:
                 file=sys.stderr,
             )
             return 2
+        if args.study_command == "cards":
+            settings = _settings()
+            if settings is None:
+                return 2
+            return study_commands.cmd_study_cards(settings, root, args.day, args.dry_run)
         return study_commands.cmd_study_check(
             root,
             args.paths,

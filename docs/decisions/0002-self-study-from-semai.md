@@ -1,6 +1,11 @@
 # 0002 – Self study moves from SemAI to Libra
 
-**Status:** Accepted; L1 design and L2 checker port implemented 2026-11-16; L3 and L4 pending.
+**Status:** Accepted; L1, L2 and L3 in code 2026-11-16; L3 first real AnkiWeb run and L4 pending.
+- Dry run: `cards.preview_cards` reuses `_done_lessons` and a split-out `_item_sources`; `_item_notes` behaviour unchanged.
+- `config._read_sops_secrets(path, keys)` takes a key list; `load_secrets` fills four secrets and skips sops only when all four are set.
+- `tests/conftest.py` leaves `_read_config_env` real in `test_config.py`, which tests that reader.
+- `tests/test_study_cards.py` keeps the 21 card tests plus `test_week_lock_excludes_others`, and adds `JsonMetaStore` and `preview_cards` tests.
+- Seam: `JsonMetaStore` loads before `make_cards` takes `anki.lock`; two concurrent real runs could lose meta writes; runs are owner-only and manual.
 
 ## Status
 - Proposed 2026-11-16 by Claude in a headless autofire session (step `lib1`); no code, sops, Anki or vault change made.
