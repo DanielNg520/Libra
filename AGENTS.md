@@ -12,7 +12,8 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## START HERE (next session)
-Next step: none queued; see Findings and Carryover.
+Next step: reproduce F216, F220 on `src/libra/study/check_facts.py` (`Probability/concepts/Counting basics.md:110`, `Independence.md:137` fail `fact_ledger` "used but not taught earlier"); fix by TriAPI dispatch if reproduced.
+Next step: remove dead copy-check deletion path (`lecture_map.ensure_book_maps`, `check_copies`) by TriAPI dispatch.
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
 
 ## Owner decisions
@@ -128,8 +129,7 @@ F19 rule: `write_maps` passes a `functools.cache` getter `linked`; `ensure_book_
 Owner (2026-10-30): `check_copies` is needed (SemAI ADR-0038 P2); `ensure_book_maps` runs it per course over cached maps, `delete=False`; lines go to the journal.
 CC guard: `lecture_map.linked_pdf_names` collects PDF names from vault note links (Markdown, `<...>`, wikilinks, `file:///`); skips `Tools/` and dot dirs.
 CC rule: `linked` matches by file name, not path, because notes keep stale relative and Mac `file:///` links; report-only lines say `report only, linked`.
-Owner (2026-10-30): deletion stays off (`delete=False`) until the owner arms it; first raise Hivemind `libra/copy-check-deletion-arm.md`.
-To arm: owner changes `delete=False` to `True` in `lecture_map.ensure_book_maps`.
+Copy-check deletion is never armed (owner, 2026-11-16); `check_copies` stays report-only; remove dead `delete=True` path in `lecture_map.ensure_book_maps`/`check_copies`.
 Seam (CC): a note citing a book only in prose (no link) is not in `linked`; owner (2026-10-30): record only, no protection.
 Seam: `refresh_exports` builds maps before readings, so a renamed deck reaches `Tools/maps/` one export later.
 Seam: fetch and Whisper can build the same new book at once; double call, last atomic write wins; harmless.
@@ -146,6 +146,11 @@ Seam: export, and a plain `read` with missing pages, wait on `index_lock` while 
 ## Findings
 F23 [low · 1 · 2026-11-03] deploy/libra-export.service: no `After=network-online.target`; Persistent catch-up at boot may fail a new-book Gemini map, `.failed` blocks retry 24 h (suspected).
 Fix proposal: add `After=`/`Wants=network-online.target` as in `libra-fetch.service`.
+F220 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `fact_ledger`: `min_sites` counts `Uses: none.` sites (ADR allows them), so all-none notes pass; `DSA/*.md` glob catches new `.md` subfolders (verified).
+F216 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `fact_ledger`: a name labelled later fails "used before labelled" though a prereq or baseline teaches it (verified by reading).
+F214 [low · 1 · 2026-11-12] `src/libra/study/check_refs.py` `vault_links`: an unreadable plan file is skipped silently, so the failure reads "no plan file links the lesson" (verified).
+F221 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `_example_end`: ignores bold anchors; an example lacking Uses can claim a later section's `- Uses:` bullet (suspected).
+F217 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `cold_read_digest`: unresolved bare-name embeds or prereqs are skipped, so edits there keep a record valid; dependency `read_text` unguarded, raises (suspected).
 
 ## Polish queue (owner-approved ideas, each plans before code in its own session)
 Owner (2026-10-29): vector search could port SemAI `memory/indexer.py` (heading chunks, hash diff) and `retriever.py` `hybrid_search` (BM25 plus local vectors).
@@ -157,10 +162,12 @@ ADR-0001 P3 `libra check-note` builds only on its D7 trigger.
 ## Carryover
 Last audit: 2026-11-03 wrap-up (audited through `8b7deba`; F21, F22 verified closed; F23 added).
 Whisper 2026-11-12 to 11-15: 2 of 5 transcribed; ECE 158A 11-05, CSE 151B 05-05, 05-07 logged "no speech", audio dropped, sidecar kept (cause unverified).
-Last fetch 2026-11-11 (login worked, F15 check passed); open owner item: deletion arming.
+Last fetch 2026-11-11 (login worked, F15 check passed).
 Open check (F15): the 10-29 login failed by 23:30; next `libra login` should save without a manual `CourseList.aspx` tab.
 Seam: login looks stuck to the owner; it polls every 15 s, saves, then fetches before printing.
 Seam (G1): mtime means rewritten on disk; the 2026-10-19 vault move made every ECE 108 transcript "newer"; lists too much, never too little.
+Seam (F204): logic-bug `Broken:` examples (5 C macro, 4 Python concepts) note on every `libra study check` run; no opt-out marker exists.
+Seam (F198): `src/libra/study/checks.py` `load_rules` reads the rule file unguarded; an unreadable `lesson_rules.toml` tracebacks.
 Seam (G6): `status` walks the whole vault each call (`os.walk`, dot dirs pruned); fine at today's size.
 Seam (F21): export takes `index_lock` and waits on a running `read --fetch` (up to 900 s); a quiet export takes 1 to 3 s, no Gemini.
 F22 trace: `_conflict_copies` walk is not duplication; catalog skips copies per course, status lists them vault-wide; no change.
