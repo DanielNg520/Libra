@@ -1,0 +1,256 @@
+# Lesson rules: the one source of truth for every Self study and Coding Practice lesson rule (SemAI ADR-0046).
+# Run on Fedora: `omll study check <vault-relative path>...` or `omll study check --all`; Mac: ssh dyne@fedora 'omll study check ...'.
+# A lesson is finished only when the check exits 0 and every manual checklist item is answered in the reply.
+# A rule is [rules.<id>]: text (owner rule, date), kind, profiles, kind parameters; enabled = false turns it off.
+# kind = "manual" rules print as a checklist every run; planned_kind names the code check that will replace it (ADR-0046 C2, C3).
+# Profiles inherit through extends; [profiles.<p>.overrides.<rule-id>] retunes a rule's parameters for that profile.
+# Globs use fnmatch, where * also matches /. An exclude match wins; otherwise the first matching select entry picks the profile.
+
+exclude = [
+  "*/00 source map.md",
+  "*/01 outline.md",
+  "Self study/Weekly/*",
+  "*/temp/*",
+]
+
+[[select]]
+glob = "Self study/*/concepts/*.md"
+profile = "concept_topic"
+
+[[select]]
+glob = "Coding Practice/*/concepts/*.md"
+profile = "concept_code"
+
+[[select]]
+glob = "Coding Practice/Bare Metal C/lessons/*.md"
+profile = "code_c"
+
+[[select]]
+glob = "Coding Practice/Python/lessons/*.md"
+profile = "code_python"
+
+[[select]]
+glob = "Self study/*/[0-9]*.md"
+profile = "topic"
+
+[profiles.lesson]
+
+[profiles.topic]
+extends = "lesson"
+
+[profiles.code]
+extends = "lesson"
+
+[profiles.code_c]
+extends = "code"
+
+[profiles.code_python]
+extends = "code"
+
+[profiles.concept]
+
+[profiles.concept_topic]
+extends = "concept"
+
+[profiles.concept_code]
+extends = "concept"
+
+# ---- Checked by code ----
+
+[rules.headings]
+text = "Reading, Practice, Recall, Sources in that order; Sources last (owner, 2026-11-07, 2026-11-09)."
+kind = "heading_order"
+profiles = ["lesson"]
+headings = ["## Reading", "## Practice", "## Recall"]
+
+[rules.tags]
+text = "Properties only: tags from the fixed set, exactly one topic tag, never invented (owner, 2026-11-07)."
+kind = "frontmatter"
+profiles = ["lesson", "concept"]
+field = "tags"
+allowed = ["topic/probability", "topic/linear-algebra", "topic/optimization", "topic/dsp", "topic/c", "topic/python"]
+
+[rules.tags.required_by_glob]
+"Self study/Probability/*" = "topic/probability"
+"Self study/Linear algebra/*" = "topic/linear-algebra"
+"Self study/Optimization/*" = "topic/optimization"
+"Self study/DSP/*" = "topic/dsp"
+"Coding Practice/Bare Metal C/*" = "topic/c"
+"Coding Practice/Python/*" = "topic/python"
+
+[rules.prereqs]
+text = "prereqs is a block list of path-qualified wikilinks to files that exist (owner, 2026-11-07)."
+kind = "frontmatter"
+profiles = ["lesson", "concept"]
+field = "prereqs"
+
+[rules.recall-count]
+text = "Recall holds 3 to 5 questions as a list (owner, 2026-11-07)."
+kind = "list_count"
+profiles = ["lesson"]
+section = "## Recall"
+min = 3
+max = 5
+
+[rules.sources]
+text = "One Sources list after Recall; each entry a book plus section, chapter or page, or a course item (owner, 2026-11-09)."
+kind = "sources"
+profiles = ["lesson"]
+heading = "## Sources"
+after = "## Recall"
+
+[rules.concept-sources]
+text = "A concept note keeps its own Sources list, same format as lessons (owner, 2026-11-10)."
+kind = "sources"
+profiles = ["concept"]
+heading = "## Sources"
+
+[rules.answers-folded]
+text = "Every problem has a folded '> [!success]- Answer' callout after it (owner, 2026-11-07)."
+kind = "answers"
+profiles = ["lesson", "concept"]
+prefix = "> [!success]-"
+
+# ---- Manual until a code kind exists (planned_kind) ----
+
+[rules.no-inline-cites]
+text = "No cites outside Sources, except Practice exercise labels like 'PCC 2-9 (p. 29)' (owner, 2026-11-09)."
+kind = "manual"
+planned_kind = "forbid_pattern"
+profiles = ["lesson", "concept"]
+
+[rules.one-day]
+text = "One lesson fits one study day: at most 7 concepts (code 8); split by chapter into 02a, 02b (owner, 2026-11-10)."
+kind = "manual"
+planned_kind = "size"
+profiles = ["lesson"]
+
+[rules.concept-size]
+text = "A concept note holds one concept, at most 1000 words (code 400) (owner, 2026-11-10)."
+kind = "manual"
+planned_kind = "size"
+profiles = ["concept"]
+
+[rules.checks-per-concept]
+text = "1 or 2 check problems with folded answers right after each concept's worked example (owner, 2026-11-10)."
+kind = "manual"
+planned_kind = "per_concept"
+profiles = ["lesson", "concept"]
+
+[rules.practice-mixed]
+text = "Practice opens with one mixed exam set, shuffled, no topic headings, at most 7 problems (code 4) (owner, 2026-11-10)."
+kind = "manual"
+planned_kind = "section_shape"
+profiles = ["lesson"]
+
+[rules.practice-order]
+text = "After the mixed set: the Python build (or build check), then one master-class application (owner, 2026-11-07, 2026-11-10)."
+kind = "manual"
+planned_kind = "section_shape"
+profiles = ["lesson"]
+
+[rules.exam-level]
+text = "The mixed set holds exam-level problems, marked with a star in topic lessons (owner, 2026-11-10)."
+kind = "manual"
+planned_kind = "require_pattern"
+profiles = ["topic"]
+
+[rules.self-contained]
+text = "Problems restate every definition in full, never 'the X from section 5' (owner, 2026-11-09)."
+kind = "manual"
+planned_kind = "forbid_pattern"
+profiles = ["lesson", "concept"]
+
+[rules.figures]
+text = "At most 4 figures; every image kept beside the lesson or in concepts/figures (owner, 2026-11-09)."
+kind = "manual"
+planned_kind = "figures"
+profiles = ["lesson", "concept"]
+
+[rules.links]
+text = "Wikilinks are path-qualified with an alias and resolve; 'section N' references point to real headings (owner, 2026-11-07)."
+kind = "manual"
+planned_kind = "links"
+profiles = ["lesson", "concept"]
+
+[rules.code-not-linked]
+text = "Code files are named by path in backticks, never linked (owner, 2026-11-07)."
+kind = "manual"
+planned_kind = "forbid_pattern"
+profiles = ["lesson", "concept"]
+
+[rules.outline-row]
+text = "The outline row's File cell links the lesson (owner, 2026-11-07, F190)."
+kind = "manual"
+planned_kind = "vault_links"
+profiles = ["lesson"]
+
+[rules.week-line]
+text = "The week file has the lesson line under today's heading at session start (owner, 2026-11-09)."
+kind = "manual"
+planned_kind = "vault_links"
+profiles = ["lesson"]
+
+[rules.reading-shape]
+text = "Each concept gives idea, formula, symbols, relationships, worked example (owner, 2026-11-07)."
+kind = "manual"
+planned_kind = "require_pattern"
+profiles = ["topic", "concept_topic"]
+
+[rules.code-pairs]
+text = "Each code concept shows a complete broken and a complete fixed snippet (owner, 2026-11-09)."
+kind = "manual"
+planned_kind = "per_concept"
+profiles = ["code", "concept_code"]
+
+[rules.code-prose]
+text = "Code lessons keep prose to at most two short lines per concept (owner, 2026-11-09)."
+kind = "manual"
+planned_kind = "size"
+profiles = ["code", "concept_code"]
+
+[rules.code-runs]
+text = "Every complete snippet runs or compiles with the stated output (owner, 2026-11-09)."
+kind = "manual"
+planned_kind = "code_run"
+profiles = ["code", "concept_code"]
+
+[rules.no-build-file]
+text = "Code lessons teach with snippets, never the build file itself (owner, 2026-11-07)."
+kind = "manual"
+profiles = ["code", "concept_code"]
+
+[rules.example-first]
+text = "Code lessons: example first, effects shown as code comments (owner, 2026-11-09)."
+kind = "manual"
+profiles = ["code", "concept_code"]
+
+[rules.answers-verified]
+text = "Every answer verified by a script or a second method (owner, 2026-11-09)."
+kind = "manual"
+profiles = ["lesson", "concept"]
+
+[rules.sources-opened]
+text = "Every source opened and confirmed, never cited from memory (owner, 2026-11-09)."
+kind = "manual"
+profiles = ["lesson", "concept"]
+
+[rules.scope-ms-track]
+text = "Scope and depth follow the MS track in Study_plan.md, never asked (owner, 2026-11-09)."
+kind = "manual"
+profiles = ["lesson"]
+
+[rules.figure-eyed]
+text = "Each figure checked by eye; drawn where the book uses one or it clearly helps (owner, 2026-11-09)."
+kind = "manual"
+profiles = ["lesson", "concept"]
+
+[rules.outline-first]
+text = "Outline agreed with the owner before the lesson; an approved multi-lesson plan runs straight through (owner, 2026-11-09, 2026-11-10)."
+kind = "manual"
+profiles = ["lesson"]
+
+[rules.problem-choice]
+text = "Problems picked for correctness and learning value, from any edition (owner, 2026-11-09)."
+kind = "manual"
+profiles = ["lesson", "concept"]

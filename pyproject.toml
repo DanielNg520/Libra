@@ -20,6 +20,11 @@ plot = [
     "matplotlib>=3.11.2",
     "schemdraw>=0.23",
 ]
+# Lesson rule checker (libra study check), on every machine.
+study = [
+    "markdown-it-py>=4.0",
+    "mdit-py-plugins>=0.6",
+]
 
 [project.scripts]
 libra = "libra.cli:main"

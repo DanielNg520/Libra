@@ -5,6 +5,7 @@ Usage: libra search [--in transcripts|readings|textbooks|all] [options] <terms..
        libra catalog [--course X] [--newer-than NOTE] [--json]   (NOTE: sources changed since a study note)
        libra map [--course X] [--date D] [--json]
        libra map --confirm --course X --transcript ID --deck DECK [--from T] [--to T]
+       libra study check [--all] [--profile P] [PATH ...]   (lesson rule check)
        libra login [--timeout S]   (sign in to podcast.ucsd.edu, then fetch)
        libra fetch | libra whisper [--until H] | libra export | libra status
        libra read --course X PATH [--pages A-B | --printed A-B | --chapter N|TITLE] [--fetch]
@@ -27,7 +28,7 @@ from libra.mapview import cmd_map
 from libra.precedents import cmd_precedents
 from libra.search import _validate_date, cmd_search
 
-VAULT_COMMANDS = frozenset({"search", "catalog", "map", "precedents"})
+VAULT_COMMANDS = frozenset({"search", "catalog", "map", "precedents", "study"})
 
 AGENT_VARS = ("CLAUDECODE", "ANTIGRAVITY_AGENT", "AI_AGENT")
 OWNER_ONLY_COMMANDS = frozenset({"login", "fetch", "export", "whisper"})
@@ -123,6 +124,20 @@ def _add_precedents_parser(subparsers: Any) -> None:
         "--json", action="store_true", default=False,
         help="structured packet instead of text",
     )
+
+
+def _add_study_parser(subparsers: Any) -> None:
+    """Add the study subcommand parser."""
+    study = subparsers.add_parser("study", help="self study lessons")
+    study_subparsers = study.add_subparsers(dest="study_command", required=True)
+
+    check = study_subparsers.add_parser(
+        "check",
+        help="check lessons against vault Tools/lesson_rules.toml",
+    )
+    check.add_argument("paths", nargs="*", help="vault-relative or absolute lesson paths")
+    check.add_argument("--all", dest="all_lessons", action="store_true", help="check every lesson under the lesson roots")
+    check.add_argument("--profile", default=None, help="use this profile instead of the path match")
 
 
 def _add_vault_parsers(subparsers: Any) -> None:
@@ -261,6 +276,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_search_parser(subparsers)
     _add_precedents_parser(subparsers)
     _add_vault_parsers(subparsers)
+    _add_study_parser(subparsers)
     _add_fedora_parsers(subparsers)
     return parser
 
@@ -398,4 +414,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         return cmd_catalog(args, root)
     if args.command == "map":
         return cmd_map(args, root)
+    if args.command == "study":
+        try:
+            from libra.study import commands as study_commands
+        except ImportError as exc:
+            if exc.name == "libra" or (exc.name or "").startswith("libra."):
+                raise
+            print(
+                f"libra: study needs the study extra ({exc.name}); "
+                "reinstall with uv tool install --editable '.[...,study]'",
+                file=sys.stderr,
+            )
+            return 2
+        return study_commands.cmd_study_check(
+            root,
+            args.paths,
+            args.all_lessons,
+            args.profile,
+        )
     return 2
