@@ -1,5 +1,5 @@
 # AGENTS.md
-Libra: the academic librarian, split out of SemAI (owner, 2026-10-27). Fetches lecture transcripts, serves course material to agents.
+Libra: the academic librarian (owner, 2026-10-27). Fetches lecture transcripts, serves course material to agents.
 Read this file first; it is the only live doc.
 
 ## Doc rules
@@ -17,12 +17,9 @@ Next step: remove dead copy-check deletion path (`lecture_map.ensure_book_maps`,
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
 
 ## Owner decisions
-Owner (2026-11-15): Libra takes over all self-study capacity from SemAI (lesson checker, Anki cards, week files); design in `docs/decisions/0002-self-study-from-semai.md`.
-Owner (2026-11-16): The lesson generator and figure maker stay parked in SemAI; they do not move to Libra.
-Owner (2026-11-16): After Libra's study code is verified, the SemAI copies of the moved modules and tests are deleted.
+Owner (2026-11-15): Libra handles self-study (lesson checker, Anki cards, week files); design in `docs/decisions/0002-self-study.md`.
+Owner (2026-11-16): Libra has no lesson generator or figure maker.
 Owner (2026-11-16): Moved files go in verbatim; the owner runs `dispatch-ledger-hand.sh` on them; only import and glue edits use DeepSeek dispatch.
-Owner (2026-11-16): SemAI `SEMAI_ANKIWEB_*` sops keys and `.state-semai/anki/` deleted; AnkiWeb held no SemAI-made cards, so none deleted.
-Owner (2026-11-16): Claude copies the AnkiWeb login values from SemAI sops into Libra sops with `sops set`, never printing them.
 Owner (2026-11-16): The checker runs on Fedora and the Mac, its code-run check on Fedora only (bwrap); Anki cards run on Fedora only.
 Owner (2026-11-11): ECE 271A dropped (no podcast access); folder moved to `~/Classes/ECE 271A`, so fetch skips it.
 Past-term fetch: `~/.cache/spike-20261111/fetch_sp26.py` calls `fetch_transcripts` with a scratch vault and term; move files, repoint queue `transcript` paths.
@@ -32,20 +29,20 @@ Owner (2026-11-01): fetches run manually with the owner (`libra login`, then fet
 Owner (2026-10-29): agents never run `login`, `fetch`, `export`, `whisper`, `read --fetch` unasked; enforced in `cli._agent_refusal`; the agent sets `LIBRA_OWNER_OK=1` itself when the owner asks or confirms.
 Owner (2026-10-29): agy (Gemini 3.8 Flash) wields Libra too; it loads Hivemind `academic-study` from `~/.gemini/config/skills/` (symlink, Fedora and Mac).
 Owner (2026-10-28): a partial fetch exits 4 (`EXIT_PARTIAL`); `libra-fetch.service` `SuccessExitStatus=4`; crash (1) and expired login (3) still fail the unit.
-Owner (2026-10-27): Libra is its own project; every academic piece left SemAI for it, transcript fetch and Whisper included (done; SemAI keeps only ADR-0041).
+Owner (2026-10-27): Libra is its own project, including transcript fetch and Whisper.
 Owner (2026-10-27): the tutor and librarian tools also live in `~/Classes/Current` and Hivemind.
 Owner (2026-10-27): remote `git@github.com:DanielNg520/Libra.git`; Libra runs on every machine (Fedora, Mac), not Fedora-only.
 Owner (2026-10-27): Libra is modular; her memory lives in Hivemind, shared by every instance (Hivemind `libra/`, start at `LIBRA.md`).
 Owner (2026-10-27): an instance may hold a feature others lack; sharing every feature across instances is the long-run goal.
 Owner (2026-10-27): Whisper runs on Fedora only; Fedora makes every Whisper output available to Libra instances on other machines.
 Owner (2026-10-27): Libra alone fetches and runs Whisper; `libra login` is the only sign-in; UCSD login is always manual with the owner.
-Owner (2026-10-27): Libra has its own sops `.secret/secrets.json`; `GEMINI_API_KEY` and `OPENROUTER_API_KEY` share SemAI's key values.
+Owner (2026-10-27): Libra has its own sops `.secret/secrets.json` holding `GEMINI_API_KEY` and `OPENROUTER_API_KEY`.
 Owner (2026-10-27): Libra absorbed vault `Tools/librarian.py` (search, catalog, maps, readings); one librarian, not two.
 Owner (2026-10-27): owner uses Gemini for midterm prep; Libra work runs ahead without waiting for exams.
 Owner (2026-10-28): Libra's agents are agy and Claude Code; model APIs only Gemini (reads, OCR), plus the OpenRouter cap fallback.
 Owner (2026-10-28): a light local model will later run on the Mac; revisit a local cleaner then, build nothing for it now.
 Owner (2026-10-28): the homework-precedent rule (Hivemind `libra/homework-workflow.md`) must be built into Libra deterministically, not left to agent memory.
-Owner (2026-10-28): course calendar workers do not stay in SemAI; they went with the transition, never ported here.
+Owner (2026-10-28): course calendar workers are not in Libra.
 Clones: Fedora `~/Documents/Coding/Libra`, Mac `~/Developer/Libra`.
 Vault: Fedora `~/Classes/Current` (git); Mac `~/Library/CloudStorage/GoogleDrive-danielnguyen520@gmail.com/My Drive/Classes/Current` (Drive, no git) (owner, 2026-11-01).
 
@@ -107,7 +104,7 @@ Mac OCR: `ssh -o BatchMode=yes dyne@fedora /home/dyne/.local/bin/libra ocr - --n
 ### Study cards
 Owner (2026-11-09): cards made after a lesson is ticked; Basic cards per Recall question plus 1-3 per Reading heading; decks `Self study::<Topic>`.
 Owner (2026-11-11): `DSA` category, deck `Self study::DSA`; one Claude-free card per Signals bullet, re-checked each tick (GUID dedupe).
-Owner (2026-11-16): `semai` tag dropped, GUID prefix `libra-`; `semai-` notes deleted from AnkiWeb.
+Owner (2026-11-16): Anki GUID prefix is `libra-`.
 `libra study cards` scans ticked lines in `Current.md` and `Master index.md` every run (carded lessons skipped via card log); `plan-line` (`vault_links`, target `plan`) checks either file.
 Seam: a reworded question or signal makes a new card; the old one stays in Anki (GUID is path plus front text).
 Seam: carded-lesson keys are path-only, so a renamed lesson is re-carded; identical concept bodies under two paths card once.
@@ -126,7 +123,7 @@ Owner (2026-10-29): a scanned textbook, once identified, is never retried (no we
 Scanned rule: `load_cached_map` retries an empty map weekly only if searchable; a scanned map (`searchable` false) is final; a new copy has a new sha.
 F18 rule: `lecture_map._link_targets` scans links (angle, balanced parens, newline ends a target), strips a trailing quoted title.
 F19 rule: `write_maps` passes a `functools.cache` getter `linked`; `ensure_book_maps(..., linked=)` scans the vault at most once per run, lazily.
-Owner (2026-10-30): `check_copies` is needed (SemAI ADR-0038 P2); `ensure_book_maps` runs it per course over cached maps, `delete=False`; lines go to the journal.
+Owner (2026-10-30): `check_copies` is needed; `ensure_book_maps` runs it per course over cached maps, `delete=False`; lines go to the journal.
 CC guard: `lecture_map.linked_pdf_names` collects PDF names from vault note links (Markdown, `<...>`, wikilinks, `file:///`); skips `Tools/` and dot dirs.
 CC rule: `linked` matches by file name, not path, because notes keep stale relative and Mac `file:///` links; report-only lines say `report only, linked`.
 Copy-check deletion is never armed (owner, 2026-11-16); `check_copies` stays report-only; remove dead `delete=True` path in `lecture_map.ensure_book_maps`/`check_copies`.
@@ -153,10 +150,10 @@ F221 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `_example_end`: i
 F217 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `cold_read_digest`: unresolved bare-name embeds or prereqs are skipped, so edits there keep a record valid; dependency `read_text` unguarded, raises (suspected).
 
 ## Polish queue (owner-approved ideas, each plans before code in its own session)
-Owner (2026-10-29): vector search could port SemAI `memory/indexer.py` (heading chunks, hash diff) and `retriever.py` `hybrid_search` (BM25 plus local vectors).
+Owner (2026-10-29): vector search could use heading chunks, hash diff, and BM25 plus local vectors.
 Owner (2026-10-30): further reading runs as rule lines (agents search themselves); a `libra further` client is built only if that proves short in use.
 `libra further` facts (2026-10-30): Crossref and arXiv keyless under 1 s; OpenAlex keyless shares a $0.10 daily per-IP budget; free key needs an email.
-`libra further` limits: topic terms only, never note text, transcripts or owner data; Google Scholar excluded (SemAI ADR-0030 decision 7).
+`libra further` limits: topic terms only, never note text, transcripts or owner data; Google Scholar excluded.
 ADR-0001 P3 `libra check-note` builds only on its D7 trigger.
 
 ## Carryover
@@ -181,7 +178,7 @@ Seam: `whisper` and `fetch` take no lock against each other; concurrent vault co
 Seam: `cmd_whisper` counts only successes; a failing job ends the loop early (logged), rest waits for the next night.
 Seam: `test_fetch_commands_report_missing_extra` child loads real `.config/libra.env`; a bad machine config fails it with the settings message (unverified elsewhere).
 Seam: `test_vault_commands_run_without_fedora_extra` child reads real `.config/libra.env`, but `--root` skips `Settings.load`; harmless today (verified).
-Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive, inherited from SemAI.
+Seam: ruff F811 on `tests/test_sources_ranges.py` `fake_chat` is a pytest-fixture false positive.
 Guard: tests/test_lecture_map.py autouse `_no_real_book_map` fails any test that reaches a real `book_map`.
 Trap: Claude Code sets `AI_AGENT` as well as `CLAUDECODE`; a live guard test must unset both.
 Trap: Claude Code `!libra fetch` runs with `CLAUDECODE` set and is refused; prefix `LIBRA_OWNER_OK=1`.
@@ -197,7 +194,7 @@ Trap: Fedora's own `known_hosts` lacks `fedora`; `ssh dyne@fedora` from Fedora f
 Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HOME/.local/bin:/opt/homebrew/bin:$PATH` before `uv`.
 
 ## File and directory index
-`AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard, `0002` self study from SemAI). `pyproject.toml` (uv; core stdlib, extras `fedora`, `plot`, `study`, `anki`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
+`AGENTS.md` this file. `docs/decisions/` ADRs (`0001` pre-problem note standard, `0002` self study). `pyproject.toml` (uv; core stdlib, extras `fedora`, `plot`, `study`, `anki`), `.sops.yaml`, `.secret/secrets.json` (gitignored, Fedora only).
 `src/libra/config.py`: `Settings` frozen dataclass, `Settings.load(env)` from env plus `.config/libra.env`; keys `LIBRA_*`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`.
 `src/libra/lecture_fetch.py` podcast.ucsd.edu to transcripts; `lecture_whisper.py` Whisper queue; `jobs.py` `wanted_courses`, `run_fetch_job`, `run_whisper_job`, `refresh_exports`.
 `src/libra/lecture_docs.py` page render and Gemini read cache; `sources.py` (also `index_lock`, `reconcile_index`), `textbooks.py`, `source_pages.py`, `reading_export.py` readings and exports.
@@ -206,7 +203,7 @@ Trap: Mac non-interactive ssh lacks `/opt/homebrew/bin`; prefix `export PATH=$HO
 `src/libra/commands.py` fetch-side handlers incl. `cmd_ocr`, `cmd_status` (conflict copies), exit codes (3 = login expired, 4 = partial fetch); `ocr.py` OCR; `read.py` `read_pages` (flock `read.lock`, renamed-source adoption, `--chapter`, `--printed`); `login.py` sign-in.
 `deploy/` user units: `libra-fetch` 23:30 (timer disabled 2026-11-01, owner), `libra-export` 23:30 (enabled 2026-11-01), `libra-whisper` 01:00 to 06:00; installed copies in `~/.config/systemd/user/`.
 `src/libra/obsidian_vault.py`: vault git `commit_paths`, `has_uncommitted_changes`. `tests/`: pytest, `test_size_guard.py` (600 lines a file, 100 a function).
-`src/libra/study/`: lesson checker ported from SemAI (`checks` rule engine, `check_*` kinds, `plan` (Self study plan files), `paths` with `LESSON_ROOTS`, `render` parser and `scan_blocks`, `frontmatter`); `commands.py` `cmd_study_check(vault, paths, all_lessons, profile)`.
+`src/libra/study/`: lesson checker (`checks` rule engine, `check_*` kinds, `plan` (Self study plan files), `paths` with `LESSON_ROOTS`, `render` parser and `scan_blocks`, `frontmatter`); `commands.py` `cmd_study_check(vault, paths, all_lessons, profile)`.
 `src/libra/study/` cards: `anki_cards` (card text, GUID), `anki_sync` (lazy `anki`), `cards` (`make_cards`, `preview_cards`, `JsonMetaStore`), `runner` (`claude_runner`); `commands.py` `cmd_study_cards(settings, vault, day, dry_run)`.
 `scripts/anki_login_once.py`: one-off AnkiWeb login; stores the hkey and endpoint in Libra sops.
 `tests/conftest.py`: autouse guard stubs `_read_sops_secrets` and `_read_config_env` (the latter not in `test_config.py`).
