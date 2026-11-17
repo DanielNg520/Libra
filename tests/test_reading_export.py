@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from libra.config import Settings
-from libra import reading_export
+from libra import reading_export, source_pages
 from test_sources import make_settings
 
 
@@ -216,8 +216,9 @@ def test_uncached_pdf_falls_back_to_pdftotext(
         return ["Chapter one", "", "Chapter two"]
 
     monkeypatch.setattr(reading_export, "pdf_page_texts", fake_pdf_page_texts)
+    monkeypatch.setattr(source_pages, "pdf_page_texts", fake_pdf_page_texts)
     monkeypatch.setattr(
-        reading_export,
+        source_pages,
         "is_searchable",
         lambda texts: any(t.strip() for t in texts),
     )

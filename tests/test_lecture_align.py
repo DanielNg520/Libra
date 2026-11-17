@@ -51,6 +51,7 @@ def test_clean_text_removes_noise() -> None:
         ("C/Slides/Lec03 Queueing Notes", "lecture", (3, 1)),
         ("C/Slides/Lec7-Addendum.pdf", "lecture", (7, 2)),
         ("C/Slides/Lec13Handout.pdf", "lecture", (13, 3)),
+        ("C/Slides/Lec8 Mulitcast (Problems).pdf", "lecture", (8, 4)),
         ("C/Slides/lecture5-dc.pdf", "lecture", (5, 0)),
         ("C/Slides/Lecture 9 - Bayes2.pdf", "lecture", (9, 0)),
         ("C/Slides/midterm review.pdf", "lecture", None),

@@ -11,8 +11,8 @@ from pathlib import Path
 from libra.config import Settings
 from libra.lecture_map import course_names
 from libra.sources import TEXTBOOKS_DIR, SourceFile, list_sources, reconcile_index
-from libra.source_pages import cached_pages
-from libra.textbooks import is_searchable, pdf_page_texts
+from libra.source_pages import cached_pages, text_layer_pages
+from libra.textbooks import pdf_page_texts
 from libra.lecture_docs import sha256_file
 
 READINGS_DIR = "Tools/readings"
@@ -136,13 +136,13 @@ def _process_source(
                 key = "pdf:" + sha256_file(vault / source.rel)
                 if manifest.get(source.rel) == key and export_path.exists():
                     return
-                pages_list = _extract_pdf(vault, source.rel)
-                if pages_list is None:
+                text_pages = text_layer_pages(vault / source.rel)
+                if text_pages is None:
                     return
-                if not is_searchable(pages_list):
+                if not text_pages:
                     kept.discard(source.rel)
                     return
-                pages = {i + 1: text for i, text in enumerate(pages_list)}
+                pages = text_pages
                 pdf_key = True
                 kind = "reading"
             else:

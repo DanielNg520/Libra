@@ -3,10 +3,13 @@ from __future__ import annotations
 
 import logging
 import re
+import subprocess
 from collections.abc import Sequence
+from pathlib import Path
 
 from libra.config import Settings
 from libra.sources import DOC_EFFORT, SourceFile, load_index, split_entry
+from libra.textbooks import is_searchable, pdf_page_texts
 from libra.lecture_docs import (
     READ_PROMPT,
     READS_DIR,
@@ -81,6 +84,18 @@ def cached_pages(settings: Settings, source: SourceFile) -> dict[int, str]:
                 result[page] = section
 
     return result
+
+
+def text_layer_pages(path: Path) -> dict[int, str] | None:
+    """Page number -> PDF text layer; `{}` if not searchable; `None` if extraction failed."""
+    try:
+        texts = pdf_page_texts(path)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+        log.warning("text extraction failed for %s: %s", path.name, type(exc).__name__)
+        return None
+    if not is_searchable(texts):
+        return {}
+    return dict(enumerate(texts, start=1))
 
 
 def missing_entries(rel: str, missing: Sequence[int], total: int) -> list[str]:

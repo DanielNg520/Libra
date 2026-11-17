@@ -242,7 +242,7 @@ def cmd_map(args: argparse.Namespace, root: Path) -> int:
     if args.json:
         print(json.dumps({"courses": results}, indent=2, ensure_ascii=False))
     else:
-        print("confirm or correct: python3 Tools/librarian.py map --confirm --course '<course>' --transcript <id> --deck <deck> [--from MM:SS --to MM:SS]")
+        print("confirm or correct: libra map --confirm --course '<course>' --transcript <id> --deck <deck> [--from MM:SS --to MM:SS]")
     return 0
 
 

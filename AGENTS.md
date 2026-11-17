@@ -12,11 +12,6 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## START HERE (next session)
-Trap: `cached_pages` matches the index by exact `rel`, `size`, `mtime`; renamed ECE 158A Lec8, Lec9, Lec11, Lec12 decks lack entries, so `libra map` omits them and `map --confirm` fails.
-Seam: `source_pages.py` needs one shared helper (cached reads, else `pdf_page_texts` via `is_searchable`) used by `reading_export.py` (drop private copy) and `lecture_map.load_units`, plus a regression test.
-Next step: check whether `fingerprint` invalidates when a deck uses the text-layer fallback before writing the TriAPI dispatch prompt.
-Next step: dispatch via TriAPI the shared helper in `source_pages.py`, `reading_export.py` and `lecture_map.load_units` call sites, and an uncached searchable deck test.
-Next step: rebuild maps, confirm `libra map --confirm` works on those decks, do pending vault lecture 8 confirmations, and remove the vault `AGENTS.md` renamed-deck trap.
 Next step: reproduce F216, F220 on `src/libra/study/check_facts.py` (`Probability/concepts/Counting basics.md:110`, `Independence.md:137` fail `fact_ledger` "used but not taught earlier"); fix by TriAPI dispatch if reproduced.
 Next step: remove dead copy-check deletion path (`lecture_map.ensure_book_maps`, `check_copies`) by TriAPI dispatch.
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
@@ -133,7 +128,11 @@ CC guard: `lecture_map.linked_pdf_names` collects PDF names from vault note link
 CC rule: `linked` matches by file name, not path, because notes keep stale relative and Mac `file:///` links; report-only lines say `report only, linked`.
 Copy-check deletion is never armed (owner, 2026-11-16); `check_copies` stays report-only; remove dead `delete=True` path in `lecture_map.ensure_book_maps`/`check_copies`.
 Seam (CC): a note citing a book only in prose (no link) is not in `linked`; owner (2026-10-30): record only, no protection.
-Seam: `refresh_exports` builds maps before readings, so a renamed deck reaches `Tools/maps/` one export later.
+Seam: `refresh_exports` builds maps before readings, so only an image-only renamed deck reaches `Tools/maps/` one export later; searchable decks map at once from the text layer.
+Rule: `source_pages.text_layer_pages(path)` is the one home for text-layer fallback (`{}` if not searchable, `None` on failure), used by `lecture_map.load_units` and `reading_export` when `cached_pages` is empty.
+Trap: `fingerprint` hashes inputs and `lecture_map.MAP_VERSION`, never code; bump `MAP_VERSION` when map-building output semantics change, else stored maps never rebuild.
+Rule: `lecture_align.deck_order` ranks within one lecture: slides 0, notes 1, addendum 2, handout 3, problems 4; same-rank ties sort by file name.
+Seam: transcript windows outside a confirmed range but adjacent to it inherit the anchor deck and print `confirmed` (e.g. ECE 158A 10-22 70:16-84:39 post-lecture chatter).
 Seam: fetch and Whisper can build the same new book at once; double call, last atomic write wins; harmless.
 
 ### Read cache and index

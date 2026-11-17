@@ -35,7 +35,7 @@ from libra.lecture_align import (
     unit_vectors,
     Unit,
 )
-from libra.source_pages import cached_pages
+from libra.source_pages import cached_pages, text_layer_pages
 from libra.sources import (
     DISCUSSION_DIR,
     SLIDES_DIR,
@@ -52,7 +52,7 @@ from libra.lecture_docs import READS_DIR, sha256_file
 log = logging.getLogger(__name__)
 
 MAPS_DIR = "Tools/maps"
-MAP_VERSION = 1
+MAP_VERSION = 3
 CONFIRMED_SUFFIX = ".confirmed.json"
 FAILED_RETRY_S = 24 * 60 * 60
 TRACKS: tuple[tuple[str, str], ...] = (("lecture", SLIDES_DIR), ("discussion", DISCUSSION_DIR))
@@ -181,10 +181,13 @@ def load_units(
     for group in grouped.values():
         pages_by_rel: dict[str, Mapping[int, str]] = {}
         for source in group:
+            raw = cached_pages(settings, source)
+            if not raw and source.rel.lower().endswith(".pdf"):
+                raw = text_layer_pages(vault / source.rel) or {}
             pages = {
-                n: clean_text(t)
-                for n, t in cached_pages(settings, source).items()
-                if clean_text(t).strip()
+                n: cleaned
+                for n, t in raw.items()
+                if (cleaned := clean_text(t)).strip()
             }
             if pages:
                 pages_by_rel[source.rel] = pages
@@ -246,7 +249,9 @@ def _anchors(
     for entry in confirmed:
         transcript = entry["transcript"]
         deck = entry["deck"]
-        if transcript not in transcript_ids or deck not in rel_to_index:
+        if transcript not in transcript_ids:
+            continue
+        if deck not in rel_to_index:
             log.warning("lecture map: confirmed %s -> %s not found", transcript, deck)
             continue
         from_s = float(entry.get("from_s", 0.0))
@@ -318,6 +323,10 @@ def build_course_map(settings: Settings, course: str, inputs: str) -> dict[str, 
     if not all_transcripts:
         return None
     confirmed = load_confirmed(vault, course)
+    known_ids = {t.id for t in all_transcripts}
+    for entry in confirmed:
+        if entry["transcript"] not in known_ids:
+            log.warning("lecture map: confirmed %s -> %s not found", entry["transcript"], entry["deck"])
     spans: dict[str, list[dict[str, Any]]] = {}
     units_by_track: dict[str, list[Unit]] = {}
     ordered_by_track: dict[str, list[Unit]] = {}

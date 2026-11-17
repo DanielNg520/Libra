@@ -70,7 +70,7 @@ def test_write_maps_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
 
     assert written == [settings.obsidian_academic_vault_dir / "Tools/maps/ECE 1.json"]
     data = json.loads(written[0].read_text(encoding="utf-8"))
-    assert data["version"] == 1
+    assert data["version"] == lecture_map.MAP_VERSION == 3
     assert data["course"] == "ECE 1"
     assert isinstance(data["inputs"], str)
     assert len(data["transcripts"]) == 2
@@ -726,3 +726,63 @@ def test_ensure_book_maps_uses_given_linked(tmp_path: Path, monkeypatch: pytest.
 
     assert lecture_map.ensure_book_maps(settings, "ECE 1", linked=lambda: frozenset({"b.pdf"})) == 0
     assert got == [frozenset({"b.pdf"})]
+
+
+def test_write_maps_uncached_deck_uses_text_layer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    assert vault is not None
+
+    monkeypatch.setattr(lecture_map, "cached_pages", _make_pages({LEC1_DECK: LEC1_PAGES}))
+
+    extracted_paths: list[Path] = []
+
+    def fake_text_layer_pages(path: Path) -> dict[int, str]:
+        extracted_paths.append(path)
+        if path == vault / LEC2_DECK:
+            return LEC2_PAGES
+        return {}
+
+    monkeypatch.setattr(lecture_map, "text_layer_pages", fake_text_layer_pages)
+
+    written = lecture_map.write_maps(settings)
+
+    assert written == [vault / "Tools/maps/ECE 1.json"]
+    data = json.loads(written[0].read_text(encoding="utf-8"))
+    assert extracted_paths == [vault / LEC2_DECK]
+    assert data["transcripts"][1]["spans"][0]["deck"] == LEC2_DECK
+    decks_by_rel = {d["rel"]: d for d in data["decks"]}
+    assert decks_by_rel[LEC2_DECK]["transcripts"] == ["2026-10-02"]
+
+
+def test_write_maps_confirmed_no_cross_track_warning(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    settings = _setup_course(tmp_path)
+    vault = settings.obsidian_academic_vault_dir
+    _write_transcript(vault, "ECE 1", "2026-10-03-DI", "Discussion review queue routing")
+    confirmed_dir = vault / "Tools/maps"
+    confirmed_dir.mkdir(parents=True, exist_ok=True)
+    (confirmed_dir / "ECE 1.confirmed.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "confirmed": [
+                    {"transcript": "2026-10-01", "deck": LEC2_DECK},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(lecture_map, "cached_pages", _make_pages({LEC1_DECK: LEC1_PAGES, LEC2_DECK: LEC2_PAGES}))
+
+    caplog.set_level("WARNING")
+    written = lecture_map.write_maps(settings)
+
+    data = json.loads(written[0].read_text(encoding="utf-8"))
+    transcript = next(t for t in data["transcripts"] if t["id"] == "2026-10-01")
+    assert transcript["spans"][0]["deck"] == LEC2_DECK
+    assert transcript["spans"][0]["status"] == "confirmed"
+    assert not any("not found" in record.message for record in caplog.records)

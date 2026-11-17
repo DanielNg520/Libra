@@ -131,6 +131,8 @@ def deck_order(rel: str, track: str) -> tuple[int, int] | None:
                 rank = 2
             elif "handout" in name:
                 rank = 3
+            elif "problem" in name:
+                rank = 4
             else:
                 rank = 0
             return (int(match.group(1)), rank)

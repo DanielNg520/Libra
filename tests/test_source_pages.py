@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 
+from libra import source_pages
 from libra.config import Settings
-from libra.source_pages import MAX_FETCH_PAGES, cached_pages, missing_entries, page_sections
+from libra.source_pages import MAX_FETCH_PAGES, cached_pages, missing_entries, page_sections, text_layer_pages
 from libra.sources import DOC_EFFORT, INDEX_NAME, SourceFile
 from libra.lecture_docs import READ_PROMPT, READS_DIR, TEXTBOOK_READ_PROMPT, reading_key
 from test_sources import _write, make_settings
@@ -184,3 +186,30 @@ def test_missing_entries():
 
 def test_max_fetch_pages():
     assert MAX_FETCH_PAGES == 25
+
+
+def test_text_layer_pages_searchable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        source_pages, "pdf_page_texts", lambda path: ["first page", "second page"]
+    )
+    monkeypatch.setattr(source_pages, "is_searchable", lambda texts: True)
+    assert text_layer_pages(tmp_path) == {1: "first page", 2: "second page"}
+
+
+def test_text_layer_pages_not_searchable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(source_pages, "pdf_page_texts", lambda path: [""])
+    monkeypatch.setattr(source_pages, "is_searchable", lambda texts: False)
+    assert text_layer_pages(tmp_path) == {}
+
+
+def test_text_layer_pages_extraction_failed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fail_extraction(path: Path) -> list[str]:
+        raise subprocess.CalledProcessError(1, "pdftotext")
+
+    monkeypatch.setattr(source_pages, "pdf_page_texts", fail_extraction)
+    monkeypatch.setattr(
+        source_pages, "is_searchable", lambda texts: pytest.fail("is_searchable called")
+    )
+    assert text_layer_pages(tmp_path) is None
