@@ -306,12 +306,12 @@ def fact_ledger(lesson: Lesson, params: Mapping[str, object], vault: Path) -> li
     min_sites = params.get("min_sites", 0)
     if not isinstance(min_sites, int) or isinstance(min_sites, bool):
         min_sites = 0
-    total_sites = len(sites) + len(problems)
-    if total_sites < min_sites:
+    counted_sites = sum(1 for _, names in sites if names) + len(problems)
+    if counted_sites < min_sites:
         findings.append(
             (
                 None,
-                f"fact_ledger: {total_sites} worked examples or answers with a Uses line, needs at least {min_sites}",
+                f"fact_ledger: {counted_sites} worked examples or answers with a Uses line naming a fact, needs at least {min_sites}",
             )
         )
     sites.sort(key=lambda s: s[0])
@@ -333,9 +333,11 @@ def fact_ledger(lesson: Lesson, params: Mapping[str, object], vault: Path) -> li
     for site_idx, names in sites:
         for name in names:
             key = name.strip().casefold()
-            if key in seen and seen[key] >= site_idx:
+            if key in closure_keys or key in assumed:
+                continue
+            elif key in seen and seen[key] >= site_idx:
                 findings.append((lesson.lineno(site_idx), f"fact_ledger: {name!r} used before it is labelled"))
-            elif key in seen or key in closure_keys or key in assumed:
+            elif key in seen:
                 continue
             else:
                 findings.append((lesson.lineno(site_idx), f"fact_ledger: {name!r} used but not taught earlier"))

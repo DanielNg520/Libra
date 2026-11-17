@@ -12,7 +12,6 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## START HERE (next session)
-Next step: reproduce F216, F220 on `src/libra/study/check_facts.py` (`Probability/concepts/Counting basics.md:110`, `Independence.md:137` fail `fact_ledger` "used but not taught earlier"); fix by TriAPI dispatch if reproduced.
 Next step: remove dead copy-check deletion path (`lecture_map.ensure_book_maps`, `check_copies`) by TriAPI dispatch.
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
 
@@ -147,9 +146,6 @@ Seam: export, and a plain `read` with missing pages, wait on `index_lock` while 
 ## Findings
 F23 [low · 1 · 2026-11-03] deploy/libra-export.service: no `After=network-online.target`; Persistent catch-up at boot may fail a new-book Gemini map, `.failed` blocks retry 24 h (suspected).
 Fix proposal: add `After=`/`Wants=network-online.target` as in `libra-fetch.service`.
-F220 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `fact_ledger`: `min_sites` counts `Uses: none.` sites (ADR allows them), so all-none notes pass; `DSA/*.md` glob catches new `.md` subfolders (verified).
-F216 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `fact_ledger`: a name labelled later fails "used before labelled" though a prereq or baseline teaches it (verified by reading).
-F214 [low · 1 · 2026-11-12] `src/libra/study/check_refs.py` `vault_links`: an unreadable plan file is skipped silently, so the failure reads "no plan file links the lesson" (verified).
 F221 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `_example_end`: ignores bold anchors; an example lacking Uses can claim a later section's `- Uses:` bullet (suspected).
 F217 [low · 1 · 2026-11-13] `src/libra/study/check_facts.py` `cold_read_digest`: unresolved bare-name embeds or prereqs are skipped, so edits there keep a record valid; dependency `read_text` unguarded, raises (suspected).
 

@@ -319,16 +319,29 @@ def test_min_sites_default_and_set(tmp_path: Path) -> None:
     assert all("needs at least" not in msg for _, msg in findings)
 
     findings = _ledger(tmp_path, "set.md", text, {**PARAMS, "min_sites": 1})
-    assert (None, "fact_ledger: 0 worked examples or answers with a Uses line, needs at least 1") in findings
+    assert (None, "fact_ledger: 0 worked examples or answers with a Uses line naming a fact, needs at least 1") in findings
 
     text_done = (
         FM_BASE
+        + "\n**Formula.**\n"
+        + "- **Rule A:** Proof: right.\n"
+        + "\n**Worked example.**\n"
+        + "Task.\n"
+        + "- Uses: rule a.\n"
+    )
+    findings = _ledger(tmp_path, "done.md", text_done, {**PARAMS, "min_sites": 1})
+    assert all("needs at least" not in msg for _, msg in findings)
+
+    text_none = (
+        FM_BASE
+        + "\n**Formula.**\n"
+        + "- **Rule A:** Proof: right.\n"
         + "\n**Worked example.**\n"
         + "Task.\n"
         + "- Uses: none.\n"
     )
-    findings = _ledger(tmp_path, "done.md", text_done, {**PARAMS, "min_sites": 1})
-    assert all("needs at least" not in msg for _, msg in findings)
+    findings = _ledger(tmp_path, "none.md", text_none, {**PARAMS, "min_sites": 1})
+    assert (None, "fact_ledger: 0 worked examples or answers with a Uses line naming a fact, needs at least 1") in findings
 
 
 def test_min_sites_counts_broken_sites(tmp_path: Path) -> None:
@@ -345,6 +358,32 @@ def test_min_sites_counts_broken_sites(tmp_path: Path) -> None:
 
 def test_min_sites_in_kind_spec() -> None:
     assert KINDS["fact_ledger"].optional["min_sites"] == "int"
+
+
+def test_label_later_ok_when_prereq_teaches(tmp_path: Path) -> None:
+    prereq = _concept(fact="Proof: alpha.", example_uses="none", answer_uses="> Uses: none.")
+    _write(tmp_path, "S/c/A.md", prereq)
+    lesson = (
+        "---\ntags:\n  - topic/probability\nprereqs:\n  - \"[[S/c/A|A]]\"\n---\n\n"
+        + "\n**Worked example.**\n"
+        + "Task.\n"
+        + "- Uses: rule a.\n"
+        + "\n**Formula.**\n"
+        + "- **Rule A:** Proof: right.\n"
+    )
+    findings = _ledger(tmp_path, "S/c/B.md", lesson)
+    assert all("used before it is labelled" not in msg for _, msg in findings)
+
+    lesson_assumed = (
+        "---\ntags:\n  - topic/probability\n---\n\n"
+        + "\n**Worked example.**\n"
+        + "Task.\n"
+        + "- Uses: arithmetic.\n"
+        + "\n**Formula.**\n"
+        + "- **Arithmetic:** Proof: right.\n"
+    )
+    findings = _ledger(tmp_path, "S/c/C.md", lesson_assumed)
+    assert all("used before it is labelled" not in msg for _, msg in findings)
 
 
 def test_example_does_not_claim_uses_after_callout(tmp_path: Path) -> None:

@@ -316,12 +316,12 @@ class TestVaultLinks:
             (None, "vault_links: cannot read outline Coding Practice/Python/01 outline.md")
         ]
 
-    def test_plan_unreadable_skipped(self, tmp_path):
+    def test_plan_unreadable_reported(self, tmp_path):
         lines = []
         path = _write(tmp_path, "Self study/Current.md")
         path.write_bytes(b"\xff\xfe bad")
         assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == [
-            (None, "vault_links: no plan file links the lesson")
+            (None, "vault_links: cannot read plan file Self study/Current.md")
         ]
         _write(
             tmp_path,

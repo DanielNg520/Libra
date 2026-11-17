@@ -273,11 +273,17 @@ def vault_links(
                 return []
         return [(None, "vault_links: no outline row links the lesson")]
     files = params.get("files", PLAN_FILES)
+    unreadable: list[str] = []
     for file in files:
         try:
             content = (vault / file).read_text(encoding="utf-8")
+        except FileNotFoundError:
+            continue
         except (OSError, UnicodeDecodeError):
+            unreadable.append(str(file))
             continue
         if _links_lesson(content, lesson.rel):
             return []
+    if unreadable:
+        return [(None, f"vault_links: cannot read plan file {file}") for file in unreadable]
     return [(None, "vault_links: no plan file links the lesson")]
