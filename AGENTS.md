@@ -12,6 +12,11 @@ Agent behaviour rules (notetaker, homework, study notes, exam sheets) live in Hi
 Smallest correct diff; reuse before adding; code goes through TriAPI's rebuild pipeline, never hand-written.
 
 ## START HERE (next session)
+Trap: `cached_pages` matches the index by exact `rel`, `size`, `mtime`; renamed ECE 158A Lec8, Lec9, Lec11, Lec12 decks lack entries, so `libra map` omits them and `map --confirm` fails.
+Seam: `source_pages.py` needs one shared helper (cached reads, else `pdf_page_texts` via `is_searchable`) used by `reading_export.py` (drop private copy) and `lecture_map.load_units`, plus a regression test.
+Next step: check whether `fingerprint` invalidates when a deck uses the text-layer fallback before writing the TriAPI dispatch prompt.
+Next step: dispatch via TriAPI the shared helper in `source_pages.py`, `reading_export.py` and `lecture_map.load_units` call sites, and an uncached searchable deck test.
+Next step: rebuild maps, confirm `libra map --confirm` works on those decks, do pending vault lecture 8 confirmations, and remove the vault `AGENTS.md` renamed-deck trap.
 Next step: reproduce F216, F220 on `src/libra/study/check_facts.py` (`Probability/concepts/Counting basics.md:110`, `Independence.md:137` fail `fact_ledger` "used but not taught earlier"); fix by TriAPI dispatch if reproduced.
 Next step: remove dead copy-check deletion path (`lecture_map.ensure_book_maps`, `check_copies`) by TriAPI dispatch.
 Test command: `uv run --extra fedora --extra plot --extra study --extra anki pytest -q`; without `anki` the sync tests skip.
