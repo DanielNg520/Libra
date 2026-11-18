@@ -155,6 +155,7 @@ Owner (2026-10-30): further reading runs as rule lines (agents search themselves
 `libra further` facts (2026-10-30): Crossref and arXiv keyless under 1 s; OpenAlex keyless shares a $0.10 daily per-IP budget; free key needs an email.
 `libra further` limits: topic terms only, never note text, transcripts or owner data; Google Scholar excluded.
 ADR-0001 P3 `libra check-note` builds only on its D7 trigger.
+Owner (2026-11-18): `libra check-note` should also flag symbols redefined across sections, repeated worked examples, duplicate mismatch entries and a missing Further reading.
 
 ## Carryover
 Last audit: 2026-11-03 wrap-up (audited through `8b7deba`; F21, F22 verified closed; F23 added).
