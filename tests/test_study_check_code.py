@@ -17,7 +17,7 @@ FRONTMATTER = "---\ntags:\n  - topic/c\n---\n"
 
 def _run(lines: Sequence[str], params: Mapping[str, object] | None = None) -> list:
     text = FRONTMATTER + "\n".join(lines)
-    lesson = parse_lesson(text, "Coding Practice/Bare Metal C/lessons/01 x.md")
+    lesson = parse_lesson(text, "Self study/Coding Practice/Bare Metal C/lessons/01 x.md")
     return KINDS["code_run"].check(lesson, params or {}, Path("/nonexistent"))
 
 
@@ -693,7 +693,7 @@ def test_real_cpp_unused_variable_fails():
 
 def test_check_text_c_fragment_note():
     text = FRONTMATTER + "```c\nint helper(void) { return 1; }\n```\n"
-    rel = "Coding Practice/Bare Metal C/lessons/01 x.md"
+    rel = "Self study/Coding Practice/Bare Metal C/lessons/01 x.md"
     failures = check_text(
         text,
         rel,

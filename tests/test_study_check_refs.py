@@ -33,8 +33,8 @@ def _validate(kind: str, params: Mapping[str, object]) -> str | None:
 
 
 def test_lesson_base():
-    assert lesson_base("Coding Practice/Python/lessons/01 x.md") == PurePosixPath(
-        "Coding Practice/Python"
+    assert lesson_base("Self study/Coding Practice/Python/lessons/01 x.md") == PurePosixPath(
+        "Self study/Coding Practice/Python"
     )
     assert lesson_base("Self study/Probability/02 x.md") == PurePosixPath(
         "Self study/Probability"
@@ -269,14 +269,14 @@ class TestLinks:
 
 
 class TestVaultLinks:
-    REL = "Coding Practice/Python/lessons/01 x.md"
+    REL = "Self study/Coding Practice/Python/lessons/01 x.md"
 
     def test_outline_row(self, tmp_path):
         lines = []
         _write(
             tmp_path,
-            "Coding Practice/Python/01 outline.md",
-            "| [[Coding Practice/Python/lessons/01 x\\|01 x]] | topic |",
+            "Self study/Coding Practice/Python/01 outline.md",
+            "| [[Self study/Coding Practice/Python/lessons/01 x\\|01 x]] | topic |",
         )
         assert _run("vault_links", {"target": "outline"}, lines, tmp_path, rel=self.REL) == []
 
@@ -284,8 +284,8 @@ class TestVaultLinks:
         lines = []
         _write(
             tmp_path,
-            "Coding Practice/Python/01 outline.md",
-            "[[Coding Practice/Python/lessons/01 x|01 x]]",
+            "Self study/Coding Practice/Python/01 outline.md",
+            "[[Self study/Coding Practice/Python/lessons/01 x|01 x]]",
         )
         assert _run("vault_links", {"target": "outline"}, lines, tmp_path, rel=self.REL) == [
             (None, "vault_links: no outline row links the lesson")
@@ -294,15 +294,15 @@ class TestVaultLinks:
     def test_outline_missing(self, tmp_path):
         lines = []
         assert _run("vault_links", {"target": "outline"}, lines, tmp_path, rel=self.REL) == [
-            (None, "vault_links: outline missing Coding Practice/Python/01 outline.md")
+            (None, "vault_links: outline missing Self study/Coding Practice/Python/01 outline.md")
         ]
 
     def test_outline_custom(self, tmp_path):
         lines = []
         _write(
             tmp_path,
-            "Coding Practice/Python/02 plan.md",
-            "| [[Coding Practice/Python/lessons/01 x\\|01 x]] | topic |",
+            "Self study/Coding Practice/Python/02 plan.md",
+            "| [[Self study/Coding Practice/Python/lessons/01 x\\|01 x]] | topic |",
         )
         assert _run(
             "vault_links", {"target": "outline", "outline": "02 plan.md"}, lines, tmp_path, rel=self.REL
@@ -310,10 +310,10 @@ class TestVaultLinks:
 
     def test_outline_unreadable(self, tmp_path):
         lines = []
-        path = _write(tmp_path, "Coding Practice/Python/01 outline.md")
+        path = _write(tmp_path, "Self study/Coding Practice/Python/01 outline.md")
         path.write_bytes(b"\xff\xfe bad")
         assert _run("vault_links", {"target": "outline"}, lines, tmp_path, rel=self.REL) == [
-            (None, "vault_links: cannot read outline Coding Practice/Python/01 outline.md")
+            (None, "vault_links: cannot read outline Self study/Coding Practice/Python/01 outline.md")
         ]
 
     def test_plan_unreadable_reported(self, tmp_path):
@@ -326,7 +326,7 @@ class TestVaultLinks:
         _write(
             tmp_path,
             "Self study/Master index.md",
-            "- [ ] PY: [[Coding Practice/Python/lessons/01 x|PY 01]]",
+            "- [ ] PY: [[Self study/Coding Practice/Python/lessons/01 x|PY 01]]",
         )
         assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == []
 
@@ -335,7 +335,7 @@ class TestVaultLinks:
         _write(
             tmp_path,
             "Self study/Current.md",
-            "- [ ] PY: [[Coding Practice/Python/lessons/01 x|PY 01]]",
+            "- [ ] PY: [[Self study/Coding Practice/Python/lessons/01 x|PY 01]]",
         )
         assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == []
 
@@ -344,7 +344,7 @@ class TestVaultLinks:
         _write(
             tmp_path,
             "Self study/Master index.md",
-            "- [ ] PY: [[Coding Practice/Python/lessons/01 x|PY 01]]",
+            "- [ ] PY: [[Self study/Coding Practice/Python/lessons/01 x|PY 01]]",
         )
         assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == []
 
@@ -353,7 +353,7 @@ class TestVaultLinks:
         _write(
             tmp_path,
             "Self study/Current.md",
-            "- [ ] PY: [[Coding Practice/Python/lessons/01 xy|PY 01]]",
+            "- [ ] PY: [[Self study/Coding Practice/Python/lessons/01 xy|PY 01]]",
         )
         assert _run("vault_links", {"target": "plan"}, lines, tmp_path, rel=self.REL) == [
             (None, "vault_links: no plan file links the lesson")
@@ -370,7 +370,7 @@ class TestVaultLinks:
         _write(
             tmp_path,
             "Plans/now.md",
-            "- [ ] PY: [[Coding Practice/Python/lessons/01 x|PY 01]]",
+            "- [ ] PY: [[Self study/Coding Practice/Python/lessons/01 x|PY 01]]",
         )
         assert _run(
             "vault_links",

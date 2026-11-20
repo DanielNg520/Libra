@@ -14,20 +14,20 @@ exclude = [
 ]
 
 [[select]]
-glob = "Self study/*/concepts/*.md"
-profile = "concept_topic"
-
-[[select]]
-glob = "Coding Practice/*/concepts/*.md"
+glob = "Self study/Coding Practice/*/concepts/*.md"
 profile = "concept_code"
 
 [[select]]
-glob = "Coding Practice/Bare Metal C/lessons/*.md"
+glob = "Self study/Coding Practice/Bare Metal C/lessons/*.md"
 profile = "code_c"
 
 [[select]]
-glob = "Coding Practice/Python/lessons/*.md"
+glob = "Self study/Coding Practice/Python/lessons/*.md"
 profile = "code_python"
+
+[[select]]
+glob = "Self study/*/concepts/*.md"
+profile = "concept_topic"
 
 [[select]]
 glob = "Self study/*/[0-9]*.md"
@@ -75,8 +75,8 @@ allowed = ["topic/probability", "topic/linear-algebra", "topic/optimization", "t
 "Self study/Linear algebra/*" = "topic/linear-algebra"
 "Self study/Optimization/*" = "topic/optimization"
 "Self study/DSP/*" = "topic/dsp"
-"Coding Practice/Bare Metal C/*" = "topic/c"
-"Coding Practice/Python/*" = "topic/python"
+"Self study/Coding Practice/Bare Metal C/*" = "topic/c"
+"Self study/Coding Practice/Python/*" = "topic/python"
 
 [rules.prereqs]
 text = "prereqs is a block list of path-qualified wikilinks to files that exist (owner, 2026-11-07)."

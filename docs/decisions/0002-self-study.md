@@ -23,7 +23,7 @@ Accepted, in code, 2026-11-16
 ### D-b, block scanner
 - `src/libra/study/render.py` runs `_make_parser` (`markdown-it-py`, `mdit_py_plugins.dollarmath`) so `scan_blocks` handles wikilink, callout, fact marker, and embed rules.
 - Checker and parser modules in `src/libra/study/`: `__init__.py`, `checks.py`, `check_kinds.py`, `check_concepts.py`, `check_refs.py`, `check_code.py`, `check_facts.py`, `plan.py`, `paths.py`, `frontmatter.py`.
-- `paths.py` defines `LESSON_ROOTS = ("Self study/", "Coding Practice/")` and imports `IMAGE_SUFFIXES` from `libra.study.render`.
+- `paths.py` defines `LESSON_ROOTS = ("Self study/",)` and imports `IMAGE_SUFFIXES` from `libra.study.render`.
 - `src/libra/sandbox.py` runs `code_run` via `bwrap`; `SandboxError` subclasses `RuntimeError`, and `SandboxUnavailable` is raised when `bwrap` is missing.
 - On `SandboxUnavailable`, `check_code.code_run` emits `Note` (`code_run: skipped, bwrap not found (Fedora only)`) and stops; other sandbox errors fail.
 

@@ -7,7 +7,7 @@ from pathlib import Path, PurePosixPath
 
 from libra.study.render import IMAGE_SUFFIXES
 
-LESSON_ROOTS: tuple[str, ...] = ("Self study/", "Coding Practice/")
+LESSON_ROOTS: tuple[str, ...] = ("Self study/",)
 
 __all__ = ["StudyPathError", "LESSON_ROOTS", "make_resolver", "note_names", "resolve_study_path"]
 

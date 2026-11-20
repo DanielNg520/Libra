@@ -136,9 +136,9 @@ def test_fixture_profile_for() -> None:
     cases = {
         "Self study/Probability/02a events and axioms.md": "topic",
         "Self study/Probability/concepts/De Morgan's laws.md": "concept_topic",
-        "Coding Practice/Python/concepts/Lists.md": "concept_code",
-        "Coding Practice/Bare Metal C/lessons/01 macros.md": "code_c",
-        "Coding Practice/Python/lessons/01 types.md": "code_python",
+        "Self study/Coding Practice/Python/concepts/Lists.md": "concept_code",
+        "Self study/Coding Practice/Bare Metal C/lessons/01 macros.md": "code_c",
+        "Self study/Coding Practice/Python/lessons/01 types.md": "code_python",
         "Self study/Probability/00 source map.md": None,
         "Self study/Probability/01 outline.md": None,
         "Self study/Weekly/2026/2026-11-09.md": None,

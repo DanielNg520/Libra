@@ -419,7 +419,7 @@ def test_make_cards_concept_embeds(
     assert store.data[ANKI_DONE_PREFIX + LESSON] == "2026-11-10"
 
 
-DSA_NOTE = "Coding Practice/DSA/Two pointers.md"
+DSA_NOTE = "Self study/Coding Practice/DSA/Two pointers.md"
 
 
 def _dsa_vault(tmp_path: Path, signals: list[str], extra_reading: str = "") -> Path:
@@ -437,7 +437,7 @@ def _dsa_vault(tmp_path: Path, signals: list[str], extra_reading: str = "") -> P
     note.write_text(text)
     _write(
         vault,
-        ["- [x] DSA: [[Coding Practice/DSA/Two pointers|LC 167 Two Sum II]]"],
+        ["- [x] DSA: [[Self study/Coding Practice/DSA/Two pointers|LC 167 Two Sum II]]"],
     )
     return vault
 
@@ -463,16 +463,16 @@ def test_make_cards_dsa_signals_without_runner(tmp_path: Path, monkeypatch: pyte
 def test_make_cards_dsa_problem_note_uses_pattern(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     rec = _fake_anki(monkeypatch)
     vault = _dsa_vault(tmp_path, ["Sorted array plus pair sum"])
-    PROBLEM = "Coding Practice/DSA/problems/LC 167 Two Sum II.md"
+    PROBLEM = "Self study/Coding Practice/DSA/problems/LC 167 Two Sum II.md"
     problem_path = vault / PROBLEM
     problem_path.parent.mkdir(parents=True)
     problem_path.write_text(
-        "---\ntags:\n  - topic/dsa\npattern: Coding Practice/DSA/Two pointers\n---\n"
+        "---\ntags:\n  - topic/dsa\npattern: Self study/Coding Practice/DSA/Two pointers\n---\n"
         "# LC 167 Two Sum II\n\nStatement text\n"
     )
     _write(
         vault,
-        ["- [x] DSA: [[Coding Practice/DSA/problems/LC 167 Two Sum II|LC 167 Two Sum II]]"],
+        ["- [x] DSA: [[Self study/Coding Practice/DSA/problems/LC 167 Two Sum II|LC 167 Two Sum II]]"],
     )
     store = FakeStore()
     runner = lambda _: (_ for _ in ()).throw(AssertionError())
@@ -491,16 +491,16 @@ def test_make_cards_dsa_problem_note_missing_pattern_fails(
 ) -> None:
     rec = _fake_anki(monkeypatch)
     vault = _dsa_vault(tmp_path, ["Sorted array plus pair sum"])
-    PROBLEM = "Coding Practice/DSA/problems/LC 167 Two Sum II.md"
+    PROBLEM = "Self study/Coding Practice/DSA/problems/LC 167 Two Sum II.md"
     problem_path = vault / PROBLEM
     problem_path.parent.mkdir(parents=True)
     problem_path.write_text(
-        "---\ntags:\n  - topic/dsa\npattern: Coding Practice/DSA/Nope\n---\n"
+        "---\ntags:\n  - topic/dsa\npattern: Self study/Coding Practice/DSA/Nope\n---\n"
         "# LC 167 Two Sum II\n\nStatement text\n"
     )
     _write(
         vault,
-        ["- [x] DSA: [[Coding Practice/DSA/problems/LC 167 Two Sum II|LC 167 Two Sum II]]"],
+        ["- [x] DSA: [[Self study/Coding Practice/DSA/problems/LC 167 Two Sum II|LC 167 Two Sum II]]"],
     )
     store = FakeStore()
     runner = lambda _: (_ for _ in ()).throw(AssertionError())
@@ -545,8 +545,8 @@ def test_make_cards_dsa_concept_embed(tmp_path: Path, monkeypatch: pytest.Monkey
     import json
 
     rec = _fake_anki(monkeypatch)
-    vault = _dsa_vault(tmp_path, ["A"], extra_reading="![[Coding Practice/DSA/concepts/Hash map|Hash map]]\n\n")
-    CONCEPT = "Coding Practice/DSA/concepts/Hash map.md"
+    vault = _dsa_vault(tmp_path, ["A"], extra_reading="![[Self study/Coding Practice/DSA/concepts/Hash map|Hash map]]\n\n")
+    CONCEPT = "Self study/Coding Practice/DSA/concepts/Hash map.md"
     concept = vault / CONCEPT
     concept.parent.mkdir(parents=True, exist_ok=True)
     concept.write_text("---\ntags:\n  - topic/dsa\n---\n# Hash map\n\nHash body\n")
@@ -607,8 +607,8 @@ def test_make_cards_zero_added_not_carded(tmp_path: Path, monkeypatch: pytest.Mo
 @pytest.mark.parametrize("mode", ["raise", "bad_json", "cap"])
 def test_make_cards_dsa_signals_survive_card_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str) -> None:
     rec = _fake_anki(monkeypatch)
-    vault = _dsa_vault(tmp_path, ["A"], extra_reading="![[Coding Practice/DSA/concepts/Hash map|Hash map]]\n\n")
-    concept_path = vault / "Coding Practice/DSA/concepts/Hash map.md"
+    vault = _dsa_vault(tmp_path, ["A"], extra_reading="![[Self study/Coding Practice/DSA/concepts/Hash map|Hash map]]\n\n")
+    concept_path = vault / "Self study/Coding Practice/DSA/concepts/Hash map.md"
     concept_path.parent.mkdir(parents=True, exist_ok=True)
     concept_path.write_text("---\ntags:\n  - topic/dsa\n---\n# Hash map\n\nHash body\n")
 
@@ -626,7 +626,7 @@ def test_make_cards_dsa_signals_survive_card_failure(tmp_path: Path, monkeypatch
     assert carded == (DSA_NOTE,)
     assert failed == ()
     assert rec["added"][-1][1] == [(note_guid(DSA_NOTE, FA), FA, "Two pointers")]
-    assert ANKI_DONE_PREFIX + "Coding Practice/DSA/concepts/Hash map.md" not in store.data
+    assert ANKI_DONE_PREFIX + "Self study/Coding Practice/DSA/concepts/Hash map.md" not in store.data
 
 
 def test_make_cards_carded_concept_not_repeated(
